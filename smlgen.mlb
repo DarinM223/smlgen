@@ -1,0 +1,17 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  ann "milletDiagnosticsIgnore all" in
+    ./smlfmt/src/base/sources.mlb
+    ./smlfmt/src/ast/sources.mlb
+    ./smlfmt/src/lex/sources.mlb
+    ./smlfmt/src/parse/sources.mlb
+    ./smlfmt/src/prettier-print/sources.mlb
+  end
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  Utils.sml
+  BuildAst.sml
+  FruGen.sml
+  GenericGen.sml
+in
+  smlgen.sml
+end
