@@ -64,6 +64,10 @@ struct
       , right = mkReservedToken CloseCurlyBracket
       }
 
+  fun appExp exps =
+    List.foldl (fn (e, acc) => App {left = acc, right = e}) (List.hd exps)
+      (List.tl exps)
+
   fun singleFnExp pat exp =
     Fn
       { fnn = mkReservedToken Token.Fn
@@ -90,6 +94,10 @@ struct
       , exp = exp
       , right = mkReservedToken CloseParen
       }
+
+  fun infixLExp opp exps =
+    List.foldl (fn (e, acc) => Infix {left = acc, id = opp, right = e})
+      (List.hd exps) (List.tl exps)
 
   val unitPat =
     Pat.Unit
@@ -154,4 +162,17 @@ struct
           (List.map (fn _ => commaTok) patTokens)))
       , right = mkReservedToken CloseCurlyBracket
       }
+
+  fun destructTuplePat pats =
+    Pat.Tuple
+      { left = mkReservedToken OpenParen
+      , elems = ArraySlice.full (Array.fromList pats)
+      , delims = ArraySlice.full (Array.fromList (List.tl
+          (List.map (fn _ => commaTok) pats)))
+      , right = mkReservedToken CloseParen
+      }
+
+  fun destructInfixLPat opp pats =
+    List.foldl (fn (p, acc) => Pat.Infix {left = acc, id = opp, right = p})
+      (List.hd pats) (List.tl pats)
 end
