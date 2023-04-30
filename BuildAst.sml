@@ -27,8 +27,13 @@ struct
   val equalTok = mkReservedToken Equal
   val commaTok = mkReservedToken Comma
   val orTok = mkReservedToken Bar
+  val andTok = mkToken "&"
   val quesTok = mkToken "?"
+  val prodTok = mkToken "*`"
   val fatArrowTok = mkReservedToken FatArrow
+  val genericTok = MaybeLongToken.make (mkToken "Generic")
+  val tieTok = MaybeLongToken.make (mkToken "Tie")
+  val openTok = mkReservedToken Open
 
   val unitExp =
     Unit {left = mkReservedToken OpenParen, right = mkReservedToken CloseParen}
@@ -151,6 +156,11 @@ struct
           , delims = ArraySlice.full (Array.fromList [])
           }
       }
+
+  val genericDec = DecOpen
+    {openn = openTok, elems = ArraySlice.full (Array.fromList [genericTok])}
+  val tieDec = DecOpen
+    {openn = openTok, elems = ArraySlice.full (Array.fromList [tieTok])}
 
   fun destructRecordPat patTokens =
     Pat.Record
