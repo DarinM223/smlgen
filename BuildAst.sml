@@ -34,6 +34,7 @@ struct
   val genericTok = MaybeLongToken.make (mkToken "Generic")
   val tieTok = MaybeLongToken.make (mkToken "Tie")
   val openTok = mkReservedToken Open
+  val underTok = mkReservedToken Underscore
 
   val unitExp =
     Unit {left = mkReservedToken OpenParen, right = mkReservedToken CloseParen}
@@ -185,4 +186,6 @@ struct
   fun destructInfixLPat opp pats =
     List.foldl (fn (p, acc) => Pat.Infix {left = acc, id = opp, right = p})
       (List.hd pats) (List.tl pats)
+
+  val wildPat = Pat.Wild underTok
 end

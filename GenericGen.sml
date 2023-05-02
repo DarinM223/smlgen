@@ -36,7 +36,7 @@ end
 
 structure GenericGen =
 struct
-  open BuildAst
+  open BuildAst Utils
   structure SCC =
     GraphSCCFn (struct type ord_key = int val compare = Int.compare end)
   structure ExpValue: CONVERT_VALUE =
@@ -480,15 +480,11 @@ struct
              in
                traverseTy (env, tycon, substMap)
              end) tys
-      val pat =
-        let
-          val tys =
-            case vars of
-              [] => tys
-            | _ => AtomTable.listItems (#resultTable env)
-        in
-          destructInfixLPat andTok (List.map identPat tys)
-        end
+      val patToks =
+        case vars of
+          [] => tys
+        | _ => AtomTable.listItems (#resultTable env)
+      val fullPat = destructInfixLPat andTok (List.map identPat patToks)
       fun linksToToks links =
         List.map
           (fn Ty.Con {id, ...} => MaybeLongToken.getToken id
@@ -560,7 +556,7 @@ struct
               singleLetExp (multDec (genericDec :: decs))
                 (infixLExp andTok exps)
             end
-      val lam = singleFnExp pat exp
+      val lam = singleFnExp fullPat exp
       val ys =
         let
           val ys =
@@ -576,7 +572,7 @@ struct
         end
       fun header exp =
         case vars of
-          [] => valDec pat (singleLetExp (multDec [tieDec, yDec]) exp)
+          [] => valDec fullPat (singleLetExp (multDec [tieDec, yDec]) exp)
         | _ =>
             let
               val concatTys = mkToken (String.concatWith "_"
@@ -588,14 +584,20 @@ struct
                       , right = parensExp
                           (App {left = Const concatTys, right = Const quesTok})
                       })) :: unpackingDecs (i + 1) tys
-              val startTyFixes =
+              val startTyToks =
                 List.map
-                  (Const o AtomTable.lookup (#resultTable env) o Atom.atom
-                   o showTy) startTys
+                  (AtomTable.lookup (#resultTable env) o Atom.atom o showTy)
+                  startTys
+              val startTyFixes = List.map Const startTyToks
+              val hiddenPat = destructInfixLPat andTok
+                (List.map
+                   (fn tok =>
+                      if List.exists (eqToken tok) startTyToks then identPat tok
+                      else wildPat) patToks)
             in
               multDec
                 (valDec (Pat.Const concatTys) (tyVarFnExp vars
-                   (singleLetExp (multDec [tieDec, yDec, valDec pat exp])
+                   (singleLetExp (multDec [tieDec, yDec, valDec hiddenPat exp])
                       (tupleExp startTyFixes))) :: unpackingDecs 1 tys)
             end
     in
