@@ -1,19 +1,3 @@
-(* Wanted syntax:
- *
- * smlgen foo.sml Ast.Str.strdec:g Parser.t:u Person.t:s
- *
- * g - Derive generic
- * u - Derive functional record update
- * s - Derive show
- * o - Derive ord
- * h - Derive hash
- * e - Derive equals
- *
- * Can combine them: Ast.t:gus
- * Will ask for each line number pattern matches
- * (so if Ast.Str.strdec appears multiple times you can choose which one to apply it to)
- *)
-
 fun filterToken tokenString ((token' :: path, actions) :: xs) =
       if token' = tokenString then (path, actions) :: filterToken tokenString xs
       else filterToken tokenString xs
@@ -294,10 +278,13 @@ in
             {topdec = goTopDec args topdec, semicolon = semicolon}) topdecs)
 end
 
+val test = CommandLineArgs.parseFlag "test"
+
 fun doSML (filepath, args) =
   let
     val fp = FilePath.fromUnixPath filepath
-    val hfp = FilePath.toHostPath fp
+    val hfp = FilePath.toHostPath
+      (if test then FilePath.fromUnixPath (filepath ^ ".test") else fp)
     val source = Source.loadFromFile fp
     val allTokens = Lexer.tokens allows source
     val result = Parser.parse allows allTokens
