@@ -54,3 +54,15 @@ In order to check the output without overwriting the file, you can pass in a `--
 ```
 
 will create a `file.sml.test` file in the same directory as `file.sml`.
+
+Testing
+-------
+
+To run the tests, run:
+
+```
+sh test.sh
+```
+
+in the project directory. It should list the number of succeeded and failed tests and
+the diff between the generated code and the expected code for each failed test.

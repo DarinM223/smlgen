@@ -1,3 +1,5 @@
+val test = CommandLineArgs.parseFlag "test"
+
 fun filterToken tokenString ((token' :: path, actions) :: xs) =
       if token' = tokenString then (path, actions) :: filterToken tokenString xs
       else filterToken tokenString xs
@@ -91,18 +93,21 @@ fun addGen (gen1: gen) (gen2: gen) : gen =
 
 local
   fun confirm default next =
-    ( print "\nConfirm [y/n]? "
-    ; case TextIO.inputLine TextIO.stdIn of
-        NONE => default
-      | SOME line =>
-          let
-            val line = String.map Char.toUpper line
-          in
-            if line = "Y\n" then next ()
-            else if line = "N\n" then default
-            else confirm default next
-          end
-    )
+    if test then
+      next ()
+    else
+      ( print "\nConfirm [y/n]? "
+      ; case TextIO.inputLine TextIO.stdIn of
+          NONE => default
+        | SOME line =>
+            let
+              val line = String.map Char.toUpper line
+            in
+              if line = "Y\n" then next ()
+              else if line = "N\n" then default
+              else confirm default next
+            end
+      )
   fun printToken t =
     ( print (Token.toString t ^ ":")
     ; print
@@ -277,8 +282,6 @@ in
          (fn {topdec, semicolon} =>
             {topdec = goTopDec args topdec, semicolon = semicolon}) topdecs)
 end
-
-val test = CommandLineArgs.parseFlag "test"
 
 fun doSML (filepath, args) =
   let
