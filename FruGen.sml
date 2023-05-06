@@ -10,7 +10,7 @@ struct
           val elems' = (List.concat o List.map (genDecsForTy o #ty)) elems
           val fromTok = mkToken "from"
           val toTok = mkToken "to"
-          val fTok = mkToken "f"
+          val fTok = mkToken "?"
           val rTok = mkToken "r"
           val from =
             singleFunDec fromTok (List.map (Pat.Const o #lab) elems) (recordExp

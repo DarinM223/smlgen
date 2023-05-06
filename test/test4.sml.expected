@@ -12,15 +12,15 @@ type (*0*) 'a (*1*) person (*2*) = (*3*)
 fun updatePerson0 r =
   let
     fun from name locations = {name = name, locations = locations}
-    fun to f {name, locations} = f name locations
+    fun to ? {name, locations} = ? name locations
   in
     FunctionalRecordUpdate.makeUpdate2 (from, from, to) r
   end
 fun updatePerson1 r =
   let
     fun from name age address = {name = name, age = age, address = address}
-    fun to f {name, age, address} =
-      f name age address
+    fun to ? {name, age, address} =
+      ? name age address
   in
     FunctionalRecordUpdate.makeUpdate3 (from, from, to) r
   end
@@ -30,15 +30,15 @@ datatype 'a person =
 fun updatePerson0 r =
   let
     fun from name locations = {name = name, locations = locations}
-    fun to f {name, locations} = f name locations
+    fun to ? {name, locations} = ? name locations
   in
     FunctionalRecordUpdate.makeUpdate2 (from, from, to) r
   end
 fun updatePerson1 r =
   let
     fun from name age address = {name = name, age = age, address = address}
-    fun to f {name, age, address} =
-      f name age address
+    fun to ? {name, age, address} =
+      ? name age address
   in
     FunctionalRecordUpdate.makeUpdate3 (from, from, to) r
   end
@@ -66,50 +66,50 @@ datatype (*21*) ( (*22*)'a (*23*), (*24*) 'b (*25*)) (*26*) t (*27*) = (*28*)
 fun updateTA0 r =
   let
     fun from c = {c = c}
-    fun to f {c} = f c
+    fun to ? {c} = ? c
   in
     FunctionalRecordUpdate.makeUpdate1 (from, from, to) r
   end
 fun updateTA1 r =
   let
     fun from a b = {a = a, b = b}
-    fun to f {a, b} = f a b
+    fun to ? {a, b} = ? a b
   in
     FunctionalRecordUpdate.makeUpdate2 (from, from, to) r
   end
 fun updateTB0 r =
   let
     fun from g = {g = g}
-    fun to f {g} = f g
+    fun to ? {g} = ? g
   in
     FunctionalRecordUpdate.makeUpdate1 (from, from, to) r
   end
 fun updateTB1 r =
   let
     fun from d e f = {d = d, e = e, f = f}
-    fun to f {d, e, f} =
-      f d e f
+    fun to ? {d, e, f} =
+      ? d e f
   in
     FunctionalRecordUpdate.makeUpdate3 (from, from, to) r
   end
 fun updateTC0 r =
   let
     fun from c = {c = c}
-    fun to f {c} = f c
+    fun to ? {c} = ? c
   in
     FunctionalRecordUpdate.makeUpdate1 (from, from, to) r
   end
 fun updateTC1 r =
   let
     fun from b = {b = b}
-    fun to f {b} = f b
+    fun to ? {b} = ? b
   in
     FunctionalRecordUpdate.makeUpdate1 (from, from, to) r
   end
 fun updateTC2 r =
   let
     fun from a = {a = a}
-    fun to f {a} = f a
+    fun to ? {a} = ? a
   in
     FunctionalRecordUpdate.makeUpdate1 (from, from, to) r
   end
