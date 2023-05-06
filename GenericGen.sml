@@ -10,12 +10,6 @@ functor ConvertFn(Value: CONVERT_VALUE) =
 struct
   open BuildAst
 
-  type constr =
-    { arg: {off: Token.token, ty: Ty.ty} option
-    , id: Token.token
-    , opp: Token.token option
-    }
-
   fun ins ([], {arg = SOME _, ...}) = Value.const quesTok
     | ins ([], _) = Value.unit
     | ins (is, constr: constr) =
@@ -60,54 +54,11 @@ struct
   structure ConvertExp = ConvertFn(ExpValue)
   structure ConvertPat = ConvertFn(PatValue)
 
-  fun mkTyVar var =
-    let val var = Token.toString var
-    in mkToken (String.substring (var, 1, String.size var - 1) ^ "_")
-    end
-
-  fun syntaxSeqToList SyntaxSeq.Empty = []
-    | syntaxSeqToList (SyntaxSeq.One e) = [e]
-    | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) =
-        ArraySlice.foldr (op::) [] elems
-  fun syntaxSeqMap _ SyntaxSeq.Empty = SyntaxSeq.Empty
-    | syntaxSeqMap f (SyntaxSeq.One e) =
-        SyntaxSeq.One (f e)
-    | syntaxSeqMap f (SyntaxSeq.Many {left, elems, delims, right}) =
-        SyntaxSeq.Many
-          { left = left
-          , elems = ArraySlice.full (Array.fromList (List.map f
-              (ArraySlice.foldr (op::) [] elems)))
-          , delims = delims
-          , right = right
-          }
   fun tyVarFnExp [] exp = exp
     | tyVarFnExp [v] exp =
         singleFnExp (Pat.Const (mkTyVar v)) exp
     | tyVarFnExp vars exp =
         singleFnExp (destructTuplePat (List.map (Pat.Const o mkTyVar) vars)) exp
-
-  fun showTy ty =
-    (* TODO: Includes comments which breaks code. Change this to not show comments *)
-    TerminalColorString.toString {colors = false}
-      (PrettierPrintAst.pretty
-         { debug = false
-         , indent = 0
-         , maxWidth = 10000
-         , ribbonFrac = 1000.0
-         , tabWidth = 0
-         }
-         (Ast (ArraySlice.full (Array.fromList
-            [{ topdec = TopExp
-                 { exp =
-                     Typed
-                       { exp = unitExp
-                       , colon = mkReservedToken Token.Colon
-                       , ty = ty
-                       }
-                 , semicolon = mkReservedToken Token.Semicolon
-                 }
-             , semicolon = NONE
-             }]))))
 
   fun subst map ty =
     case ty of
@@ -165,7 +116,7 @@ struct
     , resultLinks: Ty.ty list AtomTable.hash_table
     , vars: Token.token list
     , tyTokToId: int AtomTable.hash_table
-    , tyData: (Token.token * Token.token SyntaxSeq.t * ConvertExp.constr list) IntHashTable.hash_table
+    , tyData: (Token.token * Token.token SyntaxSeq.t * constr list) IntHashTable.hash_table
     , c: int ref
     }
   exception Beta
@@ -243,7 +194,8 @@ struct
             | go (ty as Ty.Con {args, id}) =
                 let
                   val tys = syntaxSeqToList args
-                  val tycon' = Token.toString (MaybeLongToken.getToken id)
+                  val tycon' = Token.toString
+                    (stripToken (MaybeLongToken.getToken id))
                 in
                   if AtomTable.inDomain (#tyTokToId env) (Atom.atom tycon') then
                     ( traverseTy (env, tycon', buildSubstMap env tycon' tys)
@@ -280,11 +232,8 @@ struct
             val labelExps =
               List.map
                 (fn {lab, ty, ...} =>
-                   appExp
-                     [ Const rTok
-                     , Const (mkToken ("\"" ^ Token.toString lab ^ "\""))
-                     , genTy env true ty
-                     ]) elems
+                   appExp [Const rTok, Const (stringTok lab), genTy env true ty])
+                elems
             val exp = parensExp (infixLExp prodTok labelExps)
             val to = singleFnExp (destructRecordPat labels) (infixLExp andTok
               (List.map Const labels))
@@ -592,8 +541,10 @@ struct
               val hiddenPat = destructInfixLPat andTok
                 (List.map
                    (fn tok =>
-                      if List.exists (eqToken tok) startTyToks then identPat tok
-                      else wildPat) patToks)
+                      if List.exists (fn t => Token.same (tok, t)) startTyToks then
+                        identPat tok
+                      else
+                        wildPat) patToks)
             in
               multDec
                 (valDec (Pat.Const concatTys) (tyVarFnExp vars
@@ -610,7 +561,7 @@ struct
       val tys =
         List.map
           (fn {tycon, tyvars, elems, ...} =>
-             (tycon, tyvars, ArraySlice.foldr (op::) [] elems)) elems
+             (stripToken tycon, tyvars, ArraySlice.foldr (op::) [] elems)) elems
       val c = ref 0
       val env = mkEnv ()
       val tyLinks: IntListSet.set IntHashTable.hash_table =

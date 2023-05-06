@@ -4,6 +4,17 @@ struct
   open Ast
   open Ast.Exp
 
+  type constr =
+    { arg: {off: Token.token, ty: Ty.ty} option
+    , id: Token.token
+    , opp: Token.token option
+    }
+
+  fun stripToken tok =
+    case Token.prevToken tok of
+      SOME tok => Option.valOf (Token.nextTokenNotCommentOrWhitespace tok)
+    | NONE => tok
+
   fun mkSource (s: string) : Source.t =
     Source.make
       { fileName = FilePath.fromFields ["new"]
@@ -19,10 +30,10 @@ struct
       (Token.Pretoken.reserved (mkSource (Token.reservedToString r)) r)
 
   fun appendTokens t1 t2 =
-    mkToken (Token.toString t1 ^ Token.toString t2)
+    mkToken (Token.toString (stripToken t1) ^ Token.toString (stripToken t2))
 
   fun stringTok t =
-    mkToken ("\"" ^ Token.toString t ^ "\"")
+    mkToken ("\"" ^ Token.toString (stripToken t) ^ "\"")
 
   val equalTok = mkReservedToken Equal
   val commaTok = mkReservedToken Comma
@@ -118,6 +129,9 @@ struct
 
   fun identPat t =
     Pat.Ident {opp = NONE, id = MaybeLongToken.make t}
+
+  fun conPat con pat =
+    Pat.Con {opp = NONE, id = MaybeLongToken.make con, atpat = pat}
 
   fun valDec pat exp =
     DecVal

@@ -46,10 +46,6 @@ val emptyGen: gen =
   , genDatabind = fn _ => Ast.Exp.DecEmpty
   }
 
-val showGen: gen =
-  { genTypebind = fn _ => raise Fail "show"
-  , genDatabind = fn _ => raise Fail "show"
-  }
 val ordGen: gen =
   { genTypebind = fn _ => raise Fail "ord"
   , genDatabind = fn _ => raise Fail "ord"
@@ -65,7 +61,7 @@ val equalsGen: gen =
 
 fun lookupGen #"g" = GenericGen.gen
   | lookupGen #"u" = FruGen.gen
-  | lookupGen #"s" = showGen
+  | lookupGen #"s" = ShowGen.gen
   | lookupGen #"o" = ordGen
   | lookupGen #"h" = hashGen
   | lookupGen #"e" = equalsGen
@@ -177,7 +173,7 @@ local
               )
           | NONE => dec
         end
-    | Ast.Exp.DecReplicateDatatype {left_datatypee, right_datatypee, ...} => dec
+    | Ast.Exp.DecReplicateDatatype _ => dec
     | Ast.Exp.DecAbstype {abstypee, datbind, withtypee, withh, dec, endd} =>
         Ast.Exp.DecAbstype
           { abstypee = abstypee

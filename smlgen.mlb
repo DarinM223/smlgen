@@ -8,10 +8,11 @@ local
     ./smlfmt/src/prettier-print/sources.mlb
   end
   $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
-  Utils.sml
   BuildAst.sml
+  Utils.sml
   FruGen.sml
   GenericGen.sml
+  ShowGen.sml
 in
   smlgen.sml
 end
