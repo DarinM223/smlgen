@@ -81,6 +81,15 @@ struct
       , right = mkReservedToken CloseCurlyBracket
       }
 
+  fun listExp exps =
+    List
+      { left = mkReservedToken OpenSquareBracket
+      , elems = ArraySlice.full (Array.fromList exps)
+      , delims = ArraySlice.full (Array.fromList
+          (List.map (fn _ => commaTok) (List.tl exps)))
+      , right = mkReservedToken CloseSquareBracket
+      }
+
   fun appExp exps =
     List.foldl (fn (e, acc) => App {left = acc, right = e}) (List.hd exps)
       (List.tl exps)
@@ -185,6 +194,18 @@ struct
              patTokens))
       , delims = ArraySlice.full (Array.fromList (List.tl
           (List.map (fn _ => commaTok) patTokens)))
+      , right = mkReservedToken CloseCurlyBracket
+      }
+
+  fun destructRecordPat' rows =
+    Pat.Record
+      { left = mkReservedToken OpenCurlyBracket
+      , elems = ArraySlice.full (Array.fromList
+          (List.map
+             (fn (lab, pat) =>
+                Pat.LabEqPat {lab = lab, eq = equalTok, pat = pat}) rows))
+      , delims = ArraySlice.full (Array.fromList (List.tl
+          (List.map (fn _ => commaTok) rows)))
       , right = mkReservedToken CloseCurlyBracket
       }
 
