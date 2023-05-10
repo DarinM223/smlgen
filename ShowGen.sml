@@ -40,8 +40,7 @@ struct
 
   fun tyExp (vars as ref (h :: t)) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), Const h])
-    | tyExp _ (Ty.Var v) =
-        raise Fail ("Empty vars list at var: " ^ Token.toString v)
+    | tyExp _ (Ty.Var _) = raise Fail "No vars for var"
     | tyExp vars (Ty.Record {elems, ...}) =
         let
           fun enclose exp =
@@ -70,14 +69,21 @@ struct
         in
           infixLExp concatTok (enclose exp)
         end
-    | tyExp (vars as ref (h :: t)) (Ty.Con {id, ...}) =
-        ( vars := t
-        ; appExp [Const (mkShow (MaybeLongToken.getToken id)), Const h]
-        )
-    | tyExp _ (Ty.Con {id, ...}) =
-        raise Fail
-          ("Empty vars list at con: "
-           ^ Token.toString (MaybeLongToken.getToken id))
+    | tyExp (vars as ref (h :: t)) (Ty.Con {id, args, ...}) =
+        let
+          val con = Const (mkShow (MaybeLongToken.getToken id))
+          fun tyExp' ty =
+            let val env = Env {c = ref 0, vars = ref []}
+            in singleFnExp (tyPat env ty) (tyExp (envVars env) ty)
+            end
+          val constrExp =
+            case syntaxSeqToList args of
+              [] => con
+            | args => appExp [con, tupleExp (List.map tyExp' args)]
+        in
+          (vars := t; appExp [constrExp, Const h])
+        end
+    | tyExp _ (Ty.Con _) = raise Fail "No vars for con"
     | tyExp _ (ty as Ty.Arrow _) =
         Const (stringTok (mkToken (showTy ty)))
     | tyExp vars (Ty.Parens {ty, ...}) = tyExp vars ty
