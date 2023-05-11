@@ -17,6 +17,8 @@ struct
     mkToken ("show" ^ capitalize (Token.toString t))
 
   val concatTok = mkToken "^"
+  val openSquare = stringTok (mkReservedToken OpenSquareBracket)
+  val closeSquare = stringTok (mkReservedToken CloseSquareBracket)
   val openParen = stringTok (mkReservedToken OpenParen)
   val closeParen = stringTok (mkReservedToken CloseParen)
   val openCurly = stringTok (mkReservedToken OpenCurlyBracket)
@@ -38,7 +40,39 @@ struct
     | tyPat _ (Ty.Arrow _) = wildPat
     | tyPat env (Ty.Parens {ty, ...}) = tyPat env ty
 
-  fun tyExp (vars as ref (h :: t)) (Ty.Var v) =
+  fun tyCon (vars as ref (h :: t)) "string" [] =
+        (vars := t; Const h)
+    | tyCon (vars as ref (h :: t)) "int" [] =
+        (vars := t; appExp [Const (mkToken "Int.toString"), Const h])
+    | tyCon (vars as ref (h :: t)) "list" [a] =
+        ( vars := t
+        ; infixLExp concatTok
+            [ Const openSquare
+            , appExp
+                [ Const concatWithTok
+                , Const (stringTok commaTok)
+                , parensExp (appExp
+                    [Const (mkToken "List.map"), parensExp (tyExp' a), Const h])
+                ]
+            , Const closeSquare
+            ]
+        )
+    | tyCon (vars as ref (h :: t)) (s: string) (args: Ty.ty list) =
+        let
+          val con = Const (mkToken ("show" ^ capitalize s))
+          val constrExp =
+            case args of
+              [] => con
+            | args => appExp [con, tupleExp (List.map tyExp' args)]
+        in
+          (vars := t; appExp [constrExp, Const h])
+        end
+    | tyCon _ _ _ = raise Fail "No vars in con"
+  and tyExp' ty =
+    let val env = Env {c = ref 0, vars = ref []}
+    in singleFnExp (tyPat env ty) (tyExp (envVars env) ty)
+    end
+  and tyExp (vars as ref (h :: t)) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), Const h])
     | tyExp _ (Ty.Var _) = raise Fail "No vars for var"
     | tyExp vars (Ty.Record {elems, ...}) =
@@ -69,21 +103,10 @@ struct
         in
           infixLExp concatTok (enclose exp)
         end
-    | tyExp (vars as ref (h :: t)) (Ty.Con {id, args, ...}) =
-        let
-          val con = Const (mkShow (MaybeLongToken.getToken id))
-          fun tyExp' ty =
-            let val env = Env {c = ref 0, vars = ref []}
-            in singleFnExp (tyPat env ty) (tyExp (envVars env) ty)
-            end
-          val constrExp =
-            case syntaxSeqToList args of
-              [] => con
-            | args => appExp [con, tupleExp (List.map tyExp' args)]
-        in
-          (vars := t; appExp [constrExp, Const h])
+    | tyExp vars (Ty.Con {id, args, ...}) =
+        let val id = Token.toString (MaybeLongToken.getToken id)
+        in tyCon vars id (syntaxSeqToList args)
         end
-    | tyExp _ (Ty.Con _) = raise Fail "No vars for con"
     | tyExp _ (ty as Ty.Arrow _) =
         Const (stringTok (mkToken (showTy ty)))
     | tyExp vars (Ty.Parens {ty, ...}) = tyExp vars ty
@@ -105,7 +128,6 @@ struct
 
   fun genTypebind ({elems, ...}: typbind) =
     let
-      val env = Env {c = ref 0, vars = ref []}
       val decs =
         List.map
           (fn {ty, tycon, tyvars, ...} =>
@@ -114,8 +136,7 @@ struct
                  (List.map (Pat.Const o mkTyVar) (syntaxSeqToList tyvars))
              in
                valDec (Pat.Const (mkShow tycon))
-                 (singleFnExp varsPat (singleFnExp (tyPat env ty)
-                    (tyExp (envVars env) ty)))
+                 (singleFnExp varsPat (tyExp' ty))
              end) (ArraySlice.foldr (op::) [] elems)
     in
       multDec decs
