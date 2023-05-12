@@ -2,6 +2,9 @@ structure MutRecTy =
 struct
   open BuildAst Utils
 
+  structure SCC =
+    GraphSCCFn (struct type ord_key = int val compare = Int.compare end)
+
   exception Beta
   datatype env =
     Env of
@@ -12,6 +15,7 @@ struct
       , tyData: (Token.token * Token.token SyntaxSeq.t * constr list) IntHashTable.hash_table
       , c: int ref
       }
+  fun O m (Env env) = m env
 
   fun subst map ty =
     case ty of
@@ -189,5 +193,104 @@ struct
         in
           List.app (fn {arg = SOME {ty, ...}, ...} => go ty | _ => ()) constrs
         end
+    end
+
+  fun generatedFixNameForTy (Env {resultTable, ...}, ty) =
+    AtomTable.find resultTable (Atom.atom (showTy ty))
+
+  fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind) =
+    let
+      val elems = ArraySlice.foldr (op::) [] elems
+      val tys =
+        List.map
+          (fn {tycon, tyvars, elems, ...} =>
+             (stripToken tycon, tyvars, ArraySlice.foldr (op::) [] elems)) elems
+      val c = ref 0
+      val env as Env {tyData, tyTokToId, ...} = mkEnv ()
+      val tyLinks: IntListSet.set IntHashTable.hash_table =
+        IntHashTable.mkTable (100, Beta)
+      fun addLink i j =
+        let val data = IntHashTable.lookup tyLinks i
+        in IntHashTable.insert tyLinks (i, IntListSet.add (data, j))
+        end
+      fun buildLinks _ (Ty.Var _) = ()
+        | buildLinks i (Ty.Record {elems, ...}) =
+            ArraySlice.app (buildLinks i o #ty) elems
+        | buildLinks i (Ty.Tuple {elems, ...}) =
+            ArraySlice.app (buildLinks i) elems
+        | buildLinks i (Ty.Con {id, args, ...}) =
+            let
+              val tok = Atom.atom (Token.toString (MaybeLongToken.getToken id))
+            in
+              case AtomTable.find tyTokToId tok of
+                SOME j => addLink i j
+              | NONE => ();
+              case args of
+                SyntaxSeq.Empty => ()
+              | SyntaxSeq.One ty => buildLinks i ty
+              | SyntaxSeq.Many {elems, ...} =>
+                  ArraySlice.app (buildLinks i) elems
+            end
+        | buildLinks i (Ty.Arrow {from, to, ...}) =
+            (buildLinks i from; buildLinks i to)
+        | buildLinks i (Ty.Parens {ty, ...}) = buildLinks i ty
+      val roots =
+        List.map
+          (fn (ty, vars, constrs) =>
+             let
+               val i = !c before c := !c + 1
+               val () = AtomTable.insert tyTokToId
+                 (Atom.atom (Token.toString ty), i)
+               val () = IntHashTable.insert tyLinks (i, IntListSet.empty)
+               val () = IntHashTable.insert tyData (i, (ty, vars, constrs))
+             in
+               i
+             end) tys
+      val () =
+        List.app
+          (fn (i, (_, _, constrs)) =>
+             List.app
+               (fn {arg = SOME {ty, ...}, ...} => buildLinks i ty | _ => ())
+               constrs) (ListPair.zip (roots, tys))
+      val scc = SCC.topOrder'
+        { roots = roots
+        , follow = IntListSet.toList o IntHashTable.lookup tyLinks
+        }
+      fun handleComponent (SCC.SIMPLE i) =
+            let val (ty, vars, data) = IntHashTable.lookup tyData i
+            in genSimple (env, ty, syntaxSeqToList vars, data)
+            end
+        | handleComponent (SCC.RECURSIVE is) =
+            let
+              val datas = List.map (IntHashTable.lookup tyData) is
+              val tycons = List.map #1 datas
+              val tycons' = List.map Token.toString tycons
+              fun maxList maxLen max (l :: ls) =
+                    let
+                      val len = List.length l
+                    in
+                      if len > maxLen then maxList len l ls
+                      else maxList maxLen max ls
+                    end
+                | maxList _ max [] = max
+              val vars = maxList 0 [] (List.map (syntaxSeqToList o #2) datas)
+              val varExps = List.map Ty.Var vars
+              val env = envWithVars vars env
+              val tys =
+                List.map
+                  (fn tycon =>
+                     subst (buildSubstMap env tycon varExps)
+                       (tyconToTy (env, tycon))) tycons'
+              val () =
+                List.app
+                  (fn tycon =>
+                     let val substMap = buildSubstMap env tycon varExps
+                     in traverseTy (env, tycon, substMap)
+                     end) tycons'
+            in
+              genRecursive (env, tycons, tys, vars, datas)
+            end
+    in
+      multDec (List.map handleComponent (List.rev scc))
     end
 end

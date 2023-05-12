@@ -31,8 +31,6 @@ end
 structure GenericGen =
 struct
   open BuildAst Utils MutRecTy
-  structure SCC =
-    GraphSCCFn (struct type ord_key = int val compare = Int.compare end)
   structure ExpValue: CONVERT_VALUE =
   struct
     type t = exp
@@ -60,7 +58,7 @@ struct
     | tyVarFnExp vars exp =
         singleFnExp (destructTuplePat (List.map (Pat.Const o mkTyVar) vars)) exp
 
-  fun genTy (env as Env {resultTable, ...}) parens ty =
+  fun genTy env parens ty =
     let
       val recordTok = mkToken "record'"
     in
@@ -121,7 +119,7 @@ struct
           let
             val id = MaybeLongToken.getToken id
           in
-            case AtomTable.find resultTable (Atom.atom (showTy ty)) of
+            case generatedFixNameForTy (env, ty) of
               SOME ty => Const ty
             | NONE =>
                 (case args of
@@ -206,49 +204,20 @@ struct
       multDec decs
     end
 
-  fun genSimpleDatabind (env as Env {tyData, ...}, i) =
-    let
-      val (ty, vars, data) = IntHashTable.lookup tyData i
-      val env as Env {vars, ...} = envWithVars (syntaxSeqToList vars) env
-    in
-      valDec (identPat ty) (tyVarFnExp vars (singleLetExp genericDec
-        (genConstrs (env, data))))
-    end
+  fun genSimpleDatabind (env, ty, vars, data) =
+    valDec (identPat ty) (tyVarFnExp vars (singleLetExp genericDec (genConstrs
+      (envWithVars vars env, data))))
 
-  fun genRecursiveDatabind (env as Env {tyData, ...}, is) =
+  fun genRecursiveDatabind (env, tycons, tys, vars, datas) =
     let
-      val datas = List.map (IntHashTable.lookup tyData) is
-      val tys = List.map #1 datas
-      fun maxList maxLen max (l :: ls) =
-            let val len = List.length l
-            in if len > maxLen then maxList len l ls else maxList maxLen max ls
-            end
-        | maxList _ max [] = max
-      val varLists = List.map (syntaxSeqToList o #2) datas
-      val vars = maxList 0 [] varLists
-      val varExps = List.map Ty.Var vars
-      val Env {tyTokToId, resultLinks, resultTable, ...} = envWithVars vars env
-      val startTys =
-        List.map
-          (fn tycon =>
-             let val tycon = Token.toString tycon
-             in subst (buildSubstMap env tycon varExps) (tyconToTy (env, tycon))
-             end) tys
       val yTok = mkToken "Y"
       val yDec = valDec (Pat.Const yTok) (Const (mkToken "Generic.Y"))
-      val () =
-        List.app
-          (fn tycon =>
-             let
-               val tycon = Token.toString tycon
-               val substMap = buildSubstMap env tycon varExps
-             in
-               traverseTy (env, tycon, substMap)
-             end) tys
+      val varExps = List.map Ty.Var vars
+
       val patToks =
         case vars of
-          [] => tys
-        | _ => AtomTable.listItems resultTable
+          [] => tycons
+        | _ => AtomTable.listItems (O #resultTable env)
       val fullPat = destructInfixLPat andTok (List.map identPat patToks)
       fun linksToToks links =
         List.map
@@ -282,13 +251,14 @@ struct
                   (fn (tycon, ty) =>
                      let
                        val tyconA = Atom.atom (Token.toString tycon)
-                       val links = AtomTable.lookup resultLinks
+                       val links = AtomTable.lookup (O #resultLinks env)
                          (Atom.atom (showTy ty))
                        val links = linksToToks links
                        val linkDups = findDuplicates links
                        val () = AtomTable.insert dups (tyconA, linkDups)
-                       val i = AtomTable.lookup tyTokToId tyconA
-                       val (_, _, constrs) = IntHashTable.lookup tyData i
+                       val i = AtomTable.lookup (O #tyTokToId env) tyconA
+                       val (_, _, constrs) =
+                         IntHashTable.lookup (O #tyData env) i
                        val substMap =
                          buildSubstMap env (Token.toString tycon) varExps
                        val constrs = List.map (substConstr substMap) constrs
@@ -297,13 +267,13 @@ struct
                          [destructTuplePat
                             (applyDuplicates (linkDups, Pat.Const, links))]
                          (genConstrs (env, constrs))
-                     end) (ListPair.zip (tys, startTys))
+                     end) (ListPair.zip (tycons, tys))
               val exps =
                 List.map
                   (fn (a, links) =>
                      let
                        val fixTycon = Token.toString
-                         (AtomTable.lookup resultTable a)
+                         (AtomTable.lookup (O #resultTable env) a)
                        val (tycon, _) =
                          Substring.splitr (fn ch => ch <> #"_")
                            (Substring.full fixTycon)
@@ -316,7 +286,7 @@ struct
                        case links of
                          [] => Const tycon
                        | _ => appExp [Const tycon, tupleExp links]
-                     end) (AtomTable.listItemsi resultLinks)
+                     end) (AtomTable.listItemsi (O #resultLinks env))
             in
               singleLetExp (multDec (genericDec :: decs))
                 (infixLExp andTok exps)
@@ -328,7 +298,7 @@ struct
             List.tabulate
               ( case vars of
                   [] => List.length tys
-                | _ => AtomTable.numItems resultTable
+                | _ => AtomTable.numItems (O #resultTable env)
               , fn _ => Const yTok
               )
         in
@@ -341,7 +311,7 @@ struct
         | _ =>
             let
               val concatTys = mkToken (String.concatWith "_"
-                (List.map Token.toString tys))
+                (List.map Token.toString tycons))
               fun unpackingDecs _ [] = []
                 | unpackingDecs i (ty :: tys) =
                     valDec (Pat.Const ty) (singleFnExp (Pat.Const quesTok) (App
@@ -349,14 +319,15 @@ struct
                       , right = parensExp
                           (App {left = Const concatTys, right = Const quesTok})
                       })) :: unpackingDecs (i + 1) tys
-              val startTyToks =
-                List.map (AtomTable.lookup resultTable o Atom.atom o showTy)
-                  startTys
-              val startTyFixes = List.map Const startTyToks
+              val tyToks =
+                List.map
+                  (AtomTable.lookup (O #resultTable env) o Atom.atom o showTy)
+                  tys
+              val startTyFixes = List.map Const tyToks
               val hiddenPat = destructInfixLPat andTok
                 (List.map
                    (fn tok =>
-                      if List.exists (fn t => Token.same (tok, t)) startTyToks then
+                      if List.exists (fn t => Token.same (tok, t)) tyToks then
                         identPat tok
                       else
                         wildPat) patToks)
@@ -364,75 +335,13 @@ struct
               multDec
                 (valDec (Pat.Const concatTys) (tyVarFnExp vars
                    (singleLetExp (multDec [tieDec, yDec, valDec hiddenPat exp])
-                      (tupleExp startTyFixes))) :: unpackingDecs 1 tys)
+                      (tupleExp startTyFixes))) :: unpackingDecs 1 tycons)
             end
     in
       header (appExp [Const (mkToken "fix"), ys, parensExp lam])
     end
 
-  fun genDatabind ({elems, ...}: datbind) =
-    let
-      val elems = ArraySlice.foldr (op::) [] elems
-      val tys =
-        List.map
-          (fn {tycon, tyvars, elems, ...} =>
-             (stripToken tycon, tyvars, ArraySlice.foldr (op::) [] elems)) elems
-      val c = ref 0
-      val env as Env {tyData, tyTokToId, ...} = mkEnv ()
-      val tyLinks: IntListSet.set IntHashTable.hash_table =
-        IntHashTable.mkTable (100, Beta)
-      fun addLink i j =
-        let val data = IntHashTable.lookup tyLinks i
-        in IntHashTable.insert tyLinks (i, IntListSet.add (data, j))
-        end
-      fun buildLinks _ (Ty.Var _) = ()
-        | buildLinks i (Ty.Record {elems, ...}) =
-            ArraySlice.app (buildLinks i o #ty) elems
-        | buildLinks i (Ty.Tuple {elems, ...}) =
-            ArraySlice.app (buildLinks i) elems
-        | buildLinks i (Ty.Con {id, args, ...}) =
-            let
-              val tok = Atom.atom (Token.toString (MaybeLongToken.getToken id))
-            in
-              case AtomTable.find tyTokToId tok of
-                SOME j => addLink i j
-              | NONE => ();
-              case args of
-                SyntaxSeq.Empty => ()
-              | SyntaxSeq.One ty => buildLinks i ty
-              | SyntaxSeq.Many {elems, ...} =>
-                  ArraySlice.app (buildLinks i) elems
-            end
-        | buildLinks i (Ty.Arrow {from, to, ...}) =
-            (buildLinks i from; buildLinks i to)
-        | buildLinks i (Ty.Parens {ty, ...}) = buildLinks i ty
-      val roots =
-        List.map
-          (fn (ty, vars, constrs) =>
-             let
-               val i = !c before c := !c + 1
-               val () = AtomTable.insert tyTokToId
-                 (Atom.atom (Token.toString ty), i)
-               val () = IntHashTable.insert tyLinks (i, IntListSet.empty)
-               val () = IntHashTable.insert tyData (i, (ty, vars, constrs))
-             in
-               i
-             end) tys
-      val () =
-        List.app
-          (fn (i, (_, _, constrs)) =>
-             List.app
-               (fn {arg = SOME {ty, ...}, ...} => buildLinks i ty | _ => ())
-               constrs) (ListPair.zip (roots, tys))
-      val scc = SCC.topOrder'
-        { roots = roots
-        , follow = IntListSet.toList o IntHashTable.lookup tyLinks
-        }
-      fun handleComponent (SCC.SIMPLE i) = genSimpleDatabind (env, i)
-        | handleComponent (SCC.RECURSIVE is) = genRecursiveDatabind (env, is)
-    in
-      multDec (List.map handleComponent (List.rev scc))
-    end
+  val genDatabind = genDatabindHelper (genSimpleDatabind, genRecursiveDatabind)
 
   val gen = {genTypebind = genTypebind, genDatabind = genDatabind}
 end
