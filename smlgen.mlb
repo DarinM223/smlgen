@@ -10,6 +10,7 @@ local
   $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
   BuildAst.sml
   Utils.sml
+  MutRecTy.sml
   FruGen.sml
   GenericGen.sml
   ShowGen.sml
