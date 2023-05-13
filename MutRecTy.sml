@@ -1,4 +1,4 @@
-structure MutRecTy =
+structure MutRecTy: MUT_REC_TY =
 struct
   open BuildAst Utils
 
@@ -301,7 +301,7 @@ struct
                      in traverseTy (env, tycon, substMap)
                      end) tycons'
             in
-              genRecursive (env, tycons, tys, vars, datas)
+              genRecursive (env, tycons, tys, vars)
             end
     in
       multDec (List.map handleComponent (List.rev scc))

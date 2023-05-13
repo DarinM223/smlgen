@@ -208,7 +208,7 @@ struct
     valDec (identPat ty) (tyVarFnExp vars (singleLetExp genericDec (genConstrs
       (envWithVars vars env, data))))
 
-  fun genRecursiveDatabind (env, tycons, tys, vars, datas) =
+  fun genRecursiveDatabind (env, tycons, tys, vars) =
     let
       val yTok = mkToken "Y"
       val yDec = valDec (Pat.Const yTok) (Const (mkToken "Generic.Y"))
@@ -231,14 +231,15 @@ struct
               val env = envWithVars vars env
               val exps =
                 List.map
-                  (fn (tycon, _, constrs) =>
+                  (fn tycon =>
                      let
-                       val substMap =
-                         buildSubstMap env (Token.toString tycon) varExps
-                       val constrs = List.map (substConstr substMap) constrs
+                       val tycon = Token.toString tycon
+                       val substMap = buildSubstMap env tycon varExps
+                       val constrs = List.map (substConstr substMap)
+                         (tyconConstrs env (Atom.atom tycon))
                      in
                        genConstrs (env, constrs)
-                     end) datas
+                     end) tycons
             in
               singleLetExp genericDec (infixLExp andTok exps)
             end
