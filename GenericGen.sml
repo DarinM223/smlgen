@@ -119,7 +119,7 @@ struct
           let
             val id = MaybeLongToken.getToken id
           in
-            case generatedFixNameForTy (env, ty) of
+            case generatedFixNameForTy env ty of
               SOME ty => Const ty
             | NONE =>
                 (case args of
@@ -217,7 +217,7 @@ struct
       val patToks =
         case vars of
           [] => tycons
-        | _ => AtomTable.listItems (O #resultTable env)
+        | _ => List.map #1 (generatedFixesAndArgs env)
       val fullPat = destructInfixLPat andTok (List.map identPat patToks)
       fun linksToToks links =
         List.map
@@ -245,23 +245,19 @@ struct
         | _ =>
             let
               val dups: IntRedBlackSet.set AtomTable.hash_table =
-                AtomTable.mkTable (100, Beta)
+                AtomTable.mkTable (100, LibBase.NotFound)
               val decs =
                 List.map
                   (fn (tycon, ty) =>
                      let
                        val tyconA = Atom.atom (Token.toString tycon)
-                       val links = AtomTable.lookup (O #resultLinks env)
-                         (Atom.atom (showTy ty))
-                       val links = linksToToks links
+                       val links = linksToToks (generatedArgsForTy env ty)
                        val linkDups = findDuplicates links
                        val () = AtomTable.insert dups (tyconA, linkDups)
-                       val i = AtomTable.lookup (O #tyTokToId env) tyconA
-                       val (_, _, constrs) =
-                         IntHashTable.lookup (O #tyData env) i
                        val substMap =
                          buildSubstMap env (Token.toString tycon) varExps
-                       val constrs = List.map (substConstr substMap) constrs
+                       val constrs = List.map (substConstr substMap)
+                         (tyconConstrs env tyconA)
                      in
                        singleFunDec tycon
                          [destructTuplePat
@@ -270,13 +266,10 @@ struct
                      end) (ListPair.zip (tycons, tys))
               val exps =
                 List.map
-                  (fn (a, links) =>
+                  (fn (tycon, links) =>
                      let
-                       val fixTycon = Token.toString
-                         (AtomTable.lookup (O #resultTable env) a)
-                       val (tycon, _) =
-                         Substring.splitr (fn ch => ch <> #"_")
-                           (Substring.full fixTycon)
+                       val (tycon, _) = Substring.splitr (fn ch => ch <> #"_")
+                         (Substring.full (Token.toString tycon))
                        val tycon = Substring.string (Substring.trimr 1 tycon)
                        val linkDups = AtomTable.lookup dups (Atom.atom tycon)
                        val tycon = mkToken tycon
@@ -286,7 +279,7 @@ struct
                        case links of
                          [] => Const tycon
                        | _ => appExp [Const tycon, tupleExp links]
-                     end) (AtomTable.listItemsi (O #resultLinks env))
+                     end) (generatedFixesAndArgs env)
             in
               singleLetExp (multDec (genericDec :: decs))
                 (infixLExp andTok exps)
@@ -294,13 +287,7 @@ struct
       val lam = singleFnExp fullPat exp
       val ys =
         let
-          val ys =
-            List.tabulate
-              ( case vars of
-                  [] => List.length tys
-                | _ => AtomTable.numItems (O #resultTable env)
-              , fn _ => Const yTok
-              )
+          val ys = List.tabulate (List.length patToks, fn _ => Const yTok)
         in
           (if List.length ys = 1 then fn e => e else parensExp)
             (infixLExp prodTok ys)
@@ -320,10 +307,8 @@ struct
                           (App {left = Const concatTys, right = Const quesTok})
                       })) :: unpackingDecs (i + 1) tys
               val tyToks =
-                List.map
-                  (AtomTable.lookup (O #resultTable env) o Atom.atom o showTy)
-                  tys
-              val startTyFixes = List.map Const tyToks
+                List.map (Option.valOf o generatedFixNameForTy env) tys
+              val tyFixes = List.map Const tyToks
               val hiddenPat = destructInfixLPat andTok
                 (List.map
                    (fn tok =>
@@ -335,7 +320,7 @@ struct
               multDec
                 (valDec (Pat.Const concatTys) (tyVarFnExp vars
                    (singleLetExp (multDec [tieDec, yDec, valDec hiddenPat exp])
-                      (tupleExp startTyFixes))) :: unpackingDecs 1 tycons)
+                      (tupleExp tyFixes))) :: unpackingDecs 1 tycons)
             end
     in
       header (appExp [Const (mkToken "fix"), ys, parensExp lam])

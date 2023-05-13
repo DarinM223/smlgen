@@ -5,7 +5,6 @@ struct
   structure SCC =
     GraphSCCFn (struct type ord_key = int val compare = Int.compare end)
 
-  exception Beta
   datatype env =
     Env of
       { resultTable: Token.token AtomTable.hash_table
@@ -15,7 +14,6 @@ struct
       , tyData: (Token.token * Token.token SyntaxSeq.t * constr list) IntHashTable.hash_table
       , c: int ref
       }
-  fun O m (Env env) = m env
 
   fun subst map ty =
     case ty of
@@ -96,11 +94,11 @@ struct
 
   fun mkEnv () =
     Env
-      { resultTable = AtomTable.mkTable (100, Beta)
-      , resultLinks = AtomTable.mkTable (100, Beta)
+      { resultTable = AtomTable.mkTable (100, LibBase.NotFound)
+      , resultLinks = AtomTable.mkTable (100, LibBase.NotFound)
       , vars = []
-      , tyTokToId = AtomTable.mkTable (100, Beta)
-      , tyData = IntHashTable.mkTable (100, Beta)
+      , tyTokToId = AtomTable.mkTable (100, LibBase.NotFound)
+      , tyData = IntHashTable.mkTable (100, LibBase.NotFound)
       , c = ref 0
       }
 
@@ -119,7 +117,7 @@ struct
     )
 
   fun addResultLink (Env {resultLinks, ...}) k v =
-    let val s = AtomTable.lookup resultLinks k handle Beta => []
+    let val s = AtomTable.lookup resultLinks k handle LibBase.NotFound => []
     in AtomTable.insert resultLinks (k, v :: s)
     end
 
@@ -195,8 +193,23 @@ struct
         end
     end
 
-  fun generatedFixNameForTy (Env {resultTable, ...}, ty) =
+  fun generatedFixNameForTy (Env {resultTable, ...}) ty =
     AtomTable.find resultTable (Atom.atom (showTy ty))
+
+  fun generatedArgsForTy (Env {resultLinks, ...}) ty =
+    AtomTable.lookup resultLinks (Atom.atom (showTy ty))
+
+  fun generatedFixesAndArgs (Env {resultTable, resultLinks, ...}) =
+    List.map (fn (a, links) => (AtomTable.lookup resultTable a, links))
+      (AtomTable.listItemsi resultLinks)
+
+  fun tyconConstrs (Env {tyTokToId, tyData, ...}) tyconAtom =
+    let
+      val i = AtomTable.lookup tyTokToId tyconAtom
+      val (_, _, constrs) = IntHashTable.lookup tyData i
+    in
+      constrs
+    end
 
   fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind) =
     let
@@ -208,7 +221,7 @@ struct
       val c = ref 0
       val env as Env {tyData, tyTokToId, ...} = mkEnv ()
       val tyLinks: IntListSet.set IntHashTable.hash_table =
-        IntHashTable.mkTable (100, Beta)
+        IntHashTable.mkTable (100, LibBase.NotFound)
       fun addLink i j =
         let val data = IntHashTable.lookup tyLinks i
         in IntHashTable.insert tyLinks (i, IntListSet.add (data, j))
