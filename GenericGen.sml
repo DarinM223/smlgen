@@ -204,9 +204,9 @@ struct
       multDec decs
     end
 
-  fun genSimpleDatabind (env, ty, vars, data) =
+  fun genSimpleDatabind (env, ty, vars, constrs) =
     valDec (identPat ty) (tyVarFnExp vars (singleLetExp genericDec (genConstrs
-      (envWithVars vars env, data))))
+      (envWithVars vars env, constrs))))
 
   fun genRecursiveDatabind (env, tycons, tys, vars) =
     let

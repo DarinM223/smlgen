@@ -1,9 +1,9 @@
 structure ShowGen =
 struct
-  open BuildAst Utils
+  open BuildAst Utils MutRecTy
 
-  datatype env = Env of {c: int ref, vars: Token.t list ref}
-  fun fresh (Env {c, vars}) t =
+  datatype env = Env of {c: int ref, vars: Token.t list ref, env: MutRecTy.env}
+  fun fresh (Env {c, vars, ...}) t =
     let
       val i = !c before c := !c + 1
       val tok = appendTokens t (mkToken (Int.toString i))
@@ -40,42 +40,41 @@ struct
     | tyPat _ (Ty.Arrow _) = wildPat
     | tyPat env (Ty.Parens {ty, ...}) = tyPat env ty
 
-  fun tyCon (vars as ref (h :: t)) "string" [] =
-        (vars := t; Const h)
-    | tyCon (vars as ref (h :: t)) "int" [] =
-        (vars := t; appExp [Const (mkToken "Int.toString"), Const h])
-    | tyCon (vars as ref (h :: t)) "list" [a] =
-        ( vars := t
-        ; infixLExp concatTok
-            [ Const openSquare
-            , appExp
-                [ Const concatWithTok
-                , Const (stringTok commaTok)
-                , parensExp (appExp
-                    [Const (mkToken "List.map"), parensExp (tyExp' a), Const h])
-                ]
-            , Const closeSquare
-            ]
-        )
-    | tyCon (vars as ref (h :: t)) (s: string) (args: Ty.ty list) =
+  fun tyCon _ v "string" [] = Const v
+    | tyCon _ v "int" [] =
+        appExp [Const (mkToken "Int.toString"), Const v]
+    | tyCon (Env {env, ...}) v "list" [a] =
+        infixLExp concatTok
+          [ Const openSquare
+          , appExp
+              [ Const concatWithTok
+              , Const (stringTok commaTok)
+              , parensExp (appExp
+                  [ Const (mkToken "List.map")
+                  , parensExp (tyExp' env a)
+                  , Const v
+                  ])
+              ]
+          , Const closeSquare
+          ]
+    | tyCon (Env {env, ...}) v (s: string) (args: Ty.ty list) =
         let
           val con = Const (mkToken ("show" ^ capitalize s))
           val constrExp =
             case args of
               [] => con
-            | args => appExp [con, tupleExp (List.map tyExp' args)]
+            | args => appExp [con, tupleExp (List.map (tyExp' env) args)]
         in
-          (vars := t; appExp [constrExp, Const h])
+          appExp [constrExp, Const v]
         end
-    | tyCon _ _ _ = raise Fail "No vars in con"
-  and tyExp' ty =
-    let val env = Env {c = ref 0, vars = ref []}
-    in singleFnExp (tyPat env ty) (tyExp (envVars env) ty)
+  and tyExp' env ty =
+    let val env = Env {c = ref 0, vars = ref [], env = env}
+    in singleFnExp (tyPat env ty) (tyExp env ty)
     end
-  and tyExp (vars as ref (h :: t)) (Ty.Var v) =
+  and tyExp (Env {vars = vars as ref (h :: t), ...}) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), Const h])
     | tyExp _ (Ty.Var _) = raise Fail "No vars for var"
-    | tyExp vars (Ty.Record {elems, ...}) =
+    | tyExp env (Ty.Record {elems, ...}) =
         let
           fun enclose exp =
             Const openCurly :: exp :: [Const closeCurly]
@@ -85,41 +84,48 @@ struct
               (fn {lab, ty, ...} =>
                  infixLExp concatTok
                    [ Const (stringTok (appendTokens lab equalsTok))
-                   , tyExp vars ty
+                   , tyExp env ty
                    ]) elems
           val exp = appExp
             [Const concatWithTok, Const (stringTok commaTok), listExp fields]
         in
           infixLExp concatTok (enclose exp)
         end
-    | tyExp vars (Ty.Tuple {elems, ...}) =
+    | tyExp env (Ty.Tuple {elems, ...}) =
         let
           fun enclose exp =
             Const openParen :: exp :: [Const closeParen]
           val elems = ArraySlice.foldr (op::) [] elems
-          val fields = List.map (tyExp vars) elems
+          val fields = List.map (tyExp env) elems
           val exp = appExp
             [Const concatWithTok, Const (stringTok commaTok), listExp fields]
         in
           infixLExp concatTok (enclose exp)
         end
-    | tyExp vars (Ty.Con {id, args, ...}) =
-        let val id = Token.toString (MaybeLongToken.getToken id)
-        in tyCon vars id (syntaxSeqToList args)
+    | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
+        let
+          val id = Token.toString (MaybeLongToken.getToken id)
+          fun con v =
+            case generatedFixNameForTy env' ty of
+              SOME ty => appExp [Const ty, Const v]
+            | NONE => tyCon env v id (syntaxSeqToList args)
+        in
+          case !vars of
+            h :: t => (vars := t; con h)
+          | [] => raise Fail "No vars in con"
         end
     | tyExp _ (ty as Ty.Arrow _) =
         Const (stringTok (mkToken (showTy ty)))
-    | tyExp vars (Ty.Parens {ty, ...}) = tyExp vars ty
+    | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
-  fun genConstrs (constrs: constr list) : Exp.exp =
+  fun genConstrs (env, constrs: constr list) : Exp.exp =
     let
-      val env = Env {c = ref 0, vars = ref []}
+      val env = Env {c = ref 0, vars = ref [], env = env}
       val tups =
         List.map
           (fn {arg = SOME {ty, ...}, id, ...} =>
              ( conPat id (tyPat env ty)
-             , infixLExp concatTok
-                 [Const (stringTok id), tyExp (envVars env) ty]
+             , infixLExp concatTok [Const (stringTok id), tyExp env ty]
              )
             | {id, ...} => (Pat.Const id, Const (stringTok id))) constrs
     in
@@ -128,21 +134,37 @@ struct
 
   fun genTypebind ({elems, ...}: typbind) =
     let
+      val env = mkEnv ()
       val decs =
         List.map
           (fn {ty, tycon, tyvars, ...} =>
              let
+               val env = envWithVars (syntaxSeqToList tyvars) env
                val varsPat = destructTuplePat
                  (List.map (Pat.Const o mkTyVar) (syntaxSeqToList tyvars))
              in
-               valDec (Pat.Const (mkShow tycon))
-                 (singleFnExp varsPat (tyExp' ty))
+               valDec (Pat.Const (mkShow tycon)) (singleFnExp varsPat
+                 (tyExp' env ty))
              end) (ArraySlice.foldr (op::) [] elems)
     in
       multDec decs
     end
 
-  fun genDatabind ({elems, ...}: datbind) =
+  fun genSimpleDatabind (env, ty, vars, constrs) =
+    let
+      fun header exp =
+        case vars of
+          [] => exp
+        | _ => singleFnExp (destructTuplePat (List.map Pat.Const vars)) exp
+    in
+      valDec (Pat.Const ty) (header (genConstrs (env, constrs)))
+    end
+
+  fun genRecursiveDatabind (env, tycons, tys, vars) = raise Fail ""
+
+  val genDatabind = genDatabindHelper (genSimpleDatabind, genRecursiveDatabind)
+
+  (* fun genDatabind ({elems, ...}: datbind) =
     let
       val elems = ArraySlice.foldr (op::) [] elems
       val decs =
@@ -161,7 +183,7 @@ struct
              end) elems
     in
       multDec decs
-    end
+    end *)
 
   val gen = {genTypebind = genTypebind, genDatabind = genDatabind}
 end
