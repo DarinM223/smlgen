@@ -213,17 +213,11 @@ struct
       val yTok = mkToken "Y"
       val yDec = valDec (Pat.Const yTok) (Const (mkToken "Generic.Y"))
       val varExps = List.map Ty.Var vars
-
       val patToks =
         case vars of
           [] => tycons
         | _ => List.map #1 (generatedFixesAndArgs env)
       val fullPat = destructInfixLPat andTok (List.map identPat patToks)
-      fun linksToToks links =
-        List.map
-          (fn Ty.Con {id, ...} => MaybeLongToken.getToken id
-            | Ty.Var v => mkTyVar v
-            | _ => raise Fail "Invalid link") links
       val exp =
         case vars of
           [] =>
@@ -252,9 +246,14 @@ struct
                   (fn (tycon, ty) =>
                      let
                        val tyconA = Atom.atom (Token.toString tycon)
-                       val links = linksToToks (generatedArgsForTy env ty)
-                       val linkDups = findDuplicates links
-                       val () = AtomTable.insert dups (tyconA, linkDups)
+                       val args =
+                         List.map
+                           (fn Ty.Con {id, ...} => MaybeLongToken.getToken id
+                             | Ty.Var v => mkTyVar v
+                             | _ => raise Fail "Invalid arg")
+                           (generatedArgsForTy env ty)
+                       val argDups = findDuplicates args
+                       val () = AtomTable.insert dups (tyconA, argDups)
                        val substMap =
                          buildSubstMap env (Token.toString tycon) varExps
                        val constrs = List.map (substConstr substMap)
@@ -262,24 +261,20 @@ struct
                      in
                        singleFunDec tycon
                          [destructTuplePat
-                            (applyDuplicates (linkDups, Pat.Const, links))]
+                            (applyDuplicates (argDups, Pat.Const, args))]
                          (genConstrs (env, constrs))
                      end) (ListPair.zip (tycons, tys))
               val exps =
                 List.map
-                  (fn (tycon, links) =>
+                  (fn (tycon, args) =>
                      let
-                       val (tycon, _) = Substring.splitr (fn ch => ch <> #"_")
-                         (Substring.full (Token.toString tycon))
-                       val tycon = Substring.string (Substring.trimr 1 tycon)
-                       val linkDups = AtomTable.lookup dups (Atom.atom tycon)
+                       val tycon = baseTyName (Token.toString tycon)
+                       val argDups = AtomTable.lookup dups (Atom.atom tycon)
                        val tycon = mkToken tycon
-                       val links = applyDuplicates
-                         (linkDups, genTy env false, links)
                      in
-                       case links of
+                       case applyDuplicates (argDups, genTy env false, args) of
                          [] => Const tycon
-                       | _ => appExp [Const tycon, tupleExp links]
+                       | args => appExp [Const tycon, tupleExp args]
                      end) (generatedFixesAndArgs env)
             in
               singleLetExp (multDec (genericDec :: decs))

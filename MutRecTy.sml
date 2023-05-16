@@ -211,6 +211,10 @@ struct
       constrs
     end
 
+  val baseTyName =
+    Substring.string o Substring.trimr 1 o #1
+    o Substring.splitr (fn ch => ch <> #"_") o Substring.full
+
   fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind) =
     let
       val elems = ArraySlice.foldr (op::) [] elems
