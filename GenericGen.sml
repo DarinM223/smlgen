@@ -295,13 +295,6 @@ struct
             let
               val concatTys = mkToken (String.concatWith "_"
                 (List.map Token.toString tycons))
-              fun unpackingDecs _ [] = []
-                | unpackingDecs i (ty :: tys) =
-                    valDec (Pat.Const ty) (singleFnExp (Pat.Const quesTok) (App
-                      { left = Const (mkToken ("#" ^ Int.toString i))
-                      , right = parensExp
-                          (App {left = Const concatTys, right = Const quesTok})
-                      })) :: unpackingDecs (i + 1) tys
               val tyToks =
                 List.map (Option.valOf o generatedFixNameForTy env) tys
               val tyFixes = List.map Const tyToks
@@ -316,7 +309,7 @@ struct
               multDec
                 (valDec (Pat.Const concatTys) (tyVarFnExp vars
                    (singleLetExp (multDec [tieDec, yDec, valDec hiddenPat exp])
-                      (tupleExp tyFixes))) :: unpackingDecs 1 tycons)
+                      (tupleExp tyFixes))) :: unpackingDecs (concatTys, tycons))
             end
     in
       header (appExp [Const (mkToken "fix"), ys, parensExp lam])

@@ -215,6 +215,18 @@ struct
     Substring.string o Substring.trimr 1 o #1
     o Substring.splitr (fn ch => ch <> #"_") o Substring.full
 
+  fun unpackingDecs (tyname, l) =
+    let
+      fun go _ [] = []
+        | go i (ty :: tys) =
+            valDec (Pat.Const ty) (singleFnExp (Pat.Const quesTok) (appExp
+              [ Const (mkToken ("#" ^ Int.toString i))
+              , parensExp (appExp [Const tyname, Const quesTok])
+              ])) :: go (i + 1) tys
+    in
+      go 1 l
+    end
+
   fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind) =
     let
       val elems = ArraySlice.foldr (op::) [] elems

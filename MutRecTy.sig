@@ -17,7 +17,9 @@ sig
   val generatedFixesAndArgs: env -> (Token.token * Ast.Ty.ty list) list
   val tyconConstrs: env -> Atom.atom -> Utils.constr list
 
-  val baseTyName : string -> string
+  val baseTyName: string -> string
+
+  val unpackingDecs: (Token.token * Token.token list) -> Ast.Exp.dec list
 
   val genDatabindHelper:
     (env * Token.token * Token.token list * Utils.constr list -> Ast.Exp.dec)
