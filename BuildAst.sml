@@ -37,6 +37,8 @@ struct
 
   val equalTok = mkReservedToken Equal
   val commaTok = mkReservedToken Comma
+  val andReservedTok = mkReservedToken And
+  val recTok = mkReservedToken Rec
   val orTok = mkReservedToken Bar
   val andTok = mkToken "&"
   val quesTok = mkToken "?"
@@ -151,6 +153,22 @@ struct
       , delims = ArraySlice.full (Array.fromList [])
       }
 
+  fun valDecs l =
+    DecVal
+      { vall = mkReservedToken Val
+      , tyvars = SyntaxSeq.Empty
+      , elems = ArraySlice.full (Array.fromList
+          (List.map
+             (fn (recc, pat, exp) =>
+                { recc = if recc then SOME recTok else NONE
+                , pat = pat
+                , eq = equalTok
+                , exp = exp
+                }) l))
+      , delims = ArraySlice.full (Array.fromList
+          (List.map (fn _ => andReservedTok) (List.tl l)))
+      }
+
   fun multDec decs =
     DecMultiple
       { elems = (ArraySlice.full o Array.fromList) decs
@@ -179,6 +197,15 @@ struct
                }])
           , delims = ArraySlice.full (Array.fromList [])
           }
+      }
+
+  fun localDec dec body =
+    DecLocal
+      { locall = mkReservedToken Local
+      , left_dec = dec
+      , inn = mkReservedToken In
+      , right_dec = body
+      , endd = mkReservedToken End
       }
 
   val genericDec = DecOpen

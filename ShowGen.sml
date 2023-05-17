@@ -10,8 +10,8 @@ struct
     in
       (vars := tok :: !vars; tok)
     end
-  fun envVars (Env {vars, ...}) =
-    (vars := List.rev (!vars); vars)
+  fun envVars (env as Env {vars, ...}) =
+    (vars := List.rev (!vars); env)
 
   fun mkShow t =
     mkToken ("show" ^ capitalize (Token.toString t))
@@ -69,7 +69,7 @@ struct
         end
   and tyExp' env ty =
     let val env = Env {c = ref 0, vars = ref [], env = env}
-    in singleFnExp (tyPat env ty) (tyExp env ty)
+    in singleFnExp (tyPat env ty) (tyExp (envVars env) ty)
     end
   and tyExp (Env {vars = vars as ref (h :: t), ...}) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), Const h])
@@ -125,7 +125,8 @@ struct
         List.map
           (fn {arg = SOME {ty, ...}, id, ...} =>
              ( conPat id (tyPat env ty)
-             , infixLExp concatTok [Const (stringTok id), tyExp env ty]
+             , infixLExp concatTok
+                 [Const (stringTok id), tyExp (envVars env) ty]
              )
             | {id, ...} => (Pat.Const id, Const (stringTok id))) constrs
     in
@@ -160,30 +161,61 @@ struct
       valDec (Pat.Const ty) (header (genConstrs (env, constrs)))
     end
 
-  fun genRecursiveDatabind (env, tycons, tys, vars) = raise Fail ""
+  fun genRecursiveDatabind (env, tycons, tys, vars) =
+    let
+      val varExps = List.map Ty.Var vars
+      val dups: IntRedBlackSet.set AtomTable.hash_table =
+        AtomTable.mkTable (100, LibBase.NotFound)
+      val generatorDecs =
+        List.map
+          (fn (tycon, ty) =>
+             let
+               val tyconA = Atom.atom (Token.toString tycon)
+               val args =
+                 List.map
+                   (fn Ty.Con {id, ...} => MaybeLongToken.getToken id
+                     | Ty.Var v => mkTyVar v
+                     | _ => raise Fail "Invalid arg")
+                   (generatedArgsForTy env ty)
+               val argDups = findDuplicates args
+               val () = AtomTable.insert dups (tyconA, argDups)
+               val substMap = buildSubstMap env (Token.toString tycon) varExps
+               val constrs = List.map (substConstr substMap)
+                 (tyconConstrs env tyconA)
+             in
+               ( true
+               , Pat.Const (mkShow tycon)
+               , singleFnExp
+                   (destructTuplePat
+                      (applyDuplicates (argDups, Pat.Const, args)))
+                   (genConstrs (env, constrs))
+               )
+             end) (ListPair.zip (tycons, tys))
+      val monomorphDecs =
+        List.map
+          (fn (tycon, args) =>
+             let
+               val tycon' = baseTyName (Token.toString tycon)
+               val argDups = AtomTable.lookup dups (Atom.atom tycon')
+               val args = applyDuplicates (argDups, tyExp' env, args)
+               val () = print (Int.toString (List.length args) ^ "\n")
+             in
+               ( true
+               , Pat.Const (mkShow tycon)
+               , singleFnExp (Pat.Const quesTok) (appExp
+                   [ Const (mkShow (mkToken tycon'))
+                   , tupleExp args
+                   , Const quesTok
+                   ])
+               )
+             end) (generatedFixesAndArgs env)
+      val hiddenDecs = generatorDecs @ monomorphDecs
+      val decs = [valDec wildPat unitExp]
+    in
+      localDec (valDecs hiddenDecs) (multDec decs)
+    end
 
   val genDatabind = genDatabindHelper (genSimpleDatabind, genRecursiveDatabind)
-
-  (* fun genDatabind ({elems, ...}: datbind) =
-    let
-      val elems = ArraySlice.foldr (op::) [] elems
-      val decs =
-        List.map
-          (fn {tycon, tyvars, elems, ...} =>
-             let
-               val elems = ArraySlice.foldr (op::) [] elems
-               val tyvars =
-                 List.map (Pat.Const o mkTyVar) (syntaxSeqToList tyvars)
-               fun header exp =
-                 case tyvars of
-                   [] => exp
-                 | _ => singleFnExp (destructTuplePat tyvars) exp
-             in
-               valDec (Pat.Const (mkShow tycon)) (header (genConstrs elems))
-             end) elems
-    in
-      multDec decs
-    end *)
 
   val gen = {genTypebind = genTypebind, genDatabind = genDatabind}
 end
