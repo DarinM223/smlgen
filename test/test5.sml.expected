@@ -1,0 +1,131 @@
+datatype ('a, 'b) stmt =
+  Assign of 'a * ('a, 'b) expr
+| If of ('a, 'b) expr * ('b, 'a) stmt list * ('a, 'b) stmt list
+and ('a, 'b) expr =
+  Stmt of ('a, 'a) stmt
+| Int of 'b
+| Bop of ('b, 'a) expr * ('a, 'b) expr
+local
+  val rec expr = fn (expr_0, expr_3, stmt_1, b_, a_) =>
+    fn Stmt stmt0 => "Stmt" ^ " " ^ "(" ^ stmt_1 stmt0 ^ ")"
+     | Int b_1 => "Int" ^ " " ^ b_ b_1
+     | Bop (expr2, expr3) =>
+      "Bop" ^ " "
+      ^ "(" ^ String.concatWith ", " [expr_3 expr2, expr_0 expr3] ^ ")"
+  and rec stmt = fn (stmt_6, stmt_7, expr_0, b_, a_) =>
+    fn Assign (a_0, expr1) =>
+      "Assign" ^ " " ^ "(" ^ String.concatWith ", " [a_ a_0, expr_0 expr1] ^ ")"
+     | If (expr2, list3, list4) =>
+      "If" ^ " "
+      ^
+      "("
+      ^
+      String.concatWith ", "
+        [ expr_0 expr2
+        , "["
+          ^ String.concatWith ", " (List.map (fn stmt0 => stmt_7 stmt0) list3)
+          ^ "]"
+        , "["
+          ^ String.concatWith ", " (List.map (fn stmt0 => stmt_6 stmt0) list4)
+          ^ "]"
+        ] ^ ")"
+  val expr_stmt = fn (a_, b_) =>
+    let
+      val rec expr_0 = fn ? =>
+        expr
+          ( fn expr_00 => expr_0 expr_00
+          , fn expr_30 => expr_3 expr_30
+          , fn stmt_10 => stmt_1 stmt_10
+          , fn b_0 => b_ b_0
+          , fn a_0 => a_ a_0
+          ) ?
+      and rec expr_2 = fn ? =>
+        expr
+          ( fn expr_20 => expr_2 expr_20
+          , fn expr_20 => expr_2 expr_20
+          , fn stmt_10 => stmt_1 stmt_10
+          , fn a_0 => a_ a_0
+          , fn a_0 => a_ a_0
+          ) ?
+      and rec expr_5 = fn ? =>
+        expr
+          ( fn expr_50 => expr_5 expr_50
+          , fn expr_50 => expr_5 expr_50
+          , fn stmt_40 => stmt_4 stmt_40
+          , fn b_0 => b_ b_0
+          , fn b_0 => b_ b_0
+          ) ?
+      and rec stmt_6 = fn ? =>
+        stmt
+          ( fn stmt_60 => stmt_6 stmt_60
+          , fn stmt_70 => stmt_7 stmt_70
+          , fn expr_00 => expr_0 expr_00
+          , fn b_0 => b_ b_0
+          , fn a_0 => a_ a_0
+          ) ?
+      and rec expr_3 = fn ? =>
+        expr
+          ( fn expr_30 => expr_3 expr_30
+          , fn expr_00 => expr_0 expr_00
+          , fn stmt_40 => stmt_4 stmt_40
+          , fn a_0 => a_ a_0
+          , fn b_0 => b_ b_0
+          ) ?
+      and rec stmt_4 = fn ? =>
+        stmt
+          ( fn stmt_40 => stmt_4 stmt_40
+          , fn stmt_40 => stmt_4 stmt_40
+          , fn expr_50 => expr_5 expr_50
+          , fn b_0 => b_ b_0
+          , fn b_0 => b_ b_0
+          ) ?
+      and rec stmt_1 = fn ? =>
+        stmt
+          ( fn stmt_10 => stmt_1 stmt_10
+          , fn stmt_10 => stmt_1 stmt_10
+          , fn expr_20 => expr_2 expr_20
+          , fn a_0 => a_ a_0
+          , fn a_0 => a_ a_0
+          ) ?
+      and rec stmt_7 = fn ? =>
+        stmt
+          ( fn stmt_70 => stmt_7 stmt_70
+          , fn stmt_60 => stmt_6 stmt_60
+          , fn expr_30 => expr_3 expr_30
+          , fn a_0 => a_ a_0
+          , fn b_0 => b_ b_0
+          ) ?
+    in
+      (expr_0, stmt_6)
+    end
+in
+  val showExpr = fn ? => #1 (expr_stmt ?)
+  val showStmt = fn ? => #2 (expr_stmt ?)
+end
+
+datatype 'a foo = Foo of 'a * 'a foo * string foo | Nil
+local
+  val rec foo = fn (foo_1, foo_0, a_) =>
+    fn Foo (a_0, foo1, foo2) =>
+      "Foo" ^ " "
+      ^ "(" ^ String.concatWith ", " [a_ a_0, foo_0 foo1, foo_1 foo2] ^ ")"
+     | Nil => "Nil"
+  val foo = fn (a_) =>
+    let
+      val rec foo_0 = fn ? =>
+        foo
+          ( fn foo_10 => foo_1 foo_10
+          , fn foo_00 => foo_0 foo_00
+          , fn a_0 => a_ a_0
+          ) ?
+      and rec foo_1 = fn ? =>
+        foo
+          ( fn foo_10 => foo_1 foo_10
+          , fn foo_10 => foo_1 foo_10
+          , fn string0 => "\"" ^ string0 ^ "\""
+          ) ?
+    in
+      (foo_0)
+    end
+in val showFoo = fn ? => foo ?
+end
