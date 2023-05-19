@@ -217,12 +217,14 @@ struct
 
   fun unpackingDecs (tyname, l) =
     let
+      val one = List.length l = 1
+      val mkNum = fn ? => Const (mkToken ("#" ^ Int.toString ?))
+      fun unpack i ? =
+        if one then ? else appExp [mkNum i, parensExp ?]
       fun go _ [] = []
         | go i (ty :: tys) =
-            valDec (Pat.Const ty) (singleFnExp (Pat.Const quesTok) (appExp
-              [ Const (mkToken ("#" ^ Int.toString i))
-              , parensExp (appExp [Const tyname, Const quesTok])
-              ])) :: go (i + 1) tys
+            valDec (Pat.Const ty) (singleFnExp (Pat.Const quesTok) (unpack i
+              (appExp [Const tyname, Const quesTok]))) :: go (i + 1) tys
     in
       go 1 l
     end
