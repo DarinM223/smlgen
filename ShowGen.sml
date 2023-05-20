@@ -69,8 +69,12 @@ struct
           appExp [constrExp, Const v]
         end
   and tyExp' env ty =
-    let val env = Env {c = ref 0, vars = ref [], env = env}
-    in singleFnExp (tyPat env ty) (tyExp (envVars env) ty)
+    let
+      val env = Env {c = ref 0, vars = ref [], env = env}
+    in
+      case (tyPat env ty, tyExp (envVars env) ty) of
+        (Pat.Const _, App {left, right = Const _, ...}) => left
+      | (pat, exp) => singleFnExp pat exp
     end
   and tyExp (Env {vars = vars as ref (h :: t), ...}) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), Const h])
