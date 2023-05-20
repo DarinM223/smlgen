@@ -25,18 +25,19 @@ struct
   val quotTok = stringTok (mkToken "\\\"")
   val equalsTok = mkToken " = "
   val commaTok = mkToken ", "
+  val tTok = mkToken "t"
   val concatWithTok = mkToken "String.concatWith"
 
-  fun tyPat env (Ty.Var v) =
-        Pat.Const (fresh env (mkTyVar v))
+  fun tyPat env (Ty.Var _) =
+        Pat.Const (fresh env tTok)
     | tyPat env (Ty.Record {elems, ...}) =
         destructRecordPat' (List.map (fn {lab, ty, ...} => (lab, tyPat env ty))
           (ArraySlice.foldr (op::) [] elems))
     | tyPat env (Ty.Tuple {elems, ...}) =
         destructTuplePat (List.map (tyPat env)
           (ArraySlice.foldr (op::) [] elems))
-    | tyPat env (Ty.Con {id, ...}) =
-        Pat.Const (fresh env (MaybeLongToken.getToken id))
+    | tyPat env (Ty.Con _) =
+        Pat.Const (fresh env tTok)
     | tyPat _ (Ty.Arrow _) = wildPat
     | tyPat env (Ty.Parens {ty, ...}) = tyPat env ty
 

@@ -7,23 +7,22 @@ and ('a, 'b) expr =
 | Bop of ('b, 'a) expr * ('a, 'b) expr
 local
   val rec expr = fn (expr_0, expr_3, stmt_1, b_, a_) =>
-    fn Stmt stmt0 => "Stmt" ^ " " ^ "(" ^ stmt_1 stmt0 ^ ")"
-     | Int b_1 => "Int" ^ " " ^ b_ b_1
-     | Bop (expr2, expr3) =>
-      "Bop" ^ " "
-      ^ "(" ^ String.concatWith ", " [expr_3 expr2, expr_0 expr3] ^ ")"
+    fn Stmt t0 => "Stmt" ^ " " ^ "(" ^ stmt_1 t0 ^ ")"
+     | Int t1 => "Int" ^ " " ^ b_ t1
+     | Bop (t2, t3) =>
+      "Bop" ^ " " ^ "(" ^ String.concatWith ", " [expr_3 t2, expr_0 t3] ^ ")"
   and rec stmt = fn (stmt_6, stmt_7, expr_0, b_, a_) =>
-    fn Assign (a_0, expr1) =>
-      "Assign" ^ " " ^ "(" ^ String.concatWith ", " [a_ a_0, expr_0 expr1] ^ ")"
-     | If (expr2, list3, list4) =>
+    fn Assign (t0, t1) =>
+      "Assign" ^ " " ^ "(" ^ String.concatWith ", " [a_ t0, expr_0 t1] ^ ")"
+     | If (t2, t3, t4) =>
       "If" ^ " "
       ^
       "("
       ^
       String.concatWith ", "
-        [ expr_0 expr2
-        , "[" ^ String.concatWith ", " (List.map (stmt_7) list3) ^ "]"
-        , "[" ^ String.concatWith ", " (List.map (stmt_6) list4) ^ "]"
+        [ expr_0 t2
+        , "[" ^ String.concatWith ", " (List.map (stmt_7) t3) ^ "]"
+        , "[" ^ String.concatWith ", " (List.map (stmt_6) t4) ^ "]"
         ] ^ ")"
   val expr_stmt = fn (a_, b_) =>
     let
@@ -46,15 +45,14 @@ end
 datatype 'a foo = Foo of 'a * 'a foo * string foo | Nil
 local
   val rec foo = fn (foo_1, foo_0, a_) =>
-    fn Foo (a_0, foo1, foo2) =>
+    fn Foo (t0, t1, t2) =>
       "Foo" ^ " "
-      ^ "(" ^ String.concatWith ", " [a_ a_0, foo_0 foo1, foo_1 foo2] ^ ")"
+      ^ "(" ^ String.concatWith ", " [a_ t0, foo_0 t1, foo_1 t2] ^ ")"
      | Nil => "Nil"
   val foo = fn (a_) =>
     let
       val rec foo_0 = fn ? => foo (foo_1, foo_0, a_) ?
-      and rec foo_1 = fn ? =>
-        foo (foo_1, foo_1, fn string0 => "\"" ^ string0 ^ "\"") ?
+      and rec foo_1 = fn ? => foo (foo_1, foo_1, fn t0 => "\"" ^ t0 ^ "\"") ?
     in
       (foo_0)
     end
