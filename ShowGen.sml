@@ -13,7 +13,18 @@ struct
   fun envVars (env as Env {vars, ...}) =
     (vars := List.rev (!vars); env)
 
-  val mkShow = fn t => mkToken ("show" ^ capitalize (Token.toString t))
+  fun mkShow t =
+    let
+      val (prefix, t) =
+        (Substring.splitr (fn ch => ch <> #".") o Substring.full
+         o Token.toString) t
+      val prependedShow =
+        case Substring.string t of
+          "t" => "show"
+        | t => "show" ^ capitalize t
+    in
+      mkToken (Substring.string prefix ^ prependedShow)
+    end
 
   val concatTok = mkToken "^"
   val openSquare = stringTok (mkReservedToken OpenSquareBracket)
@@ -163,9 +174,9 @@ struct
   fun genSimpleDatabind (env, ty, vars, constrs) =
     let
       fun header exp =
-        case vars of
+        case List.map (Pat.Const o mkTyVar) vars of
           [] => exp
-        | _ => singleFnExp (destructTuplePat (List.map Pat.Const vars)) exp
+        | vars => singleFnExp (destructTuplePat vars) exp
     in
       valDec (Pat.Const (mkShow ty)) (header (genConstrs (env, constrs)))
     end
