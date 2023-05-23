@@ -62,14 +62,15 @@ struct
       , endd = mkReservedToken End
       }
 
-  fun tupleExp exps =
-    Tuple
-      { left = mkReservedToken OpenParen
-      , elems = ArraySlice.full (Array.fromList exps)
-      , delims = ArraySlice.full (Array.fromList
-          (List.map (fn _ => commaTok) (List.tl exps)))
-      , right = mkReservedToken CloseParen
-      }
+  fun tupleExp [Const tok] = Const tok
+    | tupleExp exps =
+        Tuple
+          { left = mkReservedToken OpenParen
+          , elems = ArraySlice.full (Array.fromList exps)
+          , delims = ArraySlice.full (Array.fromList
+              (List.map (fn _ => commaTok) (List.tl exps)))
+          , right = mkReservedToken CloseParen
+          }
 
   fun recordExp params =
     Record
@@ -116,12 +117,13 @@ struct
       , optbar = NONE
       }
 
-  fun parensExp exp =
-    Parens
-      { left = mkReservedToken OpenParen
-      , exp = exp
-      , right = mkReservedToken CloseParen
-      }
+  fun parensExp (Const tok) = Const tok
+    | parensExp exp =
+        Parens
+          { left = mkReservedToken OpenParen
+          , exp = exp
+          , right = mkReservedToken CloseParen
+          }
 
   fun infixLExp opp exps =
     List.foldl (fn (e, acc) => Infix {left = acc, id = opp, right = e})
@@ -236,14 +238,15 @@ struct
       , right = mkReservedToken CloseCurlyBracket
       }
 
-  fun destructTuplePat pats =
-    Pat.Tuple
-      { left = mkReservedToken OpenParen
-      , elems = ArraySlice.full (Array.fromList pats)
-      , delims = ArraySlice.full (Array.fromList (List.tl
-          (List.map (fn _ => commaTok) pats)))
-      , right = mkReservedToken CloseParen
-      }
+  fun destructTuplePat [Pat.Const tok] = Pat.Const tok
+    | destructTuplePat pats =
+        Pat.Tuple
+          { left = mkReservedToken OpenParen
+          , elems = ArraySlice.full (Array.fromList pats)
+          , delims = ArraySlice.full (Array.fromList (List.tl
+              (List.map (fn _ => commaTok) pats)))
+          , right = mkReservedToken CloseParen
+          }
 
   fun destructInfixLPat opp pats =
     List.foldl (fn (p, acc) => Pat.Infix {left = acc, id = opp, right = p})

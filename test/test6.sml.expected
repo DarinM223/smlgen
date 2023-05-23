@@ -1,7 +1,7 @@
 structure Bar =
 struct
   datatype 'a t = Bar of {a: int, b: 'a}
-  val show = fn (a_) =>
+  val show = fn a_ =>
     fn Bar {a = t0, b = t1} =>
       "Bar" ^ " "
       ^
@@ -10,8 +10,7 @@ struct
   datatype bar = Bar' of int * int t
   val showBar = fn Bar' (t0, t1) =>
     "Bar'" ^ " "
-    ^
-    "(" ^ String.concatWith ", " [Int.toString t0, show (Int.toString) t1] ^ ")"
+    ^ "(" ^ String.concatWith ", " [Int.toString t0, show Int.toString t1] ^ ")"
 end
 
 structure Foo =
@@ -25,10 +24,10 @@ struct
         "("
         ^
         String.concatWith ", "
-          [Bar.show (Int.toString) t0, Bar.show (a_) t1, Bar.showBar t2, t_0 t3]
+          [Bar.show Int.toString t0, Bar.show a_ t1, Bar.showBar t2, t_0 t3]
         ^ ")"
        | Nil => "Nil"
-    val t = fn (a_) => let val rec t_0 = fn ? => t (t_0, a_) ? in (t_0) end
+    val t = fn a_ => let val rec t_0 = fn ? => t (t_0, a_) ? in t_0 end
   in val show = fn ? => t ?
   end
 end
