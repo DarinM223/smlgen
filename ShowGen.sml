@@ -61,7 +61,8 @@ struct
           ]
     | tyCon (Env {env, ...}) v (s: string) (args: Ty.ty list) =
         let
-          val con = Const (mkToken s)
+          val con = Const
+            (if tyconIsGeneratedFix env s then mkToken s else mkShow (mkToken s))
           val constrExp =
             case args of
               [] => con
@@ -166,7 +167,7 @@ struct
           [] => exp
         | _ => singleFnExp (destructTuplePat (List.map Pat.Const vars)) exp
     in
-      valDec (Pat.Const ty) (header (genConstrs (env, constrs)))
+      valDec (Pat.Const (mkShow ty)) (header (genConstrs (env, constrs)))
     end
 
   fun genRecursiveDatabind (env, tycons, tys, vars) =

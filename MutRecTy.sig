@@ -15,6 +15,7 @@ sig
   val generatedFixNameForTy: env -> Ast.Ty.ty -> Token.token option
   val generatedArgsForTy: env -> Ast.Ty.ty -> Ast.Ty.ty list
   val generatedFixesAndArgs: env -> (Token.token * Ast.Ty.ty list) list
+  val tyconIsGeneratedFix: env -> string -> bool
   val tyconConstrs: env -> Atom.atom -> Utils.constr list
 
   val baseTyName: string -> string
