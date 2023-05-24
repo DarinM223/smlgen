@@ -160,12 +160,16 @@ struct
         List.map
           (fn {ty, tycon, tyvars, ...} =>
              let
-               val env = envWithVars (syntaxSeqToList tyvars) env
-               val varsPat = destructTuplePat
-                 (List.map (Pat.Const o mkTyVar) (syntaxSeqToList tyvars))
+               val vars = syntaxSeqToList tyvars
+               val env = envWithVars vars env
+               val header =
+                 case vars of
+                   [] => (fn e => e)
+                 | _ =>
+                     singleFnExp (destructTuplePat
+                       (List.map (Pat.Const o mkTyVar) vars))
              in
-               valDec (Pat.Const (mkShow tycon)) (singleFnExp varsPat
-                 (tyExp' env ty))
+               valDec (Pat.Const (mkShow tycon)) (header (tyExp' env ty))
              end) (ArraySlice.foldr (op::) [] elems)
     in
       multDec decs

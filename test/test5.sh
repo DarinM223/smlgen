@@ -1,4 +1,4 @@
-../smlgen --test test5.sml stmt:s foo:s
+../smlgen --test test5.sml stmt:s foo:s hello:s
 if cmp --silent test5.sml.test test5.sml.expected; then
   echo "test5 succeeded"
 else

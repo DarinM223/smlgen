@@ -7,3 +7,5 @@ and ('a, 'b) expr =
 | Bop of ('b, 'a) expr * ('a, 'b) expr
 
 datatype 'a foo = Foo of 'a * 'a foo * string foo | Nil
+
+type ('a, 'b) hello = {a: 'a * 'a * 'b, b: ('a, 'b) stmt}

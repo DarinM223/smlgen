@@ -58,3 +58,13 @@ local
     end
 in val showFoo = fn ? => foo ?
 end
+
+type ('a, 'b) hello = {a: 'a * 'a * 'b, b: ('a, 'b) stmt}
+val showHello = fn (a_, b_) =>
+  fn {a = (t0, t1, t2), b = t3} =>
+    "{"
+    ^
+    String.concatWith ", "
+      [ "a = " ^ "(" ^ String.concatWith ", " [a_ t0, a_ t1, b_ t2] ^ ")"
+      , "b = " ^ showStmt (a_, b_) t3
+      ] ^ "}"

@@ -30,6 +30,15 @@ struct
     val t = fn a_ => let val rec t_0 = fn ? => t (t_0, a_) ? in t_0 end
   in val show = fn ? => t ?
   end
+  type foo = {a: int * int, b: int t}
+  val showFoo = fn {a = (t0, t1), b = t2} =>
+    "{"
+    ^
+    String.concatWith ", "
+      [ "a = " ^ "(" ^ String.concatWith ", " [Int.toString t0, Int.toString t1]
+        ^ ")"
+      , "b = " ^ show Int.toString t2
+      ] ^ "}"
 end
 
 val _ = print
