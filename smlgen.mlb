@@ -15,6 +15,7 @@ local
   FruGen.sml
   GenericGen.sml
   ShowGen.sml
+  CompareGen.sml
 in
   smlgen.sml
 end

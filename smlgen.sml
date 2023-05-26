@@ -32,25 +32,10 @@ val emptyGen: gen =
   , genDatabind = fn _ => Ast.Exp.DecEmpty
   }
 
-val ordGen: gen =
-  { genTypebind = fn _ => raise Fail "ord"
-  , genDatabind = fn _ => raise Fail "ord"
-  }
-val hashGen: gen =
-  { genTypebind = fn _ => raise Fail "hash"
-  , genDatabind = fn _ => raise Fail "hash"
-  }
-val equalsGen: gen =
-  { genTypebind = fn _ => raise Fail "equals"
-  , genDatabind = fn _ => raise Fail "equals"
-  }
-
 fun lookupGen #"g" = GenericGen.gen
   | lookupGen #"u" = FruGen.gen
   | lookupGen #"s" = ShowGen.gen
-  | lookupGen #"o" = ordGen
-  | lookupGen #"h" = hashGen
-  | lookupGen #"e" = equalsGen
+  | lookupGen #"c" = CompareGen.gen
   | lookupGen ch =
       raise Fail ("unknown lookup character: " ^ Char.toString ch)
 
