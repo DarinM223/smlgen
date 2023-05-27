@@ -12,19 +12,7 @@ struct
     end
   fun envVars (env as Env {vars, ...}) =
     (vars := List.rev (!vars); env)
-
-  fun mkShow t =
-    let
-      val (prefix, t) =
-        (Substring.splitr (fn ch => ch <> #".") o Substring.full
-         o Token.toString) t
-      val prependedShow =
-        case Substring.string t of
-          "t" => "show"
-        | t => "show" ^ capitalize t
-    in
-      mkToken (Substring.string prefix ^ prependedShow)
-    end
+  val mkShow = prependToken "show"
 
   val concatTok = mkToken "^"
   val openSquare = stringTok (mkReservedToken OpenSquareBracket)
@@ -36,21 +24,7 @@ struct
   val quotTok = stringTok (mkToken "\\\"")
   val equalsTok = mkToken " = "
   val commaTok = mkToken ", "
-  val tTok = mkToken "t"
   val concatWithTok = mkToken "String.concatWith"
-
-  fun tyPat env (Ty.Var _) =
-        Pat.Const (fresh env tTok)
-    | tyPat env (Ty.Record {elems, ...}) =
-        destructRecordPat' (List.map (fn {lab, ty, ...} => (lab, tyPat env ty))
-          (ArraySlice.foldr (op::) [] elems))
-    | tyPat env (Ty.Tuple {elems, ...}) =
-        destructTuplePat (List.map (tyPat env)
-          (ArraySlice.foldr (op::) [] elems))
-    | tyPat env (Ty.Con _) =
-        Pat.Const (fresh env tTok)
-    | tyPat _ (Ty.Arrow _) = wildPat
-    | tyPat env (Ty.Parens {ty, ...}) = tyPat env ty
 
   fun tyCon _ v "string" [] =
         infixLExp concatTok [Const quotTok, Const v, Const quotTok]
@@ -85,7 +59,7 @@ struct
     let
       val env = Env {c = ref 0, vars = ref [], env = env}
     in
-      case (tyPat env ty, tyExp (envVars env) ty) of
+      case (destructTyPat (fresh env) ty, tyExp (envVars env) ty) of
         (Pat.Const _, App {left, right = Const _, ...}) => left
       | (pat, exp) => singleFnExp pat exp
     end
@@ -144,7 +118,7 @@ struct
       val tups =
         List.map
           (fn {arg = SOME {ty, ...}, id, ...} =>
-             ( conPat id (tyPat env ty)
+             ( conPat id (destructTyPat (fresh env) ty)
              , infixLExp concatTok
                  (Const (stringTok id) :: tyToStr ty (tyExp (envVars env) ty))
              )

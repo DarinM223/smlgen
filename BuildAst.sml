@@ -48,6 +48,7 @@ struct
   val tieTok = MaybeLongToken.make (mkToken "Tie")
   val openTok = mkReservedToken Open
   val underTok = mkReservedToken Underscore
+  val tTok = mkToken "t"
 
   val unitExp =
     Unit {left = mkReservedToken OpenParen, right = mkReservedToken CloseParen}
@@ -253,4 +254,18 @@ struct
       (List.hd pats) (List.tl pats)
 
   val wildPat = Pat.Wild underTok
+
+  fun destructTyPat fresh (Ty.Var _) =
+        Pat.Const (fresh tTok)
+    | destructTyPat fresh (Ty.Record {elems, ...}) =
+        destructRecordPat'
+          (List.map (fn {lab, ty, ...} => (lab, destructTyPat fresh ty))
+             (ArraySlice.foldr (op::) [] elems))
+    | destructTyPat fresh (Ty.Tuple {elems, ...}) =
+        destructTuplePat (List.map (destructTyPat fresh)
+          (ArraySlice.foldr (op::) [] elems))
+    | destructTyPat fresh (Ty.Con _) =
+        Pat.Const (fresh tTok)
+    | destructTyPat _ (Ty.Arrow _) = wildPat
+    | destructTyPat fresh (Ty.Parens {ty, ...}) = destructTyPat fresh ty
 end

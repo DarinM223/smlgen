@@ -12,6 +12,19 @@ struct
     in mkToken (String.substring (var, 1, String.size var - 1) ^ "_")
     end
 
+  fun prependToken str t =
+    let
+      val (prefix, t) =
+        (Substring.splitr (fn ch => ch <> #".") o Substring.full
+         o Token.toString) t
+      val prepended =
+        case Substring.string t of
+          "t" => str
+        | t => str ^ capitalize t
+    in
+      mkToken (Substring.string prefix ^ prepended)
+    end
+
   fun syntaxSeqToList SyntaxSeq.Empty = []
     | syntaxSeqToList (SyntaxSeq.One e) = [e]
     | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) =

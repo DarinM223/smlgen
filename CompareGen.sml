@@ -16,39 +16,13 @@ struct
     in
       (vars := tok :: !vars; tok)
     end
+  val mkCompare = prependToken "compare"
 
-  fun mkCompare t =
+  fun tyPat (env as Env {vars, ...}) ty =
     let
-      val (prefix, t) =
-        (Substring.splitr (fn ch => ch <> #".") o Substring.full
-         o Token.toString) t
-      val prependedShow =
-        case Substring.string t of
-          "t" => "compare"
-        | t => "compare" ^ capitalize t
-    in
-      mkToken (Substring.string prefix ^ prependedShow)
-    end
-
-  val tTok = mkToken "t"
-
-  fun tyPat env (Ty.Var _) =
-        Pat.Const (fresh env tTok)
-    | tyPat env (Ty.Record {elems, ...}) =
-        destructRecordPat' (List.map (fn {lab, ty, ...} => (lab, tyPat env ty))
-          (ArraySlice.foldr (op::) [] elems))
-    | tyPat env (Ty.Tuple {elems, ...}) =
-        destructTuplePat (List.map (tyPat env)
-          (ArraySlice.foldr (op::) [] elems))
-    | tyPat env (Ty.Con _) =
-        Pat.Const (fresh env tTok)
-    | tyPat _ (Ty.Arrow _) = wildPat
-    | tyPat env (Ty.Parens {ty, ...}) = tyPat env ty
-  and tyPat' (env as Env {vars, ...}) ty =
-    let
-      val pat1 = tyPat env ty
+      val pat1 = destructTyPat (fresh env) ty
       val vars1 = !vars before vars := []
-      val pat2 = tyPat env ty
+      val pat2 = destructTyPat (fresh env) ty
       val vars2 = !vars
       fun interleave (build, x :: xs, y :: ys) =
             interleave (x :: y :: build, xs, ys)
@@ -84,7 +58,7 @@ struct
   and tyExp' (env as Env {c, vars, ...}) ty =
     ( c := 0
     ; vars := []
-    ; case (tyPat' env ty, tyExp env ty) of
+    ; case (tyPat env ty, tyExp env ty) of
         ( pat as Pat.Tuple {elems, ...}
         , exp as App {left, right = Tuple {elems = elems', ...}, ...}
         ) =>
