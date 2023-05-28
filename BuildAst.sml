@@ -40,6 +40,7 @@ struct
   val andReservedTok = mkReservedToken And
   val recTok = mkReservedToken Rec
   val orTok = mkReservedToken Bar
+  val andKeyTok = mkReservedToken And
   val andTok = mkToken "&"
   val quesTok = mkToken "?"
   val prodTok = mkToken "*`"
@@ -202,6 +203,35 @@ struct
           }
       }
 
+  fun multFunDec funs =
+    DecFun
+      { funn = mkReservedToken Fun
+      , tyvars = SyntaxSeq.Empty
+      , fvalbind =
+          { elems = ArraySlice.full (Array.fromList
+              (List.map
+                 (fn cases =>
+                    { elems = ArraySlice.full (Array.fromList
+                        (List.map
+                           (fn (tok, args, exp) =>
+                              { fname_args = PrefixedFun
+                                  { opp = NONE
+                                  , id = tok
+                                  , args = ArraySlice.full (Array.fromList args)
+                                  }
+                              , ty = NONE
+                              , eq = equalTok
+                              , exp = exp
+                              }) cases))
+                    , delims = ArraySlice.full (Array.fromList
+                        (List.map (fn _ => orTok) (List.tl cases)))
+                    , optbar = NONE
+                    }) funs))
+          , delims = ArraySlice.full (Array.fromList
+              (List.map (fn _ => andKeyTok) (List.tl funs)))
+          }
+      }
+
   fun localDec dec body =
     DecLocal
       { locall = mkReservedToken Local
@@ -252,6 +282,17 @@ struct
   fun destructInfixLPat opp pats =
     List.foldl (fn (p, acc) => Pat.Infix {left = acc, id = opp, right = p})
       (List.hd pats) (List.tl pats)
+
+  fun destructListPat pats =
+    Pat.List
+      { left = mkReservedToken OpenSquareBracket
+      , elems = ArraySlice.full (Array.fromList pats)
+      , delims = ArraySlice.full (Array.fromList
+          (case pats of
+             [] => []
+           | _ => (List.tl (List.map (fn _ => commaTok) pats))))
+      , right = mkReservedToken CloseSquareBracket
+      }
 
   val wildPat = Pat.Wild underTok
 

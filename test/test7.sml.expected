@@ -1,38 +1,68 @@
 type person =
   {a: int, b: string, c: int * string * {d: int * int, e: string list}}
-val comparePerson =
-  fn ( {a = t0, b = t1, c = (t2, t3, {d = (t4, t5), e = t6})}
-     , {a = t7, b = t8, c = (t9, t10, {d = (t11, t12), e = t13})}
-     ) =>
-    (case Int.compare (t0, t7) of
-       EQUAL =>
-         (case String.compare (t1, t8) of
-            EQUAL =>
-              (case Int.compare (t2, t9) of
-                 EQUAL =>
-                   (case String.compare (t3, t10) of
-                      EQUAL =>
-                        (case
-                           (case Int.compare (t4, t11) of
-                              EQUAL => Int.compare (t5, t12)
-                            | ? => ?)
-                         of
-                           EQUAL => compareList String.compare (t6, t13)
-                         | ? => ?)
-                    | ? => ?)
-               | ? => ?)
-          | ? => ?)
-     | ? => ?)
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+in
+  val comparePerson =
+    fn ( {a = t0, b = t1, c = (t2, t3, {d = (t4, t5), e = t6})}
+       , {a = t7, b = t8, c = (t9, t10, {d = (t11, t12), e = t13})}
+       ) =>
+      (case Int.compare (t0, t7) of
+         EQUAL =>
+           (case String.compare (t1, t8) of
+              EQUAL =>
+                (case Int.compare (t2, t9) of
+                   EQUAL =>
+                     (case String.compare (t3, t10) of
+                        EQUAL =>
+                          (case
+                             (case Int.compare (t4, t11) of
+                                EQUAL => Int.compare (t5, t12)
+                              | ? => ?)
+                           of
+                             EQUAL => compareList String.compare (t6, t13)
+                           | ? => ?)
+                      | ? => ?)
+                 | ? => ?)
+            | ? => ?)
+       | ? => ?)
+end
 
 type 'a foo = 'a list list * 'a * {a: int list, b: string}
-val compareFoo = fn a_ =>
-  fn ((t0, t1, {a = t2, b = t3}), (t4, t5, {a = t6, b = t7})) =>
-    (case compareList (compareList a_) (t0, t4) of
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+in
+  val compareFoo = fn a_ =>
+    fn ((t0, t1, {a = t2, b = t3}), (t4, t5, {a = t6, b = t7})) =>
+      (case compareList (compareList a_) (t0, t4) of
+         EQUAL =>
+           (case a_ (t1, t5) of
+              EQUAL =>
+                (case compareList Int.compare (t2, t6) of
+                   EQUAL => String.compare (t3, t7)
+                 | ? => ?)
+            | ? => ?)
+       | ? => ?)
+end
+
+type ('a, 'b) bar = 'a * 'b * int
+val compareBar = fn (a_, b_) =>
+  fn ((t0, t1, t2), (t3, t4, t5)) =>
+    (case a_ (t0, t3) of
        EQUAL =>
-         (case a_ (t1, t5) of
-            EQUAL =>
-              (case compareList Int.compare (t2, t6) of
-                 EQUAL => String.compare (t3, t7)
-               | ? => ?)
+         (case b_ (t1, t4) of
+            EQUAL => Int.compare (t2, t5)
           | ? => ?)
      | ? => ?)

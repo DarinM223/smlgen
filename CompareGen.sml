@@ -56,6 +56,52 @@ struct
           , delims = ArraySlice.full (Array.fromList [orTok])
           , optbar = NONE
           })
+  val compareListDec =
+    let
+      val conTok = mkToken "compareList"
+      val cmpTok = mkToken "cmp"
+      val (xTok, xsTok) = (mkToken "x", mkToken "xs")
+      val (yTok, ysTok) = (mkToken "y", mkToken "ys")
+      val consTok = mkToken "::"
+    in
+      multFunDec
+        [[ ( conTok
+           , [ Pat.Const cmpTok
+             , destructTuplePat
+                 [ destructInfixLPat consTok [Pat.Const xTok, Pat.Const xsTok]
+                 , destructInfixLPat consTok [Pat.Const yTok, Pat.Const ysTok]
+                 ]
+             ]
+           , caseChainExp
+               [ appExp [Const cmpTok, tupleExp [Const xTok, Const yTok]]
+               , appExp
+                   [ Const conTok
+                   , Const cmpTok
+                   , tupleExp [Const xsTok, Const ysTok]
+                   ]
+               ]
+           )
+         , ( conTok
+           , [ wildPat
+             , destructTuplePat
+                 [ destructInfixLPat consTok [wildPat, wildPat]
+                 , destructListPat []
+                 ]
+             ]
+           , Const (mkToken "GREATER")
+           )
+         , ( conTok
+           , [ wildPat
+             , destructTuplePat
+                 [ destructListPat []
+                 , destructInfixLPat consTok [wildPat, wildPat]
+                 ]
+             ]
+           , Const (mkToken "LESS")
+           )
+         , (conTok, [wildPat, wildPat], Const (mkToken "EQUAL"))
+         ]]
+    end
 
   fun tyCon _ e "string" [] =
         appExp [Const (mkToken "String.compare"), e]
@@ -123,6 +169,7 @@ struct
   fun genTypebind ({elems, ...}: typbind) =
     let
       val env = mkEnv ()
+      val usesList = ref false
       val decs =
         List.map
           (fn {ty, tycon, tyvars, ...} =>
@@ -131,7 +178,7 @@ struct
                val env = Env
                  { c = ref 0
                  , vars = ref []
-                 , usesList = ref false
+                 , usesList = usesList
                  , env = envWithVars vars env
                  }
                val header =
@@ -144,7 +191,7 @@ struct
                valDec (Pat.Const (mkCompare tycon)) (header (tyExp' env ty))
              end) (ArraySlice.foldr (op::) [] elems)
     in
-      multDec decs
+      if !usesList then localDec compareListDec (multDec decs) else multDec decs
     end
 
   fun genSimpleDatabind (env, ty, vars, constrs) = raise Fail "simple databind"
