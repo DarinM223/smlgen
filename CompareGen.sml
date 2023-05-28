@@ -33,7 +33,29 @@ struct
       (vars := interleave ([], vars1, vars2); destructTuplePat [pat1, pat2])
     end
 
-  fun caseChainExp (_: Exp.exp list) : Exp.exp = raise Fail "caseChainExp"
+  val caseTok = mkReservedToken Token.Case
+  val ofTok = mkReservedToken Of
+  val equalCmpTok = mkToken "EQUAL"
+  fun caseChainExp [] = raise Fail "Empty case chain"
+    | caseChainExp [exp] = exp
+    | caseChainExp (exp :: exps) =
+        parensExp (Case
+          { casee = caseTok
+          , exp = exp
+          , off = ofTok
+          , elems = ArraySlice.full (Array.fromList
+              [ { pat = Pat.Const equalCmpTok
+                , arrow = fatArrowTok
+                , exp = caseChainExp exps
+                }
+              , { pat = Pat.Const quesTok
+                , arrow = fatArrowTok
+                , exp = Const quesTok
+                }
+              ])
+          , delims = ArraySlice.full (Array.fromList [orTok])
+          , optbar = NONE
+          })
 
   fun tyCon _ e "string" [] =
         appExp [Const (mkToken "String.compare"), e]
@@ -55,10 +77,11 @@ struct
         in
           appExp [constrExp, e]
         end
-  and tyExp' (env as Env {c, vars, ...}) ty =
-    ( c := 0
-    ; vars := []
-    ; case (tyPat env ty, tyExp env ty) of
+  and tyExp' (Env {usesList, env, ...}) ty =
+    let
+      val env = Env {c = ref 0, vars = ref [], usesList = usesList, env = env}
+    in
+      case (tyPat env ty, tyExp env ty) of
         ( pat as Pat.Tuple {elems, ...}
         , exp as App {left, right = Tuple {elems = elems', ...}, ...}
         ) =>
@@ -73,7 +96,7 @@ struct
             | _ => singleFnExp pat exp
           end
       | (pat, exp) => singleFnExp pat exp
-    )
+    end
   and tyExp (Env {vars = vars as ref (a :: b :: t), ...}) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), tupleExp [Const a, Const b]])
     | tyExp _ (Ty.Var _) = raise Fail "No vars for var"
@@ -97,7 +120,32 @@ struct
     | tyExp _ (Ty.Arrow _) = raise Fail "Cannot compare functions"
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
-  fun genTypebind ({elems, ...}: typbind) = raise Fail "typebind"
+  fun genTypebind ({elems, ...}: typbind) =
+    let
+      val env = mkEnv ()
+      val decs =
+        List.map
+          (fn {ty, tycon, tyvars, ...} =>
+             let
+               val vars = syntaxSeqToList tyvars
+               val env = Env
+                 { c = ref 0
+                 , vars = ref []
+                 , usesList = ref false
+                 , env = envWithVars vars env
+                 }
+               val header =
+                 case vars of
+                   [] => (fn e => e)
+                 | _ =>
+                     singleFnExp (destructTuplePat
+                       (List.map (Pat.Const o mkTyVar) vars))
+             in
+               valDec (Pat.Const (mkCompare tycon)) (header (tyExp' env ty))
+             end) (ArraySlice.foldr (op::) [] elems)
+    in
+      multDec decs
+    end
 
   fun genSimpleDatabind (env, ty, vars, constrs) = raise Fail "simple databind"
   fun genRecursiveDatabind (env, tycons, tys, vars) =
