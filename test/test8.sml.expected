@@ -1,0 +1,72 @@
+datatype 'a person =
+  Person of {name: 'a, age: int, address: {name: 'a, locations: string list}}
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+in
+  val comparePerson = fn a_ =>
+    fn ( Person {name = t0, age = t1, address = {name = t2, locations = t3}}
+       , Person {name = t4, age = t5, address = {name = t6, locations = t7}}
+       ) =>
+      (case a_ (t0, t4) of
+         EQUAL =>
+           (case Int.compare (t1, t5) of
+              EQUAL =>
+                (case a_ (t2, t6) of
+                   EQUAL => compareList String.compare (t3, t7)
+                 | ? => ?)
+            | ? => ?)
+       | ? => ?)
+end
+
+datatype 'a foo =
+  A of 'a * int * string
+| B of ('a * 'a) * {a: int, b: ('a * string)}
+| C of 'a
+| D
+val compareFoo = fn a_ =>
+  fn (A (t0, t1, t2), A (t3, t4, t5)) =>
+    (case a_ (t0, t3) of
+       EQUAL =>
+         (case Int.compare (t1, t4) of
+            EQUAL => String.compare (t2, t5)
+          | ? => ?)
+     | ? => ?)
+   | (A _, B _) => LESS
+   | (A _, C _) => LESS
+   | (A _, D) => LESS
+   | (B _, A _) => GREATER
+   | ( B ((t6, t7), {a = t8, b = (t9, t10)})
+     , B ((t11, t12), {a = t13, b = (t14, t15)})
+     ) =>
+    (case
+       (case a_ (t6, t11) of
+          EQUAL => a_ (t7, t12)
+        | ? => ?)
+     of
+       EQUAL =>
+         (case Int.compare (t8, t13) of
+            EQUAL =>
+              (case a_ (t9, t14) of
+                 EQUAL => String.compare (t10, t15)
+               | ? => ?)
+          | ? => ?)
+     | ? => ?)
+   | (B _, C _) => LESS
+   | (B _, D) => LESS
+   | (C _, A _) => GREATER
+   | (C _, B _) => GREATER
+   | (C t16, C t17) => a_ (t16, t17)
+   | (C _, D) => LESS
+   | (D, A _) => GREATER
+   | (D, B _) => GREATER
+   | (D, C _) => GREATER
+   | (D, D) => EQUAL
+
+datatype bar = Bar
+val compareBar = fn (Bar, Bar) => EQUAL

@@ -30,12 +30,14 @@ struct
         | interleave (_, _, _ :: _) = raise Fail "Lists are different sizes"
         | interleave (build, [], []) = build
     in
-      (vars := interleave ([], vars1, vars2); destructTuplePat [pat1, pat2])
+      (vars := interleave ([], vars1, vars2); (pat1, pat2))
     end
 
   val caseTok = mkReservedToken Token.Case
   val ofTok = mkReservedToken Of
   val equalCmpTok = mkToken "EQUAL"
+  val greaterCmpTok = mkToken "GREATER"
+  val lessCmpTok = mkToken "LESS"
   fun caseChainExp [] = raise Fail "Empty case chain"
     | caseChainExp [exp] = exp
     | caseChainExp (exp :: exps) =
@@ -88,7 +90,7 @@ struct
                  , destructListPat []
                  ]
              ]
-           , Const (mkToken "GREATER")
+           , Const greaterCmpTok
            )
          , ( conTok
            , [ wildPat
@@ -97,9 +99,9 @@ struct
                  , destructInfixLPat consTok [wildPat, wildPat]
                  ]
              ]
-           , Const (mkToken "LESS")
+           , Const lessCmpTok
            )
-         , (conTok, [wildPat, wildPat], Const (mkToken "EQUAL"))
+         , (conTok, [wildPat, wildPat], Const equalCmpTok)
          ]]
     end
 
@@ -128,20 +130,15 @@ struct
       val env = Env {c = ref 0, vars = ref [], usesList = usesList, env = env}
     in
       case (tyPat env ty, tyExp env ty) of
-        ( pat as Pat.Tuple {elems, ...}
-        , exp as App {left, right = Tuple {elems = elems', ...}, ...}
+        ( (pat1 as Pat.Const a, pat2 as Pat.Const b)
+        , exp as App {left, right = Tuple {elems, ...}, ...}
         ) =>
-          let
-            val elems = ArraySlice.foldr (op::) [] elems
-            val elems' = ArraySlice.foldr (op::) [] elems'
-          in
-            case (elems, elems') of
-              ([Pat.Const a, Pat.Const b], [Const a', Const b']) =>
-                if Token.same (a, a') andalso Token.same (b, b') then left
-                else singleFnExp pat exp
-            | _ => singleFnExp pat exp
-          end
-      | (pat, exp) => singleFnExp pat exp
+          (case ArraySlice.foldr (op::) [] elems of
+             [Const a', Const b'] =>
+               if Token.same (a, a') andalso Token.same (b, b') then left
+               else singleFnExp (destructTuplePat [pat1, pat2]) exp
+           | _ => singleFnExp (destructTuplePat [pat1, pat2]) exp)
+      | ((pat1, pat2), exp) => singleFnExp (destructTuplePat [pat1, pat2]) exp
     end
   and tyExp (Env {vars = vars as ref (a :: b :: t), ...}) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), tupleExp [Const a, Const b]])
@@ -165,6 +162,48 @@ struct
         end
     | tyExp _ (Ty.Arrow _) = raise Fail "Cannot compare functions"
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
+
+  fun combinedConstrs l =
+    let val l = ListPair.zip (l, List.tabulate (List.length l, fn i => i))
+    in List.concat (List.map (fn c => List.map (fn c' => (c, c')) l) l)
+    end
+
+  fun genConstrs (usesList, env, constrs: constr list) : Exp.exp =
+    let
+      val env = Env {c = ref 0, vars = ref [], usesList = usesList, env = env}
+      fun conPat' id (SOME _) = conPat id wildPat
+        | conPat' id NONE = Pat.Const id
+      val tups =
+        List.map
+          (fn ( ({arg = arg1, id = id1, ...}, prec1)
+              , ({arg = arg2, id = id2, ...}, prec2)
+              ) =>
+             (case Int.compare (prec1, prec2) of
+                GREATER =>
+                  ( destructTuplePat [conPat' id1 arg1, conPat' id2 arg2]
+                  , Const greaterCmpTok
+                  )
+              | LESS =>
+                  ( destructTuplePat [conPat' id1 arg1, conPat' id2 arg2]
+                  , Const lessCmpTok
+                  )
+              | EQUAL =>
+                  case arg1 of
+                    SOME {ty, ...} =>
+                      let
+                        val (pat1, pat2) = tyPat env ty
+                      in
+                        ( destructTuplePat [conPat id1 pat1, conPat id2 pat2]
+                        , tyExp env ty
+                        )
+                      end
+                  | NONE =>
+                      ( destructTuplePat [Pat.Const id1, Pat.Const id2]
+                      , Const equalCmpTok
+                      ))) (combinedConstrs constrs)
+    in
+      multFnExp tups
+    end
 
   fun genTypebind ({elems, ...}: typbind) =
     let
@@ -194,7 +233,19 @@ struct
       if !usesList then localDec compareListDec (multDec decs) else multDec decs
     end
 
-  fun genSimpleDatabind (env, ty, vars, constrs) = raise Fail "simple databind"
+  fun genSimpleDatabind (env, ty, vars, constrs) =
+    let
+      val usesList = ref false
+      fun header exp =
+        case List.map (Pat.Const o mkTyVar) vars of
+          [] => exp
+        | vars => singleFnExp (destructTuplePat vars) exp
+      val dec = valDec (Pat.Const (mkCompare ty)) (header
+        (genConstrs (usesList, env, constrs)))
+    in
+      if !usesList then localDec compareListDec dec else dec
+    end
+
   fun genRecursiveDatabind (env, tycons, tys, vars) =
     raise Fail "recursive databind"
 
