@@ -1,0 +1,96 @@
+datatype ('a, 'b) stmt =
+  Assign of 'a * ('a, 'b) expr
+| If of ('a, 'b) expr * ('b, 'a) stmt list * ('a, 'b) stmt list
+and ('a, 'b) expr =
+  Stmt of ('a, 'a) stmt
+| Int of 'b
+| Bop of ('b, 'a) expr * ('a, 'b) expr
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+  val rec expr = fn (expr_0, expr_3, stmt_1, b_, a_) =>
+    fn (Stmt t0, Stmt t1) => stmt_1 (t0, t1)
+     | (Stmt _, Int _) => LESS
+     | (Stmt _, Bop _) => LESS
+     | (Int _, Stmt _) => GREATER
+     | (Int t2, Int t3) => b_ (t2, t3)
+     | (Int _, Bop _) => LESS
+     | (Bop _, Stmt _) => GREATER
+     | (Bop _, Int _) => GREATER
+     | (Bop (t4, t5), Bop (t6, t7)) =>
+      (case expr_3 (t4, t6) of
+         EQUAL => expr_0 (t5, t7)
+       | ? => ?)
+  and rec stmt = fn (stmt_6, stmt_7, expr_0, b_, a_) =>
+    fn (Assign (t0, t1), Assign (t2, t3)) =>
+      (case a_ (t0, t2) of
+         EQUAL => expr_0 (t1, t3)
+       | ? => ?)
+     | (Assign _, If _) => LESS
+     | (If _, Assign _) => GREATER
+     | (If (t4, t5, t6), If (t7, t8, t9)) =>
+      (case expr_0 (t4, t7) of
+         EQUAL =>
+           (case compareList stmt_7 (t5, t8) of
+              EQUAL => compareList stmt_6 (t6, t9)
+            | ? => ?)
+       | ? => ?)
+  val expr_stmt = fn (a_, b_) =>
+    let
+      val rec expr_0 = fn ? => expr (expr_0, expr_3, stmt_1, b_, a_) ?
+      and rec expr_2 = fn ? => expr (expr_2, expr_2, stmt_1, a_, a_) ?
+      and rec expr_5 = fn ? => expr (expr_5, expr_5, stmt_4, b_, b_) ?
+      and rec stmt_6 = fn ? => stmt (stmt_6, stmt_7, expr_0, b_, a_) ?
+      and rec expr_3 = fn ? => expr (expr_3, expr_0, stmt_4, a_, b_) ?
+      and rec stmt_4 = fn ? => stmt (stmt_4, stmt_4, expr_5, b_, b_) ?
+      and rec stmt_1 = fn ? => stmt (stmt_1, stmt_1, expr_2, a_, a_) ?
+      and rec stmt_7 = fn ? => stmt (stmt_7, stmt_6, expr_3, a_, b_) ?
+    in
+      (expr_0, stmt_6)
+    end
+in
+  val compareExpr = fn ? => #1 (expr_stmt ?)
+  val compareStmt = fn ? => #2 (expr_stmt ?)
+end
+
+datatype 'a foo = Foo of 'a * 'a foo * string foo | Nil
+local
+  val rec foo = fn (foo_1, foo_0, a_) =>
+    fn (Foo (t0, t1, t2), Foo (t3, t4, t5)) =>
+      (case a_ (t0, t3) of
+         EQUAL =>
+           (case foo_0 (t1, t4) of
+              EQUAL => foo_1 (t2, t5)
+            | ? => ?)
+       | ? => ?)
+     | (Foo _, Nil) => LESS
+     | (Nil, Foo _) => GREATER
+     | (Nil, Nil) => EQUAL
+  val foo = fn a_ =>
+    let
+      val rec foo_0 = fn ? => foo (foo_1, foo_0, a_) ?
+      and rec foo_1 = fn ? => foo (foo_1, foo_1, String.compare) ?
+    in
+      foo_0
+    end
+in val compareFoo = fn ? => foo ?
+end
+
+type ('a, 'b) hello = {a: 'a * 'a * 'b, b: ('a, 'b) stmt}
+val compareHello = fn (a_, b_) =>
+  fn ({a = (t0, t1, t2), b = t3}, {a = (t4, t5, t6), b = t7}) =>
+    (case
+       (case a_ (t0, t4) of
+          EQUAL =>
+            (case a_ (t1, t5) of
+               EQUAL => b_ (t2, t6)
+             | ? => ?)
+        | ? => ?)
+     of
+       EQUAL => compareStmt (a_, b_) (t3, t7)
+     | ? => ?)

@@ -1,2 +1,4 @@
 test/*.test
+test/test9.sml
+test/test10.sml
 smlgen
