@@ -22,7 +22,6 @@ struct
   val openCurly = stringTok (mkReservedToken OpenCurlyBracket)
   val closeCurly = stringTok (mkReservedToken CloseCurlyBracket)
   val quotTok = stringTok (mkToken "\\\"")
-  val strSpaceTok = mkToken "\" \""
   val equalsTok = mkToken " = "
   val commaTok = mkToken ", "
   val concatWithTok = mkToken "String.concatWith"
@@ -114,11 +113,7 @@ struct
         in
           case (id, args) of
             ("ref", [ty]) =>
-              infixLExp concatTok
-                [ Const (stringTok (mkToken "ref"))
-                , Const strSpaceTok
-                , tyExp env ty
-                ]
+              infixLExp concatTok [Const (mkToken "\"ref \""), tyExp env ty]
           | _ =>
               (case !vars of
                  h :: t => (vars := t; con h)
@@ -133,14 +128,14 @@ struct
       val enclose = fn exp => Const openParen :: exp :: [Const closeParen]
       fun tyToStr (Ty.Con _) = enclose
         | tyToStr _ = fn a => [a]
-      val tyToStr = fn a => fn b => Const strSpaceTok :: tyToStr a b
+      val toStr = fn t => mkToken ("\"" ^ Token.toString (stripToken t) ^ " \"")
       val env = Env {c = ref 0, vars = ref [], env = env}
       val tups =
         List.map
           (fn {arg = SOME {ty, ...}, id, ...} =>
              ( conPat id (destructTyPat (fresh env) ty)
              , infixLExp concatTok
-                 (Const (stringTok id) :: tyToStr ty (tyExp (envVars env) ty))
+                 (Const (toStr id) :: tyToStr ty (tyExp (envVars env) ty))
              )
             | {id, ...} => (Pat.Const id, Const (stringTok id))) constrs
     in

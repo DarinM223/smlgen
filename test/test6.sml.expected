@@ -3,13 +3,12 @@ struct
   datatype 'a t = Bar of {a: int, b: 'a}
   val show = fn a_ =>
     fn Bar {a = t0, b = t1} =>
-      "Bar" ^ " "
-      ^
-      "{" ^ String.concatWith ", " ["a = " ^ Int.toString t0, "b = " ^ a_ t1]
+      "Bar "
+      ^ "{" ^ String.concatWith ", " ["a = " ^ Int.toString t0, "b = " ^ a_ t1]
       ^ "}"
   datatype bar = Bar' of int * int t
   val showBar = fn Bar' (t0, t1) =>
-    "Bar'" ^ " "
+    "Bar' "
     ^ "(" ^ String.concatWith ", " [Int.toString t0, show Int.toString t1] ^ ")"
 end
 
@@ -19,7 +18,7 @@ struct
   local
     val rec t = fn (t_0, a_) =>
       fn Foo (t0, t1, t2, t3) =>
-        "Foo" ^ " "
+        "Foo "
         ^
         "("
         ^

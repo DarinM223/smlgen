@@ -7,15 +7,15 @@ and ('a, 'b) expr =
 | Bop of ('b, 'a) expr * ('a, 'b) expr
 local
   val rec expr = fn (expr_0, expr_3, stmt_1, b_, a_) =>
-    fn Stmt t0 => "Stmt" ^ " " ^ "(" ^ stmt_1 t0 ^ ")"
-     | Int t1 => "Int" ^ " " ^ b_ t1
+    fn Stmt t0 => "Stmt " ^ "(" ^ stmt_1 t0 ^ ")"
+     | Int t1 => "Int " ^ b_ t1
      | Bop (t2, t3) =>
-      "Bop" ^ " " ^ "(" ^ String.concatWith ", " [expr_3 t2, expr_0 t3] ^ ")"
+      "Bop " ^ "(" ^ String.concatWith ", " [expr_3 t2, expr_0 t3] ^ ")"
   and rec stmt = fn (stmt_6, stmt_7, expr_0, b_, a_) =>
     fn Assign (t0, t1) =>
-      "Assign" ^ " " ^ "(" ^ String.concatWith ", " [a_ t0, expr_0 t1] ^ ")"
+      "Assign " ^ "(" ^ String.concatWith ", " [a_ t0, expr_0 t1] ^ ")"
      | If (t2, t3, t4) =>
-      "If" ^ " "
+      "If "
       ^
       "("
       ^
@@ -46,8 +46,7 @@ datatype 'a foo = Foo of 'a * 'a foo * string foo | Nil
 local
   val rec foo = fn (foo_1, foo_0, a_) =>
     fn Foo (t0, t1, t2) =>
-      "Foo" ^ " "
-      ^ "(" ^ String.concatWith ", " [a_ t0, foo_0 t1, foo_1 t2] ^ ")"
+      "Foo " ^ "(" ^ String.concatWith ", " [a_ t0, foo_0 t1, foo_1 t2] ^ ")"
      | Nil => "Nil"
   val foo = fn a_ =>
     let

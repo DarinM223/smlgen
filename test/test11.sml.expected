@@ -59,19 +59,18 @@ val show =
         "("
         ^
         String.concatWith ", "
-          [ "ref" ^ " " ^ "#\"" ^ Char.toString t8 ^ "\""
-          , "ref" ^ " "
-            ^
-            "(" ^ String.concatWith ", " [Bool.toString t9, Int.toString t10]
+          [ "ref " ^ "#\"" ^ Char.toString t8 ^ "\""
+          , "ref "
+            ^ "(" ^ String.concatWith ", " [Bool.toString t9, Int.toString t10]
             ^ ")"
-          , "ref" ^ " "
+          , "ref "
             ^
             "{"
             ^
             String.concatWith ", "
               ["a = " ^ Int.toString t11, "b = " ^ "\"" ^ t12 ^ "\""] ^ "}"
           ] ^ ")"
-      , "i = " ^ "ref" ^ " " ^ "ref" ^ " " ^ "ref" ^ " " ^ Int.toString t13
+      , "i = " ^ "ref " ^ "ref " ^ "ref " ^ Int.toString t13
       ] ^ "}"
 local
   fun compareBool (false, true) = LESS
