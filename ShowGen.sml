@@ -22,6 +22,7 @@ struct
   val openCurly = stringTok (mkReservedToken OpenCurlyBracket)
   val closeCurly = stringTok (mkReservedToken CloseCurlyBracket)
   val quotTok = stringTok (mkToken "\\\"")
+  val strSpaceTok = mkToken "\" \""
   val equalsTok = mkToken " = "
   val commaTok = mkToken ", "
   val concatWithTok = mkToken "String.concatWith"
@@ -30,6 +31,16 @@ struct
         infixLExp concatTok [Const quotTok, Const v, Const quotTok]
     | tyCon _ v "int" [] =
         appExp [Const (mkToken "Int.toString"), Const v]
+    | tyCon _ v "real" [] =
+        appExp [Const (mkToken "Real.toString"), Const v]
+    | tyCon _ v "char" [] =
+        infixLExp concatTok
+          [ Const (mkToken "\"#\\\"\"")
+          , appExp [Const (mkToken "Char.toString"), Const v]
+          , Const (mkToken "\"\\\"\"")
+          ]
+    | tyCon _ v "bool" [] =
+        appExp [Const (mkToken "Bool.toString"), Const v]
     | tyCon (Env {env, ...}) v "list" [a] =
         infixLExp concatTok
           [ Const openSquare
@@ -95,14 +106,23 @@ struct
     | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
         let
           val id = Token.toString (MaybeLongToken.getToken id)
+          val args = syntaxSeqToList args
           fun con v =
             case generatedFixNameForTy env' ty of
               SOME ty => appExp [Const ty, Const v]
-            | NONE => tyCon env v id (syntaxSeqToList args)
+            | NONE => tyCon env v id args
         in
-          case !vars of
-            h :: t => (vars := t; con h)
-          | [] => raise Fail "No vars in con"
+          case (id, args) of
+            ("ref", [ty]) =>
+              infixLExp concatTok
+                [ Const (stringTok (mkToken "ref"))
+                , Const strSpaceTok
+                , tyExp env ty
+                ]
+          | _ =>
+              (case !vars of
+                 h :: t => (vars := t; con h)
+               | [] => raise Fail "No vars in con")
         end
     | tyExp _ (ty as Ty.Arrow _) =
         Const (stringTok (mkToken (showTy ty)))
@@ -113,7 +133,7 @@ struct
       val enclose = fn exp => Const openParen :: exp :: [Const closeParen]
       fun tyToStr (Ty.Con _) = enclose
         | tyToStr _ = fn a => [a]
-      val tyToStr = fn a => fn b => Const (mkToken "\" \"") :: tyToStr a b
+      val tyToStr = fn a => fn b => Const strSpaceTok :: tyToStr a b
       val env = Env {c = ref 0, vars = ref [], env = env}
       val tups =
         List.map

@@ -1,0 +1,157 @@
+type t =
+  { a: int
+  , b: real
+  , c: string
+  , d: char
+  , e: bool
+  , f: int * real
+  , g: string list
+  , h: char ref * (bool * int) ref * {a: int, b: string} ref
+  , i: int ref ref ref
+  }
+val t =
+  let
+    open Generic
+  in
+    record'
+      (R' "a" int *` R' "b" real *` R' "c" string *` R' "d" char *` R' "e" bool
+       *` R' "f" (tuple2 (int, real)) *` R' "g" (list string)
+       *`
+       R' "h"
+         (tuple3
+            ( ref char
+            , ref tuple2 (bool, int)
+            , ref
+                (record' (R' "a" int *` R' "b" string)
+                   (fn {a, b} => a & b, fn a & b => {a = a, b = b}))
+            )) *` R' "i" (ref (ref (ref int))))
+      ( fn {a, b, c, d, e, f, g, h, i} => a & b & c & d & e & f & g & h & i
+      , fn a & b & c & d & e & f & g & h & i =>
+          {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i}
+      )
+  end
+val show =
+  fn { a = t0
+     , b = t1
+     , c = t2
+     , d = t3
+     , e = t4
+     , f = (t5, t6)
+     , g = t7
+     , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
+     , i = ref (ref (ref t13))
+     } =>
+    "{"
+    ^
+    String.concatWith ", "
+      [ "a = " ^ Int.toString t0
+      , "b = " ^ Real.toString t1
+      , "c = " ^ "\"" ^ t2 ^ "\""
+      , "d = " ^ "#\"" ^ Char.toString t3 ^ "\""
+      , "e = " ^ Bool.toString t4
+      , "f = "
+        ^ "(" ^ String.concatWith ", " [Int.toString t5, Real.toString t6] ^ ")"
+      , "g = "
+        ^ "[" ^ String.concatWith ", " (List.map (fn t0 => "\"" ^ t0 ^ "\"") t7)
+        ^ "]"
+      , "h = "
+        ^
+        "("
+        ^
+        String.concatWith ", "
+          [ "ref" ^ " " ^ "#\"" ^ Char.toString t8 ^ "\""
+          , "ref" ^ " "
+            ^
+            "(" ^ String.concatWith ", " [Bool.toString t9, Int.toString t10]
+            ^ ")"
+          , "ref" ^ " "
+            ^
+            "{"
+            ^
+            String.concatWith ", "
+              ["a = " ^ Int.toString t11, "b = " ^ "\"" ^ t12 ^ "\""] ^ "}"
+          ] ^ ")"
+      , "i = " ^ "ref" ^ " " ^ "ref" ^ " " ^ "ref" ^ " " ^ Int.toString t13
+      ] ^ "}"
+local
+  fun compareBool (false, true) = LESS
+    | compareBool (true, false) = GREATER
+    | compareBool (_, _) = EQUAL
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+in
+  val compare =
+    fn ( { a = t0
+         , b = t1
+         , c = t2
+         , d = t3
+         , e = t4
+         , f = (t5, t6)
+         , g = t7
+         , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
+         , i = ref (ref (ref t13))
+         }
+       , { a = t14
+         , b = t15
+         , c = t16
+         , d = t17
+         , e = t18
+         , f = (t19, t20)
+         , g = t21
+         , h = (ref t22, ref (t23, t24), ref {a = t25, b = t26})
+         , i = ref (ref (ref t27))
+         }
+       ) =>
+      (case Int.compare (t0, t14) of
+         EQUAL =>
+           (case Real.compare (t1, t15) of
+              EQUAL =>
+                (case String.compare (t2, t16) of
+                   EQUAL =>
+                     (case Char.compare (t3, t17) of
+                        EQUAL =>
+                          (case compareBool (t4, t18) of
+                             EQUAL =>
+                               (case
+                                  (case Int.compare (t5, t19) of
+                                     EQUAL => Real.compare (t6, t20)
+                                   | ? => ?)
+                                of
+                                  EQUAL =>
+                                    (case compareList String.compare (t7, t21) of
+                                       EQUAL =>
+                                         (case
+                                            (case Char.compare (t8, t22) of
+                                               EQUAL =>
+                                                 (case
+                                                    (case compareBool (t9, t23) of
+                                                       EQUAL =>
+                                                         Int.compare (t10, t24)
+                                                     | ? => ?)
+                                                  of
+                                                    EQUAL =>
+                                                      (case
+                                                         Int.compare (t11, t25)
+                                                       of
+                                                         EQUAL =>
+                                                           String.compare
+                                                             (t12, t26)
+                                                       | ? => ?)
+                                                  | ? => ?)
+                                             | ? => ?)
+                                          of
+                                            EQUAL => Int.compare (t13, t27)
+                                          | ? => ?)
+                                     | ? => ?)
+                                | ? => ?)
+                           | ? => ?)
+                      | ? => ?)
+                 | ? => ?)
+            | ? => ?)
+       | ? => ?)
+end

@@ -63,4 +63,24 @@ struct
         ^ ")" ^ Token.toString (stripToken (MaybeLongToken.getToken id))
     | Ty.Arrow {from, to, ...} => showTy from ^ "->" ^ showTy to
     | Ty.Parens {ty, ...} => "(" ^ showTy ty ^ ")"
+
+  fun destructTyPat fresh (Ty.Var _) =
+        Pat.Const (fresh tTok)
+    | destructTyPat fresh (Ty.Record {elems, ...}) =
+        destructRecordPat'
+          (List.map (fn {lab, ty, ...} => (lab, destructTyPat fresh ty))
+             (ArraySlice.foldr (op::) [] elems))
+    | destructTyPat fresh (Ty.Tuple {elems, ...}) =
+        destructTuplePat (List.map (destructTyPat fresh)
+          (ArraySlice.foldr (op::) [] elems))
+    | destructTyPat fresh (Ty.Con {id, args, ...}) =
+        let
+          val id = MaybeLongToken.getToken id
+        in
+          case (Token.toString id, syntaxSeqToList args) of
+            ("ref", [ty]) => conPat id (parensPat (destructTyPat fresh ty))
+          | _ => Pat.Const (fresh tTok)
+        end
+    | destructTyPat _ (Ty.Arrow _) = wildPat
+    | destructTyPat fresh (Ty.Parens {ty, ...}) = destructTyPat fresh ty
 end
