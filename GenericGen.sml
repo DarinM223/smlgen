@@ -58,7 +58,7 @@ struct
     | tyVarFnExp vars exp =
         singleFnExp (destructTuplePat (List.map (Pat.Const o mkTyVar) vars)) exp
 
-  fun genTy env parens ty =
+  fun genTy env ty =
     let
       val recordTok = mkToken "record'"
     in
@@ -72,8 +72,11 @@ struct
             val labelExps =
               List.map
                 (fn {lab, ty, ...} =>
-                   appExp [Const rTok, Const (stringTok lab), genTy env true ty])
-                elems
+                   appExp
+                     [ Const rTok
+                     , Const (stringTok lab)
+                     , parensExp (genTy env ty)
+                     ]) elems
             val exp = parensExp (infixLExp prodTok labelExps)
             val to = singleFnExp (destructRecordPat labels) (infixLExp andTok
               (List.map Const labels))
@@ -81,8 +84,7 @@ struct
               singleFnExp (destructInfixLPat andTok (List.map Pat.Const labels))
                 (recordExp (List.map (fn l => (l, Const l)) labels))
           in
-            (if parens then parensExp else fn a => a) (appExp
-              [Const recordTok, exp, tupleExp [to, from]])
+            appExp [Const recordTok, exp, tupleExp [to, from]]
           end
       | Ty.Tuple {elems, ...} =>
           let
@@ -92,28 +94,27 @@ struct
             val freshToks = List.tabulate (len, fn i =>
               mkToken ("t" ^ Int.toString i))
           in
-            (if parens then parensExp else fn a => a)
-              (if len <= 4 then
-                 App
-                   { left = Const (mkToken ("tuple" ^ Int.toString len))
-                   , right = tupleExp (List.map (genTy env false) elems)
-                   }
-               else
-                 appExp
-                   [ Const (mkToken "tuple'")
-                   , parensExp (infixLExp prodTok
-                       (List.map (fn t => appExp [Const tTok, genTy env true t])
-                          elems))
-                   , tupleExp
-                       [ singleFnExp
-                           (destructTuplePat (List.map Pat.Const freshToks))
-                           (infixLExp andTok (List.map Const freshToks))
-                       , singleFnExp
-                           (destructInfixLPat andTok
-                              (List.map Pat.Const freshToks))
-                           (tupleExp (List.map Const freshToks))
-                       ]
-                   ])
+            if len <= 4 then
+              App
+                { left = Const (mkToken ("tuple" ^ Int.toString len))
+                , right = tupleExp (List.map (genTy env) elems)
+                }
+            else
+              appExp
+                [ Const (mkToken "tuple'")
+                , parensExp (infixLExp prodTok
+                    (List.map
+                       (fn t => appExp [Const tTok, parensExp (genTy env t)])
+                       elems))
+                , tupleExp
+                    [ singleFnExp
+                        (destructTuplePat (List.map Pat.Const freshToks))
+                        (infixLExp andTok (List.map Const freshToks))
+                    , singleFnExp
+                        (destructInfixLPat andTok (List.map Pat.Const freshToks))
+                        (tupleExp (List.map Const freshToks))
+                    ]
+                ]
           end
       | Ty.Con {id, args} =>
           let
@@ -125,22 +126,21 @@ struct
                 (case args of
                    SyntaxSeq.Empty => Const id
                  | SyntaxSeq.One ty =>
-                     (if parens then parensExp else fn a => a) (App
-                       {left = Const id, right = genTy env true ty})
+                     App {left = Const id, right = parensExp (genTy env ty)}
                  | SyntaxSeq.Many {elems, ...} =>
-                     (if parens then parensExp else fn a => a) (App
+                     App
                        { left = Const id
-                       , right = tupleExp (List.map (genTy env false)
+                       , right = tupleExp (List.map (genTy env)
                            (ArraySlice.foldr (op::) [] elems))
-                       }))
+                       })
           end
       | Ty.Arrow {from, to, ...} =>
           Infix
-            { left = genTy env false from
+            { left = parensExp (genTy env from)
             , id = mkToken "-->"
-            , right = genTy env false to
+            , right = parensExp (genTy env to)
             }
-      | Ty.Parens {ty, ...} => genTy env false ty
+      | Ty.Parens {ty, ...} => genTy env ty
     end
 
   fun genConstrs (env, constrs) =
@@ -150,7 +150,8 @@ struct
       val constrs' =
         List.map
           (fn {arg = SOME {ty, ...}, id, ...} =>
-             appExp [Const c1tok, Const (stringTok id), genTy env true ty]
+             appExp
+               [Const c1tok, Const (stringTok id), parensExp (genTy env ty)]
             | {id, ...} =>
              App {left = Const c0tok, right = Const (stringTok id)}) constrs
       val plusTok = mkToken "+`"
@@ -197,8 +198,7 @@ struct
                val env = envWithVars tyvars (mkEnv ())
              in
                valDec (Pat.Const tycon)
-                 (tyVarFnExp tyvars (singleLetExp genericDec
-                    (genTy env false ty)))
+                 (tyVarFnExp tyvars (singleLetExp genericDec (genTy env ty)))
              end) elems
     in
       multDec decs
@@ -272,7 +272,7 @@ struct
                        val argDups = AtomTable.lookup dups (Atom.atom tycon)
                        val tycon = mkToken tycon
                      in
-                       case applyDuplicates (argDups, genTy env false, args) of
+                       case applyDuplicates (argDups, genTy env, args) of
                          [] => Const tycon
                        | args => appExp [Const tycon, tupleExp args]
                      end) (generatedFixesAndArgs env)

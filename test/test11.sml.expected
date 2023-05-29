@@ -20,7 +20,7 @@ val t =
        R' "h"
          (tuple3
             ( ref char
-            , ref tuple2 (bool, int)
+            , ref (tuple2 (bool, int))
             , ref
                 (record' (R' "a" int *` R' "b" string)
                    (fn {a, b} => a & b, fn a & b => {a = a, b = b}))

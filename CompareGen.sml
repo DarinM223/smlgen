@@ -27,8 +27,8 @@ struct
         , usesBool = usesBool
         , env = env
         }
-      fun to fn__ {c, vars, usesList, usesBool, env} =
-        fn__ c vars usesList usesBool env
+      fun to ? {c, vars, usesList, usesBool, env} =
+        ?c vars usesList usesBool env
     in
       FunctionalRecordUpdate.makeUpdate5 (from, from, to) r
     end
