@@ -119,6 +119,7 @@ struct
       | Ty.Con {id, args} =>
           let
             val id = MaybeLongToken.getToken id
+            val id = if Token.toString id = "ref" then mkToken "refc" else id
           in
             case generatedFixNameForTy env ty of
               SOME ty => Const ty

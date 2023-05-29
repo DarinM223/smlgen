@@ -19,12 +19,12 @@ val t =
        *`
        R' "h"
          (tuple3
-            ( ref char
-            , ref (tuple2 (bool, int))
-            , ref
+            ( refc char
+            , refc (tuple2 (bool, int))
+            , refc
                 (record' (R' "a" int *` R' "b" string)
                    (fn {a, b} => a & b, fn a & b => {a = a, b = b}))
-            )) *` R' "i" (ref (ref (ref int))))
+            )) *` R' "i" (refc (refc (refc int))))
       ( fn {a, b, c, d, e, f, g, h, i} => a & b & c & d & e & f & g & h & i
       , fn a & b & c & d & e & f & g & h & i =>
           {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i}
