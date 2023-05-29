@@ -2,7 +2,7 @@ smlgen
 ======
 
 A code generator for Standard ML that generates boilerplate functions for
-things like converting types to strings, hashing types, etc.
+things like converting types to strings, comparing types, etc.
 
 Building
 --------
@@ -39,11 +39,12 @@ Ast.t:gu
 
 The characters corresponding to each generator are listed below:
 
-| Option |        Generator         |
-|--------|--------------------------|
-|   u    | Functional record update |
-|   g    | Generic                  |
-|   s    | Show                     |
+| Option |        Generator                                |
+|--------|-------------------------------------------------|
+|   u    | Functional record update                        |
+|   g    | [Generic](https://github.com/DarinM223/generic) |
+|   s    | Show                                            |
+|   c    | Compare                                         |
 
 smlgen will prompt you for every type name that matches to generate code for that type. It will then overwrite the file with the formatted and generated code.
 
