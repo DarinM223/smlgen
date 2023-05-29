@@ -66,26 +66,27 @@ struct
   val equalCmpTok = mkToken "EQUAL"
   val greaterCmpTok = mkToken "GREATER"
   val lessCmpTok = mkToken "LESS"
-  fun caseChainExp [] = raise Fail "Empty case chain"
+  fun caseChain (exp, exps) =
+    parensExp (Case
+      { casee = caseTok
+      , exp = exp
+      , off = ofTok
+      , elems = ArraySlice.full (Array.fromList
+          [ { pat = Pat.Const equalCmpTok
+            , arrow = fatArrowTok
+            , exp = caseChainExp exps
+            }
+          , {pat = Pat.Const quesTok, arrow = fatArrowTok, exp = Const quesTok}
+          ])
+      , delims = ArraySlice.full (Array.fromList [orTok])
+      , optbar = NONE
+      })
+  and caseChainExp [] = raise Fail "Empty case chain"
     | caseChainExp [exp] = exp
-    | caseChainExp (exp :: exps) =
-        parensExp (Case
-          { casee = caseTok
-          , exp = exp
-          , off = ofTok
-          , elems = ArraySlice.full (Array.fromList
-              [ { pat = Pat.Const equalCmpTok
-                , arrow = fatArrowTok
-                , exp = caseChainExp exps
-                }
-              , { pat = Pat.Const quesTok
-                , arrow = fatArrowTok
-                , exp = Const quesTok
-                }
-              ])
-          , delims = ArraySlice.full (Array.fromList [orTok])
-          , optbar = NONE
-          })
+    | caseChainExp (exp :: (exps as Const tok :: exps')) =
+        if Token.same (tok, equalCmpTok) then caseChainExp (exp :: exps')
+        else caseChain (exp, exps)
+    | caseChainExp (exp :: exps) = caseChain (exp, exps)
   val compareBoolDec =
     let
       val conTok = mkToken "compareBool"
@@ -218,6 +219,7 @@ struct
         in
           case (id, args) of
             ("ref", [ty]) => tyExp env ty
+          | ("unit", []) => Const equalCmpTok
           | _ =>
               (case !vars of
                  a :: b :: t => (vars := t; con (tupleExp [Const a, Const b]))

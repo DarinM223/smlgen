@@ -79,6 +79,7 @@ struct
         in
           case (Token.toString id, syntaxSeqToList args) of
             ("ref", [ty]) => conPat id (parensPat (destructTyPat fresh ty))
+          | ("unit", []) => wildPat
           | _ => Pat.Const (fresh tTok)
         end
     | destructTyPat _ (Ty.Arrow _) = wildPat

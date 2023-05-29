@@ -8,6 +8,7 @@ type t =
   , g: string list
   , h: char ref * (bool * int) ref * {a: int, b: string} ref
   , i: int ref ref ref
+  , j: unit * unit * {a: unit, b: unit}
   }
 val t =
   let
@@ -24,10 +25,19 @@ val t =
             , refc
                 (record' (R' "a" int *` R' "b" string)
                    (fn {a, b} => a & b, fn a & b => {a = a, b = b}))
-            )) *` R' "i" (refc (refc (refc int))))
-      ( fn {a, b, c, d, e, f, g, h, i} => a & b & c & d & e & f & g & h & i
-      , fn a & b & c & d & e & f & g & h & i =>
-          {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i}
+            )) *` R' "i" (refc (refc (refc int)))
+       *`
+       R' "j"
+         (tuple3
+            ( unit
+            , unit
+            , record' (R' "a" unit *` R' "b" unit)
+                (fn {a, b} => a & b, fn a & b => {a = a, b = b})
+            )))
+      ( fn {a, b, c, d, e, f, g, h, i, j} =>
+          a & b & c & d & e & f & g & h & i & j
+      , fn a & b & c & d & e & f & g & h & i & j =>
+          {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j}
       )
   end
 val show =
@@ -40,6 +50,7 @@ val show =
      , g = t7
      , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
      , i = ref (ref (ref t13))
+     , j = (_, _, {a = _, b = _})
      } =>
     "{"
     ^
@@ -71,6 +82,15 @@ val show =
               ["a = " ^ Int.toString t11, "b = " ^ "\"" ^ t12 ^ "\""] ^ "}"
           ] ^ ")"
       , "i = " ^ "ref " ^ "ref " ^ "ref " ^ Int.toString t13
+      , "j = "
+        ^
+        "("
+        ^
+        String.concatWith ", "
+          [ "()"
+          , "()"
+          , "{" ^ String.concatWith ", " ["a = " ^ "()", "b = " ^ "()"] ^ "}"
+          ] ^ ")"
       ] ^ "}"
 local
   fun compareBool (false, true) = LESS
@@ -94,6 +114,7 @@ in
          , g = t7
          , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
          , i = ref (ref (ref t13))
+         , j = (_, _, {a = _, b = _})
          }
        , { a = t14
          , b = t15
@@ -104,6 +125,7 @@ in
          , g = t21
          , h = (ref t22, ref (t23, t24), ref {a = t25, b = t26})
          , i = ref (ref (ref t27))
+         , j = (_, _, {a = _, b = _})
          }
        ) =>
       (case Int.compare (t0, t14) of

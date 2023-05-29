@@ -8,4 +8,5 @@ type t =
   , g: string list
   , h: char ref * (bool * int) ref * {a: int, b: string} ref
   , i: int ref ref ref
+  , j: unit * unit * {a: unit, b: unit}
   }

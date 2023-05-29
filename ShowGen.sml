@@ -25,6 +25,7 @@ struct
   val equalsTok = mkToken " = "
   val commaTok = mkToken ", "
   val concatWithTok = mkToken "String.concatWith"
+  val unitTok = stringTok (mkToken "()")
 
   fun tyCon _ v "string" [] =
         infixLExp concatTok [Const quotTok, Const v, Const quotTok]
@@ -114,6 +115,7 @@ struct
           case (id, args) of
             ("ref", [ty]) =>
               infixLExp concatTok [Const (mkToken "\"ref \""), tyExp env ty]
+          | ("unit", []) => Const unitTok
           | _ =>
               (case !vars of
                  h :: t => (vars := t; con h)
