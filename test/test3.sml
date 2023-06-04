@@ -1,4 +1,4 @@
-infix &
+infix & *` +`
 
 datatype (*a*) ((*b*)'a(*c*), (*d*)'b(*e*)) (*f*)stmt(*g*) =
   (*h*)Assign(*i*) of (*j*)'a(*k*) * (*l*)((*m*)'a(*n*), (*o*)'b(*p*)) (*q*)expr(*r*)

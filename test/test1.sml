@@ -1,4 +1,4 @@
-infix &
+infix & *` +`
 
 type 'a person = {name: string, age: int, data: 'a}
 

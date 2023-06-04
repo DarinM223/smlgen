@@ -1,4 +1,4 @@
-infix &
+infix & *` +`
 
 datatype ('a, 'b) stmt =
   Assign of 'a * ('a, 'b) expr
@@ -188,7 +188,7 @@ val expr_stmt = fn (a_, b_) =>
 val expr = fn ? => #1 (expr_stmt ?)
 val stmt = fn ? => #2 (expr_stmt ?)
 
-datatype 'a t = T of 'a t * int t * string t
+datatype 'a t = T' of 'a * 'a t * int t * string t
 val t = fn a_ =>
   let
     open Tie
@@ -197,7 +197,8 @@ val t = fn a_ =>
       let
         open Generic
         fun t (t_2, t_1, t_0, a_) =
-          data' (C1' "T" (tuple3 (t_0, t_1, t_2))) (fn T ? => ?, fn ? => T ?)
+          data' (C1' "T'" (tuple4 (a_, t_0, t_1, t_2))) (fn T' ? => ?, fn ? =>
+            T' ?)
       in
         t (t_2, t_1, t_2, string) & t (t_2, t_1, t_1, int)
         & t (t_2, t_1, t_0, a_)

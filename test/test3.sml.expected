@@ -1,4 +1,4 @@
-infix &
+infix & *` +`
 
 datatype (*a*) ( (*b*)'a (*c*), (*d*) 'b (*e*)) (*f*) stmt (*g*) =
 (*h*)

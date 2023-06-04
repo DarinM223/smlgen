@@ -1,4 +1,4 @@
-infix &
+infix & *` +`
 
 datatype ('a, 'b) stmt =
   Assign of 'a * ('a, 'b) expr
@@ -24,4 +24,4 @@ and 'a expr =
 | Int of 'a
 | Bop of 'a expr * 'a expr
 
-datatype 'a t = T of 'a t * int t * string t
+datatype 'a t = T' of 'a * 'a t * int t * string t
