@@ -185,7 +185,7 @@ val expr_stmt = fn (a_, b_) =>
   in
     (expr_0, stmt_11)
   end
-val expr = fn ? => #1 (expr_stmt ?)
+val expr = fn a_ => #1 (expr_stmt (a_, a_))
 val stmt = fn ? => #2 (expr_stmt ?)
 
 datatype 'a t = T' of 'a * 'a t * int t * string t

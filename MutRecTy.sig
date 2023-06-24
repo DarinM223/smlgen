@@ -20,7 +20,14 @@ sig
 
   val baseTyName: string -> string
 
-  val unpackingDecs: (Token.token * Token.token list) -> Ast.Exp.dec list
+  val unpackingDecs:
+    (env
+     * Token.token list
+     * Token.token
+     * Token.token list
+     * (Token.token -> Token.token)
+     * string)
+    -> Ast.Exp.dec list
 
   val genDatabindHelper:
     (env * Token.token * Token.token list * Utils.constr list -> Ast.Exp.dec)

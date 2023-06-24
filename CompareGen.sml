@@ -369,9 +369,10 @@ struct
                 (destructTuplePat (List.map (Pat.Const o mkTyVar) vars))
                 (singleLetExp mutRecDec (tupleExp (List.map Const tyToks))))
          ])
+      val unpacked = unpackingDecs
+        (env', vars, concatTys, tycons, mkCompare, "Int.compare")
     in
-      localDec dec (multDec (unpackingDecs
-        (concatTys, (List.map mkCompare tycons))))
+      localDec dec (multDec unpacked)
     end
 
   val genDatabind = genDatabindHelper (genSimpleDatabind, genRecursiveDatabind)

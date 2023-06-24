@@ -223,18 +223,63 @@ struct
     Substring.string o Substring.trimr 1 o #1
     o Substring.splitr (fn ch => ch <> #"_") o Substring.full
 
-  fun unpackingDecs (tyname, l) =
+  fun unpackingDecs
+    ( Env {tyTokToId, tyData, ...}
+    , normalizedVars
+    , tupledName
+    , tyNames
+    , toDec
+    , default
+    ) =
     let
-      val one = List.length l = 1
+      val one = List.length tyNames = 1
       val mkNum = fn ? => Const (mkToken ("#" ^ Int.toString ?))
-      fun unpack i ? =
-        if one then ? else appExp [mkNum i, parensExp ?]
-      fun go _ [] = []
-        | go i (ty :: tys) =
-            valDec (Pat.Const ty) (singleFnExp (Pat.Const quesTok) (unpack i
-              (appExp [Const tyname, Const quesTok]))) :: go (i + 1) tys
+      val normalizedLen = List.length normalizedVars
+      fun padList ([], i, pad) =
+            if i > 0 then pad :: padList ([], i - 1, pad) else []
+        | padList (h :: t, i, pad) =
+            h :: padList (t, i, pad)
+      fun unpack (vars, i) =
+        let
+          val vars = List.map mkTyVar vars
+          val defaultVar =
+            case vars of
+              v :: _ => v
+            | _ => mkToken default
+        in
+          if one then
+            singleFnExp (Pat.Const quesTok)
+              (appExp [Const tupledName, Const quesTok])
+          else if List.length vars = normalizedLen then
+            singleFnExp (Pat.Const quesTok) (appExp
+              [mkNum i, parensExp (appExp [Const tupledName, Const quesTok])])
+          else
+            let
+              val tuple = tupleExp (List.map Const (padList
+                (vars, normalizedLen - List.length vars, defaultVar)))
+              val exp = appExp
+                [mkNum i, parensExp (appExp [Const tupledName, tuple])]
+            in
+              case vars of
+                [] => exp
+              | _ =>
+                  singleFnExp (destructTuplePat (List.map Pat.Const vars)) exp
+            end
+        end
+      fun go (_, []) = []
+        | go (i, tyName :: tyNames) =
+            let
+              val vars =
+                (syntaxSeqToList o #2 o IntHashTable.lookup tyData
+                 o AtomTable.lookup tyTokToId o Atom.atom o Token.toString)
+                  tyName
+                handle LibBase.NotFound => normalizedVars
+            in
+              valDec (Pat.Const (toDec tyName)) (unpack (vars, i))
+              :: go (i + 1, tyNames)
+            end
     in
-      go 1 l
+      go (1, tyNames)
     end
 
   fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind) =

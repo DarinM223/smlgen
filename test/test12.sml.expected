@@ -1,0 +1,555 @@
+infix & *` +`
+
+datatype ('a, 'b) stmt =
+  Assign of 'a * ('a, 'b, 'a) expr
+| If of ('a, 'b, 'b) expr * ('b, 'a) stmt list * ('a, 'b) stmt list
+and ('d, 'c, 'b) expr =
+  Stmt of ('b, 'd) stmt
+| Int of 'd * 'b
+| Bop of ('d, 'b, 'c) expr * ('c, 'b, 'd) expr
+val expr_stmt = fn (d_, c_, b_) =>
+  let
+    open Tie
+    val Y = Generic.Y
+    val
+      _ & _ & _ & _ & _ & _ & expr_0 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ &
+        _ & _ & _ & stmt_19 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ &
+        _ =
+      fix
+        (Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y
+         *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y
+         *` Y *` Y *` Y *` Y *` Y *` Y *` Y)
+        (fn expr_27 & stmt_29 & expr_11 & expr_4 & expr_21 & expr_22 & expr_0 &
+             stmt_16 & expr_33 & expr_30 & stmt_8 & expr_9 & expr_13 & expr_24 &
+             expr_32 & stmt_14 & expr_35 & expr_28 & expr_17 & expr_23 & expr_20 &
+             stmt_19 & expr_5 & stmt_6 & expr_31 & expr_2 & expr_15 & expr_18 &
+             stmt_3 & expr_7 & stmt_1 & expr_12 & expr_10 & expr_25 & stmt_26 &
+             expr_34 =>
+           let
+             open Generic
+             fun expr (expr_35, expr_13, stmt_1, b_, c_, d_) =
+               data'
+                 (C1' "Stmt" stmt_1 +` C1' "Int" (tuple2 (d_, b_))
+                  +` C1' "Bop" (tuple2 (expr_13, expr_35)))
+                 ( fn Bop ? => INR ?
+                    | Int ? => INL (INR ?)
+                    | Stmt ? => INL (INL ?)
+                 , fn INR ? => Bop ?
+                    | INL (INR ?) => Int ?
+                    | INL (INL ?) => Stmt ?
+                 )
+             fun stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) =
+               data'
+                 (C1' "Assign" (tuple2 (d_, expr_20))
+                  +` C1' "If" (tuple3 (expr_23, list stmt_14, list stmt_19)))
+                 ( fn If ? => INR ? | Assign ? => INL ?
+                 , fn INR ? => If ? | INL ? => Assign ?
+                 )
+           in
+             expr (expr_33, expr_28, stmt_16, c_, b_, c_)
+             & stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_)
+             & expr (expr_10, expr_11, stmt_6, d_, d_, b_)
+             & expr (expr_4, expr_4, stmt_3, b_, b_, b_)
+             & expr (expr_20, expr_20, stmt_14, c_, d_, d_)
+             & expr (expr_21, expr_22, stmt_19, d_, d_, c_)
+             & expr (expr_35, expr_13, stmt_1, b_, c_, d_)
+             & stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_)
+             & expr (expr_28, expr_33, stmt_26, c_, c_, b_)
+             & expr (expr_32, expr_31, stmt_3, b_, c_, b_)
+             & stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_)
+             & expr (expr_9, expr_9, stmt_8, d_, d_, d_)
+             & expr (expr_24, expr_0, stmt_14, c_, b_, d_)
+             & expr (expr_34, expr_25, stmt_6, d_, c_, b_)
+             & expr (expr_31, expr_32, stmt_29, b_, b_, c_)
+             & stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_)
+             & expr (expr_25, expr_34, stmt_19, d_, b_, c_)
+             & expr (expr_27, expr_27, stmt_29, b_, c_, c_)
+             & expr (expr_17, expr_17, stmt_16, c_, c_, c_)
+             & expr (expr_18, expr_23, stmt_14, c_, c_, d_)
+             & expr (expr_22, expr_21, stmt_8, d_, c_, d_)
+             & stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_)
+             & expr (expr_2, expr_2, stmt_6, d_, b_, b_)
+             & stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_)
+             & expr (expr_30, expr_30, stmt_26, c_, b_, b_)
+             & expr (expr_12, expr_5, stmt_3, b_, d_, b_)
+             & expr (expr_23, expr_18, stmt_16, c_, d_, c_)
+             & expr (expr_15, expr_15, stmt_19, d_, c_, c_)
+             & stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_)
+             & expr (expr_11, expr_10, stmt_8, d_, b_, d_)
+             & stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_)
+             & expr (expr_5, expr_12, stmt_1, b_, b_, d_)
+             & expr (expr_7, expr_7, stmt_1, b_, d_, d_)
+             & expr (expr_0, expr_24, stmt_26, c_, d_, b_)
+             & stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_)
+             & expr (expr_13, expr_35, stmt_29, b_, d_, c_)
+           end)
+  in
+    (expr_0, stmt_19)
+  end
+val expr = fn ? => #1 (expr_stmt ?)
+val stmt = fn (a_, b_) => #2 (expr_stmt (a_, b_, a_))
+local
+  val rec expr = fn (expr_35, expr_13, stmt_1, b_, c_, d_) =>
+    fn Stmt t0 => "Stmt " ^ "(" ^ stmt_1 t0 ^ ")"
+     | Int (t1, t2) =>
+      "Int " ^ "(" ^ String.concatWith ", " [d_ t1, b_ t2] ^ ")"
+     | Bop (t3, t4) =>
+      "Bop " ^ "(" ^ String.concatWith ", " [expr_13 t3, expr_35 t4] ^ ")"
+  and rec stmt = fn (stmt_19, stmt_14, expr_23, expr_20, c_, d_) =>
+    fn Assign (t0, t1) =>
+      "Assign " ^ "(" ^ String.concatWith ", " [d_ t0, expr_20 t1] ^ ")"
+     | If (t2, t3, t4) =>
+      "If "
+      ^
+      "("
+      ^
+      String.concatWith ", "
+        [ expr_23 t2
+        , "[" ^ String.concatWith ", " (List.map stmt_14 t3) ^ "]"
+        , "[" ^ String.concatWith ", " (List.map stmt_19 t4) ^ "]"
+        ] ^ ")"
+  val expr_stmt = fn (d_, c_, b_) =>
+    let
+      val rec expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
+      and rec stmt_29 = fn ? =>
+        stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
+      and rec expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
+      and rec expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
+      and rec expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
+      and rec expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
+      and rec expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      and rec stmt_16 = fn ? =>
+        stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_) ?
+      and rec expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
+      and rec expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
+      and rec stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
+      and rec expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
+      and rec expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
+      and rec expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
+      and rec expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
+      and rec stmt_14 = fn ? =>
+        stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_) ?
+      and rec expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
+      and rec expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
+      and rec expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and rec expr_23 = fn ? => expr (expr_18, expr_23, stmt_14, c_, c_, d_) ?
+      and rec expr_20 = fn ? => expr (expr_22, expr_21, stmt_8, d_, c_, d_) ?
+      and rec stmt_19 = fn ? =>
+        stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
+      and rec expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
+      and rec stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
+      and rec expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
+      and rec expr_2 = fn ? => expr (expr_12, expr_5, stmt_3, b_, d_, b_) ?
+      and rec expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
+      and rec expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
+      and rec stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
+      and rec expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
+      and rec stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
+      and rec expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
+      and rec expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
+      and rec expr_25 = fn ? => expr (expr_0, expr_24, stmt_26, c_, d_, b_) ?
+      and rec stmt_26 = fn ? =>
+        stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
+      and rec expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+    in
+      (expr_0, stmt_19)
+    end
+in
+  val showExpr = fn ? => #1 (expr_stmt ?)
+  val showStmt = fn (a_, b_) => #2 (expr_stmt (a_, b_, a_))
+end
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+  val rec expr = fn (expr_35, expr_13, stmt_1, b_, c_, d_) =>
+    fn (Stmt t0, Stmt t1) => stmt_1 (t0, t1)
+     | (Stmt _, Int _) => LESS
+     | (Stmt _, Bop _) => LESS
+     | (Int _, Stmt _) => GREATER
+     | (Int (t2, t3), Int (t4, t5)) =>
+      (case d_ (t2, t4) of
+         EQUAL => b_ (t3, t5)
+       | ? => ?)
+     | (Int _, Bop _) => LESS
+     | (Bop _, Stmt _) => GREATER
+     | (Bop _, Int _) => GREATER
+     | (Bop (t6, t7), Bop (t8, t9)) =>
+      (case expr_13 (t6, t8) of
+         EQUAL => expr_35 (t7, t9)
+       | ? => ?)
+  and rec stmt = fn (stmt_19, stmt_14, expr_23, expr_20, c_, d_) =>
+    fn (Assign (t0, t1), Assign (t2, t3)) =>
+      (case d_ (t0, t2) of
+         EQUAL => expr_20 (t1, t3)
+       | ? => ?)
+     | (Assign _, If _) => LESS
+     | (If _, Assign _) => GREATER
+     | (If (t4, t5, t6), If (t7, t8, t9)) =>
+      (case expr_23 (t4, t7) of
+         EQUAL =>
+           (case compareList stmt_14 (t5, t8) of
+              EQUAL => compareList stmt_19 (t6, t9)
+            | ? => ?)
+       | ? => ?)
+  val expr_stmt = fn (d_, c_, b_) =>
+    let
+      val rec expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
+      and rec stmt_29 = fn ? =>
+        stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
+      and rec expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
+      and rec expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
+      and rec expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
+      and rec expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
+      and rec expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      and rec stmt_16 = fn ? =>
+        stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_) ?
+      and rec expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
+      and rec expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
+      and rec stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
+      and rec expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
+      and rec expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
+      and rec expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
+      and rec expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
+      and rec stmt_14 = fn ? =>
+        stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_) ?
+      and rec expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
+      and rec expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
+      and rec expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and rec expr_23 = fn ? => expr (expr_18, expr_23, stmt_14, c_, c_, d_) ?
+      and rec expr_20 = fn ? => expr (expr_22, expr_21, stmt_8, d_, c_, d_) ?
+      and rec stmt_19 = fn ? =>
+        stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
+      and rec expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
+      and rec stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
+      and rec expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
+      and rec expr_2 = fn ? => expr (expr_12, expr_5, stmt_3, b_, d_, b_) ?
+      and rec expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
+      and rec expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
+      and rec stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
+      and rec expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
+      and rec stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
+      and rec expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
+      and rec expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
+      and rec expr_25 = fn ? => expr (expr_0, expr_24, stmt_26, c_, d_, b_) ?
+      and rec stmt_26 = fn ? =>
+        stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
+      and rec expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+    in
+      (expr_0, stmt_19)
+    end
+in
+  val compareExpr = fn ? => #1 (expr_stmt ?)
+  val compareStmt = fn (a_, b_) => #2 (expr_stmt (a_, b_, a_))
+end
+
+val () = print
+  (showStmt (Int.toString, fn a => a) (Assign (1, Bop
+     (Int (1, "hello"), Int ("hello", 2)))) ^ "\n")
+
+datatype ('a, 'b, 'c) stmt =
+  Assign of 'b * ('a, 'c, 'b) expr
+| If of ('c, 'b, 'a) expr * ('b, 'a, 'c) stmt list * ('b, 'a, 'c) stmt list
+and ('c, 'd, 'b) expr =
+  Stmt of ('b, 'd, 'c) stmt
+| Int of 'd * 'b
+| Bop of ('d, 'b, 'c) expr * ('c, 'b, 'd) expr
+val expr_stmt = fn (c_, d_, b_) =>
+  let
+    open Tie
+    val Y = Generic.Y
+    val _ & _ & _ & _ & _ & _ & _ & stmt_8 & _ & _ & expr_0 & _ =
+      fix (Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y)
+        (fn stmt_3 & expr_11 & stmt_10 & expr_4 & expr_2 & expr_9 & stmt_1 &
+             stmt_8 & stmt_6 & stmt_5 & expr_0 & expr_7 =>
+           let
+             open Generic
+             fun expr (expr_9, expr_4, stmt_1, b_, d_, c_) =
+               data'
+                 (C1' "Stmt" stmt_1 +` C1' "Int" (tuple2 (d_, b_))
+                  +` C1' "Bop" (tuple2 (expr_4, expr_9)))
+                 ( fn Bop ? => INR ?
+                    | Int ? => INL (INR ?)
+                    | Stmt ? => INL (INL ?)
+                 , fn INR ? => Bop ?
+                    | INL (INR ?) => Int ?
+                    | INL (INL ?) => Stmt ?
+                 )
+             fun stmt (stmt_3, expr_7, expr_9, b_, d_, c_) =
+               data'
+                 (C1' "Assign" (tuple2 (d_, expr_9))
+                  +` C1' "If" (tuple3 (expr_7, list stmt_3, list stmt_3)))
+                 ( fn If ? => INR ? | Assign ? => INL ?
+                 , fn INR ? => If ? | INL ? => Assign ?
+                 )
+           in
+             stmt (stmt_8, expr_2, expr_4, b_, c_, d_)
+             & expr (expr_4, expr_9, stmt_6, b_, c_, d_)
+             & stmt (stmt_1, expr_9, expr_11, c_, b_, d_)
+             & expr (expr_11, expr_2, stmt_5, c_, b_, d_)
+             & expr (expr_7, expr_0, stmt_3, d_, c_, b_)
+             & expr (expr_0, expr_7, stmt_10, d_, b_, c_)
+             & stmt (stmt_10, expr_0, expr_2, c_, d_, b_)
+             & stmt (stmt_3, expr_7, expr_9, b_, d_, c_)
+             & stmt (stmt_5, expr_11, expr_7, d_, c_, b_)
+             & stmt (stmt_6, expr_4, expr_0, d_, b_, c_)
+             & expr (expr_9, expr_4, stmt_1, b_, d_, c_)
+             & expr (expr_2, expr_11, stmt_8, c_, d_, b_)
+           end)
+  in
+    (expr_0, stmt_8)
+  end
+val expr = fn ? => #1 (expr_stmt ?)
+val stmt = fn ? => #2 (expr_stmt ?)
+local
+  val rec expr = fn (expr_9, expr_4, stmt_1, b_, d_, c_) =>
+    fn Stmt t0 => "Stmt " ^ "(" ^ stmt_1 t0 ^ ")"
+     | Int (t1, t2) =>
+      "Int " ^ "(" ^ String.concatWith ", " [d_ t1, b_ t2] ^ ")"
+     | Bop (t3, t4) =>
+      "Bop " ^ "(" ^ String.concatWith ", " [expr_4 t3, expr_9 t4] ^ ")"
+  and rec stmt = fn (stmt_3, expr_7, expr_9, b_, d_, c_) =>
+    fn Assign (t0, t1) =>
+      "Assign " ^ "(" ^ String.concatWith ", " [d_ t0, expr_9 t1] ^ ")"
+     | If (t2, t3, t4) =>
+      "If "
+      ^
+      "("
+      ^
+      String.concatWith ", "
+        [ expr_7 t2
+        , "[" ^ String.concatWith ", " (List.map stmt_3 t3) ^ "]"
+        , "[" ^ String.concatWith ", " (List.map stmt_3 t4) ^ "]"
+        ] ^ ")"
+  val expr_stmt = fn (c_, d_, b_) =>
+    let
+      val rec stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
+      and rec expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
+      and rec stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
+      and rec expr_4 = fn ? => expr (expr_11, expr_2, stmt_5, c_, b_, d_) ?
+      and rec expr_2 = fn ? => expr (expr_7, expr_0, stmt_3, d_, c_, b_) ?
+      and rec expr_9 = fn ? => expr (expr_0, expr_7, stmt_10, d_, b_, c_) ?
+      and rec stmt_1 = fn ? => stmt (stmt_10, expr_0, expr_2, c_, d_, b_) ?
+      and rec stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
+      and rec stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
+      and rec stmt_5 = fn ? => stmt (stmt_6, expr_4, expr_0, d_, b_, c_) ?
+      and rec expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
+      and rec expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
+    in
+      (expr_0, stmt_8)
+    end
+in
+  val showExpr = fn ? => #1 (expr_stmt ?)
+  val showStmt = fn ? => #2 (expr_stmt ?)
+end
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+  val rec expr = fn (expr_9, expr_4, stmt_1, b_, d_, c_) =>
+    fn (Stmt t0, Stmt t1) => stmt_1 (t0, t1)
+     | (Stmt _, Int _) => LESS
+     | (Stmt _, Bop _) => LESS
+     | (Int _, Stmt _) => GREATER
+     | (Int (t2, t3), Int (t4, t5)) =>
+      (case d_ (t2, t4) of
+         EQUAL => b_ (t3, t5)
+       | ? => ?)
+     | (Int _, Bop _) => LESS
+     | (Bop _, Stmt _) => GREATER
+     | (Bop _, Int _) => GREATER
+     | (Bop (t6, t7), Bop (t8, t9)) =>
+      (case expr_4 (t6, t8) of
+         EQUAL => expr_9 (t7, t9)
+       | ? => ?)
+  and rec stmt = fn (stmt_3, expr_7, expr_9, b_, d_, c_) =>
+    fn (Assign (t0, t1), Assign (t2, t3)) =>
+      (case d_ (t0, t2) of
+         EQUAL => expr_9 (t1, t3)
+       | ? => ?)
+     | (Assign _, If _) => LESS
+     | (If _, Assign _) => GREATER
+     | (If (t4, t5, t6), If (t7, t8, t9)) =>
+      (case expr_7 (t4, t7) of
+         EQUAL =>
+           (case compareList stmt_3 (t5, t8) of
+              EQUAL => compareList stmt_3 (t6, t9)
+            | ? => ?)
+       | ? => ?)
+  val expr_stmt = fn (c_, d_, b_) =>
+    let
+      val rec stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
+      and rec expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
+      and rec stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
+      and rec expr_4 = fn ? => expr (expr_11, expr_2, stmt_5, c_, b_, d_) ?
+      and rec expr_2 = fn ? => expr (expr_7, expr_0, stmt_3, d_, c_, b_) ?
+      and rec expr_9 = fn ? => expr (expr_0, expr_7, stmt_10, d_, b_, c_) ?
+      and rec stmt_1 = fn ? => stmt (stmt_10, expr_0, expr_2, c_, d_, b_) ?
+      and rec stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
+      and rec stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
+      and rec stmt_5 = fn ? => stmt (stmt_6, expr_4, expr_0, d_, b_, c_) ?
+      and rec expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
+      and rec expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
+    in
+      (expr_0, stmt_8)
+    end
+in
+  val compareExpr = fn ? => #1 (expr_stmt ?)
+  val compareStmt = fn ? => #2 (expr_stmt ?)
+end
+
+val () = print
+  (showStmt (Int.toString, Real.toString, fn a => a) (Assign (2.0, Bop
+     (Int (3.0, 2), Int (4.0, "hello")))) ^ "\n")
+
+datatype ('a, 'b, 'c) stmt =
+  Assign of 'b * expr
+| If of expr * ('b, 'a, 'c) stmt list * ('b, 'a, 'c) stmt list
+and expr =
+  Stmt of (string, int, real) stmt
+| Int of int
+| Bop of expr * expr
+val expr_stmt = fn (a_, b_, c_) =>
+  let
+    open Tie
+    val Y = Generic.Y
+    val stmt_3 & _ & _ & expr_0 & _ =
+      fix (Y *` Y *` Y *` Y *` Y)
+        (fn stmt_3 & stmt_1 & stmt_4 & expr_0 & stmt_2 =>
+           let
+             open Generic
+             fun expr (expr_0, stmt_1) =
+               data'
+                 (C1' "Stmt" stmt_1 +` C1' "Int" int
+                  +` C1' "Bop" (tuple2 (expr_0, expr_0)))
+                 ( fn Bop ? => INR ?
+                    | Int ? => INL (INR ?)
+                    | Stmt ? => INL (INL ?)
+                 , fn INR ? => Bop ?
+                    | INL (INR ?) => Int ?
+                    | INL (INL ?) => Stmt ?
+                 )
+             fun stmt (stmt_4, expr_0, c_, b_, a_) =
+               data'
+                 (C1' "Assign" (tuple2 (b_, expr_0))
+                  +` C1' "If" (tuple3 (expr_0, list stmt_4, list stmt_4)))
+                 ( fn If ? => INR ? | Assign ? => INL ?
+                 , fn INR ? => If ? | INL ? => Assign ?
+                 )
+           in
+             stmt (stmt_4, expr_0, c_, b_, a_)
+             & stmt (stmt_2, expr_0, real, int, string)
+             & stmt (stmt_3, expr_0, c_, a_, b_) & expr (expr_0, stmt_1)
+             & stmt (stmt_1, expr_0, real, string, int)
+           end)
+  in
+    (expr_0, stmt_3)
+  end
+val expr = #1 (expr_stmt (Generic.unit, Generic.unit, Generic.unit))
+val stmt = fn ? => #2 (expr_stmt ?)
+local
+  val rec expr = fn (expr_0, stmt_1) =>
+    fn Stmt t0 => "Stmt " ^ "(" ^ stmt_1 t0 ^ ")"
+     | Int t1 => "Int " ^ "(" ^ Int.toString t1 ^ ")"
+     | Bop (t2, t3) =>
+      "Bop " ^ "(" ^ String.concatWith ", " [expr_0 t2, expr_0 t3] ^ ")"
+  and rec stmt = fn (stmt_4, expr_0, c_, b_, a_) =>
+    fn Assign (t0, t1) =>
+      "Assign " ^ "(" ^ String.concatWith ", " [b_ t0, expr_0 t1] ^ ")"
+     | If (t2, t3, t4) =>
+      "If "
+      ^
+      "("
+      ^
+      String.concatWith ", "
+        [ expr_0 t2
+        , "[" ^ String.concatWith ", " (List.map stmt_4 t3) ^ "]"
+        , "[" ^ String.concatWith ", " (List.map stmt_4 t4) ^ "]"
+        ] ^ ")"
+  val expr_stmt = fn (a_, b_, c_) =>
+    let
+      val rec stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
+      and rec stmt_1 = fn ? =>
+        stmt
+          ( stmt_2
+          , expr_0
+          , Real.toString
+          , Int.toString
+          , fn t0 => "\"" ^ t0 ^ "\""
+          ) ?
+      and rec stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
+      and rec expr_0 = fn ? => expr (expr_0, stmt_1) ?
+      and rec stmt_2 = fn ? =>
+        stmt
+          ( stmt_1
+          , expr_0
+          , Real.toString
+          , fn t0 => "\"" ^ t0 ^ "\""
+          , Int.toString
+          ) ?
+    in
+      (expr_0, stmt_3)
+    end
+in
+  val showExpr = #1 (expr_stmt (Int.toString, Int.toString, Int.toString))
+  val showStmt = fn ? => #2 (expr_stmt ?)
+end
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+  val rec expr = fn (expr_0, stmt_1) =>
+    fn (Stmt t0, Stmt t1) => stmt_1 (t0, t1)
+     | (Stmt _, Int _) => LESS
+     | (Stmt _, Bop _) => LESS
+     | (Int _, Stmt _) => GREATER
+     | (Int t2, Int t3) => Int.compare (t2, t3)
+     | (Int _, Bop _) => LESS
+     | (Bop _, Stmt _) => GREATER
+     | (Bop _, Int _) => GREATER
+     | (Bop (t4, t5), Bop (t6, t7)) =>
+      (case expr_0 (t4, t6) of
+         EQUAL => expr_0 (t5, t7)
+       | ? => ?)
+  and rec stmt = fn (stmt_4, expr_0, c_, b_, a_) =>
+    fn (Assign (t0, t1), Assign (t2, t3)) =>
+      (case b_ (t0, t2) of
+         EQUAL => expr_0 (t1, t3)
+       | ? => ?)
+     | (Assign _, If _) => LESS
+     | (If _, Assign _) => GREATER
+     | (If (t4, t5, t6), If (t7, t8, t9)) =>
+      (case expr_0 (t4, t7) of
+         EQUAL =>
+           (case compareList stmt_4 (t5, t8) of
+              EQUAL => compareList stmt_4 (t6, t9)
+            | ? => ?)
+       | ? => ?)
+  val expr_stmt = fn (a_, b_, c_) =>
+    let
+      val rec stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
+      and rec stmt_1 = fn ? =>
+        stmt (stmt_2, expr_0, Real.compare, Int.compare, String.compare) ?
+      and rec stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
+      and rec expr_0 = fn ? => expr (expr_0, stmt_1) ?
+      and rec stmt_2 = fn ? =>
+        stmt (stmt_1, expr_0, Real.compare, String.compare, Int.compare) ?
+    in
+      (expr_0, stmt_3)
+    end
+in
+  val compareExpr = #1 (expr_stmt (Int.compare, Int.compare, Int.compare))
+  val compareStmt = fn ? => #2 (expr_stmt ?)
+end

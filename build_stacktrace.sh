@@ -1,0 +1,1 @@
+mlton -const 'Exn.keepHistory true' smlgen.mlb

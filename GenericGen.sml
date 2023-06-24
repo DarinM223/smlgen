@@ -306,11 +306,13 @@ struct
                         identPat tok
                       else
                         wildPat) patToks)
+              val unpacked = unpackingDecs
+                (env, vars, concatTys, tycons, fn a => a, "Generic.unit")
             in
               multDec
                 (valDec (Pat.Const concatTys) (tyVarFnExp vars
                    (singleLetExp (multDec [tieDec, yDec, valDec hiddenPat exp])
-                      (tupleExp tyFixes))) :: unpackingDecs (concatTys, tycons))
+                      (tupleExp tyFixes))) :: unpacked)
             end
     in
       header (appExp [Const (mkToken "fix"), ys, parensExp lam])

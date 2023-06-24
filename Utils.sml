@@ -25,6 +25,10 @@ struct
       mkToken (Substring.string prefix ^ prepended)
     end
 
+  fun sameTokens (t1, t2) =
+    List.length t1 = List.length t2
+    andalso List.all Token.same (ListPair.zip (t1, t2))
+
   fun syntaxSeqToList SyntaxSeq.Empty = []
     | syntaxSeqToList (SyntaxSeq.One e) = [e]
     | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) =
