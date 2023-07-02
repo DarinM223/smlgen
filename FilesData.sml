@@ -53,7 +53,7 @@ struct
     \         fold (h (a11, a12, a13), f)\n\
     \      fun lift0 (s: ('a1, 'a2, 'a2, 'a2, 'a2) step0)\n\
     \                (a: 'a1, f: 'b -> 'c): ('a2, 'b, 'c, 'd) t =\n\
-    \         fold (fold (a, id) s $, f)\n\
+    \         fold (fold (a, fn a => a) s $, f)\n\
     \      fun post (w: ('a, 'b, 'c1, 'd) t,\n\
     \                g: 'c1 -> 'c2)\n\
     \               (s: ('a, 'b, 'c2, 'd) step): 'd =\n\
@@ -329,7 +329,7 @@ struct
     \   struct\n\
     \      open Fold01N\n\
     \      fun fold {finish, start, zero} =\n\
-    \         Fold.fold ((id, finish, fn () => zero, start),\n\
+    \         Fold.fold ((fn a => a, finish, fn () => zero, start),\n\
     \                    fn (finish, _, p, _) => finish (p ()))\n\
     \      fun step0 {combine, input} =\n\
     \         Fold.step0 (fn (_, finish, _, f) =>\n\
