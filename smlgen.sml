@@ -304,6 +304,16 @@ val () =
   case fileGen of
     "fru" => (print "Generating FRU\n"; FilesGen.genFiles FruFile.t)
   | "fold" => (print "Generating Fold\n"; FilesGen.genFiles FoldFile.t)
+  | "fold01n" => (print "Generating Fold01N\n"; FilesGen.genFiles Fold01NFile.t)
+  | "product" => (print "Generating product\n"; FilesGen.genFiles ProductFile.t)
+  | "printf" => (print "Generating printf\n"; FilesGen.genFiles PrintfFile.t)
+  | "num" => (print "Generating numeric literal\n"; FilesGen.genFiles NumFile.t)
+  | "literal" =>
+      (print "Generating array literal\n"; FilesGen.genFiles LiteralFile.t)
+  | "optarg" =>
+      ( print "Generating optional argument\n"
+      ; FilesGen.genFiles OptionalArgFile.t
+      )
   | _ => ()
 
 val () =

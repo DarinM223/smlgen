@@ -4,19 +4,61 @@ datatype files_data =
 structure FoldFile =
 struct
   val data =
-    "structure Fold =\n\
-    \struct\n\
-    \  fun fold (a, f) g = g (a, f)\n\
-    \  fun post (w, g) s =\n\
-    \    w (fn (a, h) => s (a, g o h))\n\
-    \  fun step0 h (a, f) =\n\
-    \    fold (h a, f)\n\
-    \  fun step1 h (a, f) b =\n\
-    \    fold (h (b, a), f)\n\
-    \  fun step2 h (a, f) b c =\n\
-    \    fold (h (b, c, a), f)\n\
-    \end\n\
-    \fun $ (a, f) = f a\n"
+    "fun $ (a, f) = f a\n\
+    \signature FOLD =\n\
+    \   sig\n\
+    \      type ('a, 'b, 'c, 'd) step = 'a * ('b -> 'c) -> 'd\n\
+    \      type ('a, 'b, 'c, 'd) t = ('a, 'b, 'c, 'd) step -> 'd\n\
+    \      type ('a1, 'a2, 'b, 'c, 'd) step0 =\n\
+    \         ('a1, 'b, 'c, ('a2, 'b, 'c, 'd) t) step\n\
+    \      type ('a11, 'a12, 'a2, 'b, 'c, 'd) step1 =\n\
+    \         ('a12, 'b, 'c, 'a11 -> ('a2, 'b, 'c, 'd) t) step\n\
+    \      type ('a11, 'a12, 'a13, 'a2, 'b, 'c, 'd) step2 =\n\
+    \         ('a13, 'b, 'c, 'a11 -> 'a12 -> ('a2, 'b, 'c, 'd) t) step\n\
+    \      val fold: 'a * ('b -> 'c) -> ('a, 'b, 'c, 'd) t\n\
+    \      val lift0: ('a1, 'a2, 'a2, 'a2, 'a2) step0\n\
+    \                 -> ('a1, 'a2, 'b, 'c, 'd) step0\n\
+    \      val post: ('a, 'b, 'c1, 'd) t * ('c1 -> 'c2)\n\
+    \                -> ('a, 'b, 'c2, 'd) t\n\
+    \      val step0: ('a1 -> 'a2) -> ('a1, 'a2, 'b, 'c, 'd) step0\n\
+    \      val step1: ('a11 * 'a12 -> 'a2)\n\
+    \                 -> ('a11, 'a12, 'a2, 'b, 'c, 'd) step1\n\
+    \      val step2: ('a11 * 'a12 * 'a13 -> 'a2)\n\
+    \                 -> ('a11, 'a12, 'a13, 'a2, 'b, 'c, 'd) step2\n\
+    \   end\n\
+    \structure Fold:> FOLD =\n\
+    \   struct\n\
+    \      type ('a, 'b, 'c, 'd) step = 'a * ('b -> 'c) -> 'd\n\
+    \      type ('a, 'b, 'c, 'd) t = ('a, 'b, 'c, 'd) step -> 'd\n\
+    \      type ('a1, 'a2, 'b, 'c, 'd) step0 =\n\
+    \         ('a1, 'b, 'c, ('a2, 'b, 'c, 'd) t) step\n\
+    \      type ('a11, 'a12, 'a2, 'b, 'c, 'd) step1 =\n\
+    \         ('a12, 'b, 'c, 'a11 -> ('a2, 'b, 'c, 'd) t) step\n\
+    \      type ('a11, 'a12, 'a13, 'a2, 'b, 'c, 'd) step2 =\n\
+    \         ('a13, 'b, 'c, 'a11 -> 'a12 -> ('a2, 'b, 'c, 'd) t) step\n\
+    \      fun fold (a: 'a, f: 'b -> 'c)\n\
+    \               (g: ('a, 'b, 'c, 'd) step): 'd =\n\
+    \         g (a, f)\n\
+    \      fun step0 (h: 'a1 -> 'a2)\n\
+    \                (a1: 'a1, f: 'b -> 'c): ('a2, 'b, 'c, 'd) t =\n\
+    \         fold (h a1, f)\n\
+    \      fun step1 (h: 'a11 * 'a12 -> 'a2)\n\
+    \                (a12: 'a12, f: 'b -> 'c)\n\
+    \                (a11: 'a11): ('a2, 'b, 'c, 'd) t =\n\
+    \         fold (h (a11, a12), f)\n\
+    \      fun step2 (h: 'a11 * 'a12 * 'a13 -> 'a2)\n\
+    \                (a13: 'a13, f: 'b -> 'c)\n\
+    \                (a11: 'a11)\n\
+    \                (a12: 'a12) : ('a2, 'b, 'c, 'd) t =\n\
+    \         fold (h (a11, a12, a13), f)\n\
+    \      fun lift0 (s: ('a1, 'a2, 'a2, 'a2, 'a2) step0)\n\
+    \                (a: 'a1, f: 'b -> 'c): ('a2, 'b, 'c, 'd) t =\n\
+    \         fold (fold (a, id) s $, f)\n\
+    \      fun post (w: ('a, 'b, 'c1, 'd) t,\n\
+    \                g: 'c1 -> 'c2)\n\
+    \               (s: ('a, 'b, 'c2, 'd) step): 'd =\n\
+    \         w (fn (a, h) => s (a, g o h))\n\
+    \  end\n"
 
   val t = FilesData {depends = [], data = data, fileName = "Fold.sml"}
 end
@@ -146,5 +188,232 @@ struct
       { depends = [FoldFile.t]
       , data = data
       , fileName = "FunctionalRecordUpdate.sml"
+      }
+end
+
+structure LiteralFile =
+struct
+  val data =
+    "structure Literal:>\n\
+    \ sig\n\
+    \    type 'a z\n\
+    \    val A: ('a z, 'a z, 'a array, 'd) Fold.t\n\
+    \    val V: ('a z, 'a z, 'a vector, 'd) Fold.t\n\
+    \    val ` : ('a, 'a z, 'a z, 'b, 'c, 'd) Fold.step1\n\
+    \ end =\n\
+    \ struct\n\
+    \    type 'a z = int * 'a option * ('a array -> unit)\n\
+    \    val A =\n\
+    \       fn z =>\n\
+    \       Fold.fold\n\
+    \       ((0, NONE, ignore),\n\
+    \        fn (n, opt, fill) =>\n\
+    \        case opt of\n\
+    \           NONE =>\n\
+    \              Array.tabulate (0, fn _ => raise Fail \"array0\")\n\
+    \         | SOME x =>\n\
+    \              let\n\
+    \                 val a = Array.array (n, x)\n\
+    \                 val () = fill a\n\
+    \              in\n\
+    \                 a\n\
+    \              end)\n\
+    \       z\n\
+    \    val V = fn z => Fold.post (A, Array.vector) z\n\
+    \    val ` =\n\
+    \       fn z =>\n\
+    \       Fold.step1\n\
+    \       (fn (x, (i, _, fill)) =>\n\
+    \        (i + 1,\n\
+    \         SOME x,\n\
+    \         fn a => (Array.update (a, i, x); fill a)))\n\
+    \       z\n\
+    \ end\n"
+
+  val t =
+    FilesData
+      {depends = [FoldFile.t], data = data, fileName = "ArrayLiteral.sml"}
+end
+
+structure NumFile =
+struct
+  val data =
+    "structure Num =\n\
+    \  struct\n\
+    \     fun make (op *, op +, i2x) iBase =\n\
+    \         let\n\
+    \            val xBase = i2x iBase\n\
+    \            fun fst (x, _) = x\n\
+    \         in\n\
+    \            Fold.fold\n\
+    \               ((i2x 0,\n\
+    \                 fn (i, x) =>\n\
+    \                    if 0 <= i andalso i < iBase then\n\
+    \                       x * xBase + i2x i\n\
+    \                    else\n\
+    \                       raise Fail (concat\n\
+    \                                      [\"Num: \", Int.toString i,\n\
+    \                                       \" is not a valid digit in base \",\n\
+    \                                       Int.toString iBase])),\n\
+    \                fst)\n\
+    \         end\n\
+    \     fun I  ? = make (op *, op +, fn a => a) ?\n\
+    \     fun II ? = make (op *, op +, IntInf.fromInt) ?\n\
+    \     fun W  ? = make (op *, op +, Word.fromInt) ?\n\
+    \     fun ` ? = Fold.step1 (fn (i, (x, step)) =>\n\
+    \                              (step (i, x), step)) ?\n\
+    \     val a = 10\n\
+    \     val b = 11\n\
+    \     val c = 12\n\
+    \     val d = 13\n\
+    \     val e = 14\n\
+    \     val f = 15\n\
+    \  end\n"
+
+  val t =
+    FilesData
+      {depends = [FoldFile.t], data = data, fileName = "NumberLiteral.sml"}
+end
+
+structure Fold01NFile =
+struct
+  val data =
+    "structure Fold01N =\n\
+    \   struct\n\
+    \      type ('input, 'accum1, 'accum2, 'answer, 'zero,\n\
+    \            'a, 'b, 'c, 'd, 'e) t =\n\
+    \         (('zero -> 'zero)\n\
+    \          * ('accum2 -> 'answer)\n\
+    \          * (unit -> 'zero)\n\
+    \          * ('input -> 'accum1),\n\
+    \          ('a -> 'b) * 'c * (unit -> 'a) * 'd,\n\
+    \          'b,\n\
+    \          'e) Fold.t\n\
+    \       type ('input1, 'accum1, 'input2, 'accum2,\n\
+    \            'a, 'b, 'c, 'd, 'e, 'f) step0 =\n\
+    \         ('a * 'b * 'c * ('input1 -> 'accum1),\n\
+    \          'b * 'b * (unit -> 'accum1) * ('input2 -> 'accum2),\n\
+    \          'd, 'e, 'f) Fold.step0\n\
+    \      type ('accum1, 'input, 'accum2,\n\
+    \            'a, 'b, 'c, 'd, 'e, 'f, 'g) step1 =\n\
+    \         ('a,\n\
+    \          'b * 'c * 'd * ('a -> 'accum1),\n\
+    \          'c * 'c * (unit -> 'accum1) * ('input -> 'accum2),\n\
+    \          'e, 'f, 'g) Fold.step1\n\
+    \   end\n\
+    \signature FOLD_01N =\n\
+    \   sig\n\
+    \      type ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j) t =\n\
+    \         ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j) Fold01N.t\n\
+    \      type ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j) step0 =\n\
+    \         ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j) Fold01N.step0\n\
+    \      type ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j) step1 =\n\
+    \         ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j) Fold01N.step1\n\
+    \      val fold:\n\
+    \         {finish: 'accum2 -> 'answer,\n\
+    \          start: 'input -> 'accum1,\n\
+    \          zero: 'zero}\n\
+    \         -> ('input, 'accum1, 'accum2, 'answer, 'zero,\n\
+    \             'a, 'b, 'c, 'd, 'e) t\n\
+    \      val step0:\n\
+    \         {combine: 'accum1 * 'input2 -> 'accum2,\n\
+    \          input: 'input1}\n\
+    \         -> ('input1, 'accum1, 'input2, 'accum2,\n\
+    \             'a, 'b, 'c, 'd, 'e, 'f) step0\n\
+    \      val step1:\n\
+    \         {combine: 'accum1 * 'input -> 'accum2}\n\
+    \         -> ('accum1, 'input, 'accum2,\n\
+    \             'a, 'b, 'c, 'd, 'e, 'f, 'g) step1\n\
+    \   end\n\
+    \structure Fold01N: FOLD_01N =\n\
+    \   struct\n\
+    \      open Fold01N\n\
+    \      fun fold {finish, start, zero} =\n\
+    \         Fold.fold ((id, finish, fn () => zero, start),\n\
+    \                    fn (finish, _, p, _) => finish (p ()))\n\
+    \      fun step0 {combine, input} =\n\
+    \         Fold.step0 (fn (_, finish, _, f) =>\n\
+    \                     (finish,\n\
+    \                      finish,\n\
+    \                      fn () => f input,\n\
+    \                      fn x' => combine (f input, x')))\n\
+    \      fun step1 {combine} z input =\n\
+    \         step0 {combine = combine, input = input} z\n\
+    \   end\n"
+
+  val t =
+    FilesData {depends = [FoldFile.t], data = data, fileName = "Fold01N.sml"}
+end
+
+structure PrintfFile =
+struct
+  val data =
+    "structure Printf =\n\
+    \  struct\n\
+    \     fun fprintf out =\n\
+    \        Fold.fold ((out, fn a => a), fn (_, f) => f (fn p => p ()) ignore)\n\
+    \     val printf = fn z => fprintf TextIO.stdOut z\n\
+    \     fun one ((out, f), make) =\n\
+    \        (out, fn r =>\n\
+    \         f (fn p =>\n\
+    \            make (fn s =>\n\
+    \                  r (fn () => (p (); TextIO.output (out, s))))))\n\
+    \     val ` =\n\
+    \        fn z => Fold.step1 (fn (s, x) => one (x, fn f => f s)) z\n\
+    \     fun spec to = Fold.step0 (fn x => one (x, fn f => f o to))\n\
+    \     val B = fn z => spec Bool.toString z\n\
+    \     val I = fn z => spec Int.toString z\n\
+    \     val R = fn z => spec Real.toString z\n\
+    \  end\n"
+
+  val t =
+    FilesData {depends = [FoldFile.t], data = data, fileName = "Printf.sml"}
+end
+
+structure ProductFile =
+struct
+  val data =
+    "structure Product = struct\n\
+    \  datatype ('a, 'b) product = & of 'a * 'b\n\
+    \  type ('a, 'b) t = ('a, 'b) product\n\
+    \  infix &\n\
+    \end\n"
+
+  val t = FilesData {depends = [], data = data, fileName = "Product.sml"}
+end
+
+structure OptionalArgFile =
+struct
+  val data =
+    "structure OptionalArg =\n\
+    \  struct\n\
+    \     infix &\n\
+    \     open Product\n\
+    \     val make =\n\
+    \        fn z =>\n\
+    \        Fold.fold\n\
+    \        ((fn a => a, fn (f, x) => f x),\n\
+    \         fn (d, r) => fn func =>\n\
+    \         Fold.fold ((fn a => a, d ()), fn (f, d) =>\n\
+    \                    let\n\
+    \                       val d & () = r (fn a => a, f d)\n\
+    \                    in\n\
+    \                       func d\n\
+    \                    end))\n\
+    \        z\n\
+    \     fun D d = Fold.step0 (fn (f, r) =>\n\
+    \                           (fn ds => f (d & ds),\n\
+    \                            fn (f, a & b) => r (fn x => f a & x, b)))\n\
+    \     val ` =\n\
+    \        fn z =>\n\
+    \        Fold.step1 (fn (x, (f, _ & d)) => (fn d => f (x & d), d))\n\
+    \        z\n\
+    \  end\n"
+
+  val t =
+    FilesData
+      { depends = [FoldFile.t, ProductFile.t]
+      , data = data
+      , fileName = "OptionalArg.sml"
       }
 end
