@@ -1,4 +1,5 @@
 val test = CommandLineArgs.parseFlag "test"
+val fileGen = CommandLineArgs.parseString "gen" ""
 
 fun filterToken tokenString ((token' :: path, actions) :: xs) =
       if token' = tokenString then (path, actions) :: filterToken tokenString xs
@@ -299,9 +300,13 @@ fun parseArg (arg: string) : string list * gen =
       )
   | _ => raise Fail "bar"
 
-val info =
-  case CommandLineArgs.positional () of
-    file :: args => (file, List.map parseArg args)
-  | [] => raise Fail "Not enough arguments"
+val () =
+  case fileGen of
+    "fru" => (print "Generating FRU\n"; FilesGen.genFiles FruFile.t)
+  | "fold" => (print "Generating Fold\n"; FilesGen.genFiles FoldFile.t)
+  | _ => ()
 
-val () = doSML info
+val () =
+  case CommandLineArgs.positional () of
+    file :: args => doSML (file, List.map parseArg args)
+  | [] => ()

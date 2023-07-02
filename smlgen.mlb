@@ -8,6 +8,7 @@ local
     ./smlfmt/src/prettier-print/sources.mlb
   end
   $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  Fold.sml
   FunctionalRecordUpdate.sml
   BuildAst.sml
   Utils.sml
@@ -17,6 +18,8 @@ local
   GenericGen.sml
   ShowGen.sml
   CompareGen.sml
+  FilesData.sml
+  FilesGen.sml
 in
   smlgen.sml
 end

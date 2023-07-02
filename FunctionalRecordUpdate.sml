@@ -1,19 +1,5 @@
 structure FunctionalRecordUpdate =
 struct
-  structure Fold =
-  struct
-    fun fold (a, f) g = g (a, f)
-    fun post (w, g) s =
-      w (fn (a, h) => s (a, g o h))
-
-    fun step0 h (a, f) =
-      fold (h a, f)
-    fun step1 h (a, f) b =
-      fold (h (b, a), f)
-    fun step2 h (a, f) b c =
-      fold (h (b, c, a), f)
-  end
-
   local
     fun next g (f, z) x =
       g (f x, z)
@@ -48,7 +34,6 @@ struct
     fun f28 z = next f27 z
     fun f29 z = next f28 z
     fun f30 z = next f29 z
-
     fun c0 from = from
     fun c1 from = c0 from f1
     fun c2 from = c1 from f2
@@ -80,7 +65,6 @@ struct
     fun c28 from = c27 from f28
     fun c29 from = c28 from f29
     fun c30 from = c29 from f30
-
     fun makeUpdate cX (from, from', to) record =
       let
         fun ops () = cX from'
@@ -120,7 +104,6 @@ struct
     fun makeUpdate28 z = makeUpdate c28 z
     fun makeUpdate29 z = makeUpdate c29 z
     fun makeUpdate30 z = makeUpdate c30 z
-
     fun upd z =
       Fold.step2
         (fn (s, f, (vars, ops)) => (fn out => vars (s (ops ()) (out, f)), ops))
@@ -129,6 +112,5 @@ struct
       Fold.step2
         (fn (s, v, (vars, ops)) =>
            (fn out => vars (s (ops ()) (out, fn _ => v)), ops)) z
-    fun $ (a, f) = f a
   end
 end
