@@ -56,6 +56,25 @@ In order to check the output without overwriting the file, you can pass in a `--
 
 will create a `file.sml.test` file in the same directory as `file.sml`.
 
+smlgen also allows you to generate many commonly used files for things like array literal syntax, printf syntax, etc. To generate these files, run:
+
+```
+./smlgen -gen <generator>
+```
+
+The list of file generators is shown below:
+
+| Generator |             Description                                                 |
+|-----------|-------------------------------------------------------------------------|
+| fru       | [Functional record update](http://www.mlton.org/FunctionalRecordUpdate) |
+| fold      | [Fold](http://www.mlton.org/Fold)                                       |
+| fold01n   | [Fold01N](http://www.mlton.org/Fold01N)                                 |
+| product   | [Product](http://www.mlton.org/ProductType)                             |
+| printf    | [Printf](http://www.mlton.org/Printf)                                   |
+| num       | [Numeric literals](http://www.mlton.org/NumericLiteral)                 |
+| literal   | [Array & Vector literals](http://www.mlton.org/ArrayLiteral)            |
+| optarg    | [Optional arguments](http://www.mlton.org/OptionalArguments)            |
+
 Testing
 -------
 
