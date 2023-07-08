@@ -112,3 +112,12 @@ and print the message `Max type size limit exceeded`. So a generator for somethi
 ```sml
 datatype 'a t = T' of 'a * 'a list t (* BAD *)
 ```
+
+You may hit the maximum type size limit error unintentionally, from having a very large record or tuple.
+In that case you can increase the maximum type size with the `-maxsize` flag. For example:
+
+```
+./smlgen file.sml ... -maxsize 1000
+```
+
+will set the max type size limit to 1000. The default max type size is set at 100.

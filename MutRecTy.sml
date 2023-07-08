@@ -148,7 +148,7 @@ struct
     end
 
   exception RecursionLimit
-  val maxTySize = ref 5000
+  val maxTySize = ref 100
 
   fun traverseTy
     (env as Env {c, tyTokToId, tyData, tyToFix, fixToTy, ...}, tycon, substMap) =
@@ -184,13 +184,10 @@ struct
                 in
                   if AtomTable.inDomain tyTokToId (Atom.atom tycon') then
                     let
-                      val tyStr = showTy ty
-                      (* TODO: Use more accurate method to count "size" of type. *)
                       val () =
-                        if String.size tyStr > !maxTySize then
-                          raise RecursionLimit
-                        else
-                          ()
+                        if tySize ty > !maxTySize then raise RecursionLimit
+                        else ()
+                      val tyStr = showTy ty
                       val con = fn () =>
                         Ty.Con
                           { args = Ast.SyntaxSeq.Empty

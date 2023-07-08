@@ -1,5 +1,6 @@
 val test = CommandLineArgs.parseFlag "test"
 val fileGen = CommandLineArgs.parseString "gen" ""
+val maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
 
 fun filterToken tokenString ((token' :: path, actions) :: xs) =
       if token' = tokenString then (path, actions) :: filterToken tokenString xs
@@ -298,7 +299,15 @@ fun parseArg (arg: string) : string list * gen =
       , CharVector.foldl (fn (ch, acc) => addGen acc (lookupGen ch)) emptyGen
           opts
       )
-  | _ => raise Fail "bar"
+  | _ => raise Fail "Invalid generator syntax: should be format type:generators"
+
+val () =
+  if maxSize <> ! MutRecTy.maxTySize then
+    ( print ("Setting max type size to: " ^ Int.toString maxSize ^ "\n")
+    ; MutRecTy.maxTySize := maxSize
+    )
+  else
+    ()
 
 val () =
   case fileGen of

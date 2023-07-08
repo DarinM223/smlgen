@@ -68,6 +68,18 @@ struct
     | Ty.Arrow {from, to, ...} => showTy from ^ "->" ^ showTy to
     | Ty.Parens {ty, ...} => "(" ^ showTy ty ^ ")"
 
+  fun tySize ty =
+    case ty of
+      Ty.Var _ => 1
+    | Ty.Record {elems, ...} =>
+        ArraySlice.foldl (fn ({ty, ...}, acc) => acc + tySize ty) 1 elems
+    | Ty.Tuple {elems, ...} =>
+        ArraySlice.foldl (fn (ty, acc) => acc + tySize ty) 0 elems
+    | Ty.Con {args, ...} =>
+        List.foldl (fn (ty, acc) => acc + tySize ty) 1 (syntaxSeqToList args)
+    | Ty.Arrow {from, to, ...} => tySize from + tySize to
+    | Ty.Parens {ty, ...} => tySize ty
+
   fun destructTyPat fresh (Ty.Var _) =
         Pat.Const (fresh tTok)
     | destructTyPat fresh (Ty.Record {elems, ...}) =
