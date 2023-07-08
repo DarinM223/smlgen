@@ -58,14 +58,20 @@ struct
                 Token.toString (stripToken lab) ^ ":" ^ showTy ty)
              (ArraySlice.foldr (op::) [] elems)) ^ "}"
     | Ty.Tuple {elems, ...} =>
-        "("
-        ^
-        String.concatWith "," (List.map showTy
-          (ArraySlice.foldr (op::) [] elems)) ^ ")"
+        if ArraySlice.length elems = 1 then
+          showTy (parensTy (ArraySlice.sub (elems, 0)))
+        else
+          "("
+          ^
+          String.concatWith "," (List.map showTy
+            (ArraySlice.foldr (op::) [] elems)) ^ ")"
     | Ty.Con {args, id} =>
         "(" ^ String.concatWith "," (List.map showTy (syntaxSeqToList args))
         ^ ")" ^ Token.toString (stripToken (MaybeLongToken.getToken id))
     | Ty.Arrow {from, to, ...} => showTy from ^ "->" ^ showTy to
+    | Ty.Parens {ty as Ty.Parens _, ...} => showTy ty
+    | Ty.Parens {ty as Ty.Tuple _, ...} => showTy ty
+    | Ty.Parens {ty as Ty.Record _, ...} => showTy ty
     | Ty.Parens {ty, ...} => "(" ^ showTy ty ^ ")"
 
   fun tySize ty =

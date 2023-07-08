@@ -52,9 +52,10 @@ struct
   val tTok = mkToken "t"
   val falseTok = mkToken "false"
   val trueTok = mkToken "true"
+  val openParenTok = mkReservedToken OpenParen
+  val closeParenTok = mkReservedToken CloseParen
 
-  val unitExp =
-    Unit {left = mkReservedToken OpenParen, right = mkReservedToken CloseParen}
+  val unitExp = Unit {left = openParenTok, right = closeParenTok}
 
   fun singleLetExp dec exp =
     LetInEnd
@@ -69,11 +70,11 @@ struct
   fun tupleExp [Const tok] = Const tok
     | tupleExp exps =
         Tuple
-          { left = mkReservedToken OpenParen
+          { left = openParenTok
           , elems = ArraySlice.full (Array.fromList exps)
           , delims = ArraySlice.full (Array.fromList
               (List.map (fn _ => commaTok) (List.tl exps)))
-          , right = mkReservedToken CloseParen
+          , right = closeParenTok
           }
 
   fun recordExp params =
@@ -123,29 +124,19 @@ struct
 
   fun parensExp (Const tok) = Const tok
     | parensExp exp =
-        Parens
-          { left = mkReservedToken OpenParen
-          , exp = exp
-          , right = mkReservedToken CloseParen
-          }
+        Parens {left = openParenTok, exp = exp, right = closeParenTok}
 
   fun infixLExp opp exps =
     List.foldl (fn (e, acc) => Infix {left = acc, id = opp, right = e})
       (List.hd exps) (List.tl exps)
 
-  val unitPat =
-    Pat.Unit
-      {left = mkReservedToken OpenParen, right = mkReservedToken CloseParen}
+  val unitPat = Pat.Unit {left = openParenTok, right = closeParenTok}
 
   fun parensPat (pat as Pat.Const _) = pat
     | parensPat (pat as Pat.Tuple _) = pat
     | parensPat (pat as Pat.Record _) = pat
     | parensPat pat =
-        Pat.Parens
-          { left = mkReservedToken OpenParen
-          , pat = pat
-          , right = mkReservedToken CloseParen
-          }
+        Pat.Parens {left = openParenTok, pat = pat, right = closeParenTok}
 
   fun identPat t =
     Pat.Ident {opp = NONE, id = MaybeLongToken.make t}
@@ -277,11 +268,11 @@ struct
   fun destructTuplePat [Pat.Const tok] = Pat.Const tok
     | destructTuplePat pats =
         Pat.Tuple
-          { left = mkReservedToken OpenParen
+          { left = openParenTok
           , elems = ArraySlice.full (Array.fromList pats)
           , delims = ArraySlice.full (Array.fromList (List.tl
               (List.map (fn _ => commaTok) pats)))
-          , right = mkReservedToken CloseParen
+          , right = closeParenTok
           }
 
   fun destructInfixLPat opp pats =
@@ -300,4 +291,7 @@ struct
       }
 
   val wildPat = Pat.Wild underTok
+
+  fun parensTy ty =
+    Ty.Parens {left = openParenTok, ty = ty, right = closeParenTok}
 end
