@@ -1,0 +1,21 @@
+datatype 'a t = T' of 'a * 'a list t
+
+datatype 'a t = T' of ('a * 'a) t
+
+datatype 'a t = T' of ('a * 'a * 'a * 'a * 'a) list t
+
+datatype ('a, 'b) t = T' of (('a * 'a) list, 'b * 'b) t
+
+(* This should work *)
+datatype 'a t =
+  T' of 'a t
+local
+  val rec t = fn (t_0, a_) => fn T' t0 => "T' " ^ "(" ^ t_0 t0 ^ ")"
+  val t = fn a_ => let val rec t_0 = fn ? => t (t_0, a_) ? in t_0 end
+in val show = fn ? => t ?
+end
+local
+  val rec t = fn (t_0, a_) => fn (T' t0, T' t1) => t_0 (t0, t1)
+  val t = fn a_ => let val rec t_0 = fn ? => t (t_0, a_) ? in t_0 end
+in val compare = fn ? => t ?
+end

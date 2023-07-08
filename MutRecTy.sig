@@ -29,6 +29,7 @@ sig
      * string)
     -> Ast.Exp.dec list
 
+  val maxTySize: int ref
   val genDatabindHelper:
     (env * Token.token * Token.token list * Utils.constr list -> Ast.Exp.dec)
     * (env * Token.token list * Ast.Ty.ty list * Token.token list -> Ast.Exp.dec)

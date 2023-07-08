@@ -106,11 +106,9 @@ datatype 'a t = T' of 'a * 'a t * int t * string t
 
 All of the generator functions handle some types of polymorphic recursive use inside its definition. In the above example, the constructor of `'a t` contains monomorphic uses of `t` (`int t` and `string t`), and a naive recursive function will not work with these, since it will unify `'a` with either `int` or `string`.
 The generator functions work around this by creating separate functions for `int t` and `string t`.
-However, if the type itself grows infinitely, the generator will currently go into
-an infinite loop. So a generator for something like this cannot be done:
+However, if the type itself grows infinitely, the generator will skip the type
+and print the message `Max type size limit exceeded`. So a generator for something like this cannot be done:
 
 ```sml
 datatype 'a t = T' of 'a * 'a list t (* BAD *)
 ```
-
-If a generator is used on this type, it will loop infinitely until it runs out of memory. Standard ML doesn't support polymorphic recursion, so this case cannot be handled anyway, but in the future, detecting these cases and stopping with an error would be better.

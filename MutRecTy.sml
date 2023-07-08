@@ -147,6 +147,9 @@ struct
         }
     end
 
+  exception RecursionLimit
+  val maxTySize = ref 5000
+
   fun traverseTy
     (env as Env {c, tyTokToId, tyData, tyToFix, fixToTy, ...}, tycon, substMap) =
     let
@@ -180,13 +183,24 @@ struct
                     (stripToken (MaybeLongToken.getToken id))
                 in
                   if AtomTable.inDomain tyTokToId (Atom.atom tycon') then
-                    ( traverseTy (env, tycon', buildSubstMap env tycon' tys)
-                    ; addTyArg env tyStrA (Ty.Con
-                        { args = SyntaxSeq.Empty
-                        , id = MaybeLongToken.make (AtomTable.lookup tyToFix
-                            (Atom.atom (showTy ty)))
-                        })
-                    )
+                    let
+                      val tyStr = showTy ty
+                      (* TODO: Use more accurate method to count "size" of type. *)
+                      val () =
+                        if String.size tyStr > !maxTySize then
+                          raise RecursionLimit
+                        else
+                          ()
+                      val con = fn () =>
+                        Ty.Con
+                          { args = Ast.SyntaxSeq.Empty
+                          , id = MaybeLongToken.make
+                              (AtomTable.lookup tyToFix (Atom.atom tyStr))
+                          }
+                    in
+                      traverseTy (env, tycon', buildSubstMap env tycon' tys);
+                      addTyArg env tyStrA (con ())
+                    end
                   else
                     List.app go tys
                 end
@@ -374,6 +388,8 @@ struct
             in
               genRecursive (env, tycons, tys, vars)
             end
+            handle RecursionLimit =>
+              (print "Max type size limit exceeded\n"; DecEmpty)
     in
       multDec (List.map handleComponent (List.rev scc))
     end
