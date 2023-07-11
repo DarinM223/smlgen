@@ -12,16 +12,15 @@ struct
 
   fun ins ([], {arg = SOME _, ...}) = Value.const quesTok
     | ins ([], _) = Value.unit
-    | ins (is, constr: constr) =
+    | ins (i :: is, constr: constr) =
         let
           val head =
             case constr of
               {arg = SOME _, ...} => Value.const quesTok
             | _ => Value.unit
-          val head = Value.app (List.hd is) head
+          val head = Value.app i head
         in
-          List.foldl (fn (i, acc) => Value.app i (Value.parens acc)) head
-            (List.tl is)
+          List.foldl (fn (i, acc) => Value.app i (Value.parens acc)) head is
         end
   fun constr ({arg = SOME _, id, ...}: constr) =
         Value.app id (Value.const quesTok)
@@ -144,49 +143,53 @@ struct
       | Ty.Parens {ty, ...} => genTy env ty
     end
 
-  fun genConstrs (env, constrs) =
-    let
-      val c0tok = mkToken "C0'"
-      val c1tok = mkToken "C1'"
-      val constrs' =
-        List.map
-          (fn {arg = SOME {ty, ...}, id, ...} =>
-             appExp
-               [Const c1tok, Const (stringTok id), parensExp (genTy env ty)]
-            | {id, ...} =>
-             App {left = Const c0tok, right = Const (stringTok id)}) constrs
-      val plusTok = mkToken "+`"
-      val dataExp =
-        List.foldl (fn (e, acc) => Infix {left = acc, id = plusTok, right = e})
-          (List.hd constrs') (List.tl constrs')
-      val inrTok = mkToken "INR"
-      val inlTok = mkToken "INL"
-      fun buildINs 0 [_] = [[]]
-        | buildINs n [_] =
-            [inlTok :: List.tabulate (n - 1, fn _ => inlTok)]
-        | buildINs 0 (_ :: cs) =
-            [inrTok] :: buildINs 1 cs
-        | buildINs n (_ :: cs) =
-            (inrTok :: List.tabulate (n, fn _ => inlTok)) :: buildINs (n + 1) cs
-        | buildINs _ [] = []
-      val revConstrs = List.rev constrs
-      val ins = buildINs 0 revConstrs
-      val toINs =
-        List.map
-          (fn (is, constr) =>
-             (ConvertPat.constr constr, ConvertExp.ins (is, constr)))
-          (ListPair.zip (ins, revConstrs))
-      val fromINs =
-        List.map
-          (fn (is, constr) =>
-             (ConvertPat.ins (is, constr), ConvertExp.constr constr))
-          (ListPair.zip (ins, revConstrs))
-    in
-      App
-        { left = App {left = Const (mkToken "data'"), right = parensExp dataExp}
-        , right = tupleExp [multFnExp toINs, multFnExp fromINs]
-        }
-    end
+  fun genConstrs (_, []) = unitExp
+    | genConstrs (env, constrs) =
+        let
+          val c0tok = mkToken "C0'"
+          val c1tok = mkToken "C1'"
+          val constrs' =
+            List.map
+              (fn {arg = SOME {ty, ...}, id, ...} =>
+                 appExp
+                   [Const c1tok, Const (stringTok id), parensExp (genTy env ty)]
+                | {id, ...} =>
+                 App {left = Const c0tok, right = Const (stringTok id)}) constrs
+          val plusTok = mkToken "+`"
+          val dataExp =
+            List.foldl
+              (fn (e, acc) => Infix {left = acc, id = plusTok, right = e})
+              (List.hd constrs') (List.tl constrs')
+          val inrTok = mkToken "INR"
+          val inlTok = mkToken "INL"
+          fun buildINs 0 [_] = [[]]
+            | buildINs n [_] =
+                [inlTok :: List.tabulate (n - 1, fn _ => inlTok)]
+            | buildINs 0 (_ :: cs) =
+                [inrTok] :: buildINs 1 cs
+            | buildINs n (_ :: cs) =
+                (inrTok :: List.tabulate (n, fn _ => inlTok))
+                :: buildINs (n + 1) cs
+            | buildINs _ [] = []
+          val revConstrs = List.rev constrs
+          val ins = buildINs 0 revConstrs
+          val toINs =
+            List.map
+              (fn (is, constr) =>
+                 (ConvertPat.constr constr, ConvertExp.ins (is, constr)))
+              (ListPair.zip (ins, revConstrs))
+          val fromINs =
+            List.map
+              (fn (is, constr) =>
+                 (ConvertPat.ins (is, constr), ConvertExp.constr constr))
+              (ListPair.zip (ins, revConstrs))
+        in
+          App
+            { left = App
+                {left = Const (mkToken "data'"), right = parensExp dataExp}
+            , right = tupleExp [multFnExp toINs, multFnExp fromINs]
+            }
+        end
 
   fun genTypebind ({elems, ...}: typbind) =
     let

@@ -67,13 +67,14 @@ struct
       , endd = mkReservedToken End
       }
 
-  fun tupleExp [Const tok] = Const tok
-    | tupleExp exps =
+  fun tupleExp [] = unitExp
+    | tupleExp [Const tok] = Const tok
+    | tupleExp (exps as _ :: tail) =
         Tuple
           { left = openParenTok
           , elems = ArraySlice.full (Array.fromList exps)
           , delims = ArraySlice.full (Array.fromList
-              (List.map (fn _ => commaTok) (List.tl exps)))
+              (List.map (fn _ => commaTok) tail))
           , right = closeParenTok
           }
 
@@ -84,8 +85,9 @@ struct
           (List.map (fn (a, b) => RecordRow {lab = a, eq = equalTok, exp = b})
              params))
       , delims =
-          (ArraySlice.full o Array.fromList o List.map (fn _ => commaTok)
-           o List.tl) params
+          ArraySlice.full
+            (Array.tabulate (Int.max (0, List.length params - 1), fn _ =>
+               commaTok))
       , right = mkReservedToken CloseCurlyBracket
       }
 
@@ -93,14 +95,17 @@ struct
     List
       { left = mkReservedToken OpenSquareBracket
       , elems = ArraySlice.full (Array.fromList exps)
-      , delims = ArraySlice.full (Array.fromList
-          (List.map (fn _ => commaTok) (List.tl exps)))
+      , delims =
+          ArraySlice.full
+            (Array.tabulate (Int.max (0, List.length exps - 1), fn _ =>
+               commaTok))
       , right = mkReservedToken CloseSquareBracket
       }
 
-  fun appExp exps =
-    List.foldl (fn (e, acc) => App {left = acc, right = e}) (List.hd exps)
-      (List.tl exps)
+  fun appExp [] = raise Fail "Empty application"
+    | appExp [exp] = exp
+    | appExp (exp :: exps) =
+        List.foldl (fn (e, acc) => App {left = acc, right = e}) exp exps
 
   fun singleFnExp pat exp =
     Fn
@@ -117,8 +122,9 @@ struct
       , elems = ArraySlice.full (Array.fromList
           (List.map
              (fn (pat, exp) => {pat = pat, arrow = fatArrowTok, exp = exp}) tups))
-      , delims = ArraySlice.full (Array.fromList
-          (List.map (fn _ => orTok) (List.tl tups)))
+      , delims =
+          ArraySlice.full
+            (Array.tabulate (Int.max (0, List.length tups - 1), fn _ => orTok))
       , optbar = NONE
       }
 
@@ -126,9 +132,11 @@ struct
     | parensExp exp =
         Parens {left = openParenTok, exp = exp, right = closeParenTok}
 
-  fun infixLExp opp exps =
-    List.foldl (fn (e, acc) => Infix {left = acc, id = opp, right = e})
-      (List.hd exps) (List.tl exps)
+  fun infixLExp _ [] = raise Fail "Empty infixl expression"
+    | infixLExp _ [exp] = exp
+    | infixLExp opp (exp :: exps) =
+        List.foldl (fn (e, acc) => Infix {left = acc, id = opp, right = e}) exp
+          exps
 
   val unitPat = Pat.Unit {left = openParenTok, right = closeParenTok}
 
@@ -165,8 +173,10 @@ struct
                 , eq = equalTok
                 , exp = exp
                 }) l))
-      , delims = ArraySlice.full (Array.fromList
-          (List.map (fn _ => andReservedTok) (List.tl l)))
+      , delims =
+          ArraySlice.full
+            (Array.tabulate (Int.max (0, List.length l - 1), fn _ =>
+               andReservedTok))
       }
 
   fun multDec decs =
@@ -219,12 +229,16 @@ struct
                               , eq = equalTok
                               , exp = exp
                               }) cases))
-                    , delims = ArraySlice.full (Array.fromList
-                        (List.map (fn _ => orTok) (List.tl cases)))
+                    , delims =
+                        ArraySlice.full
+                          (Array.tabulate
+                             (Int.max (0, List.length cases - 1), fn _ => orTok))
                     , optbar = NONE
                     }) funs))
-          , delims = ArraySlice.full (Array.fromList
-              (List.map (fn _ => andKeyTok) (List.tl funs)))
+          , delims =
+              ArraySlice.full
+                (Array.tabulate (Int.max (0, List.length funs - 1), fn _ =>
+                   andKeyTok))
           }
       }
 
@@ -248,8 +262,10 @@ struct
       , elems = ArraySlice.full (Array.fromList
           (List.map (fn tok => Pat.LabAsPat {id = tok, ty = NONE, aspat = NONE})
              patTokens))
-      , delims = ArraySlice.full (Array.fromList (List.tl
-          (List.map (fn _ => commaTok) patTokens)))
+      , delims =
+          ArraySlice.full
+            (Array.tabulate (Int.max (0, List.length patTokens - 1), fn _ =>
+               commaTok))
       , right = mkReservedToken CloseCurlyBracket
       }
 
@@ -260,8 +276,10 @@ struct
           (List.map
              (fn (lab, pat) =>
                 Pat.LabEqPat {lab = lab, eq = equalTok, pat = pat}) rows))
-      , delims = ArraySlice.full (Array.fromList (List.tl
-          (List.map (fn _ => commaTok) rows)))
+      , delims =
+          ArraySlice.full
+            (Array.tabulate (Int.max (0, List.length rows - 1), fn _ =>
+               commaTok))
       , right = mkReservedToken CloseCurlyBracket
       }
 
@@ -270,14 +288,19 @@ struct
         Pat.Tuple
           { left = openParenTok
           , elems = ArraySlice.full (Array.fromList pats)
-          , delims = ArraySlice.full (Array.fromList (List.tl
-              (List.map (fn _ => commaTok) pats)))
+          , delims =
+              ArraySlice.full
+                (Array.tabulate (Int.max (0, List.length pats - 1), fn _ =>
+                   commaTok))
           , right = closeParenTok
           }
 
-  fun destructInfixLPat opp pats =
-    List.foldl (fn (p, acc) => Pat.Infix {left = acc, id = opp, right = p})
-      (List.hd pats) (List.tl pats)
+  fun destructInfixLPat _ [] =
+        raise Fail "Destructing empty infixl pattern"
+    | destructInfixLPat _ [pat] = pat
+    | destructInfixLPat opp (pat :: pats) =
+        List.foldl (fn (p, acc) => Pat.Infix {left = acc, id = opp, right = p})
+          pat pats
 
   fun destructListPat pats =
     Pat.List
@@ -286,7 +309,7 @@ struct
       , delims = ArraySlice.full (Array.fromList
           (case pats of
              [] => []
-           | _ => (List.tl (List.map (fn _ => commaTok) pats))))
+           | _ :: pats => List.map (fn _ => commaTok) pats))
       , right = mkReservedToken CloseSquareBracket
       }
 
