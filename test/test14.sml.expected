@@ -1,0 +1,175 @@
+infix & *` +`
+
+structure Lam =
+struct
+  type varname = int
+  val varname = let open Generic in int end
+  val showVarname = Int.toString
+  val compareVarname = Int.compare
+  datatype exp =
+    Var of varname
+  | App of exp * exp
+  | Lam of varname * exp
+  | Let of varname * exp * exp
+  val exp =
+    let
+      open Tie
+      val Y = Generic.Y
+    in
+      fix Y (fn exp =>
+        let
+          open Generic
+        in
+          data'
+            (C1' "Var" varname +` C1' "App" (tuple2 (exp, exp))
+             +` C1' "Lam" (tuple2 (varname, exp))
+             +` C1' "Let" (tuple3 (varname, exp, exp)))
+            ( fn Let ? => INR ?
+               | Lam ? => INL (INR ?)
+               | App ? => INL (INL (INR ?))
+               | Var ? => INL (INL (INL ?))
+            , fn INR ? => Let ?
+               | INL (INR ?) => Lam ?
+               | INL (INL (INR ?)) => App ?
+               | INL (INL (INL ?)) => Var ?
+            )
+        end)
+    end
+  local
+    val rec exp = fn exp_0 =>
+      fn Var t0 => "Var " ^ "(" ^ showVarname t0 ^ ")"
+       | App (t1, t2) =>
+        "App " ^ "(" ^ String.concatWith ", " [exp_0 t1, exp_0 t2] ^ ")"
+       | Lam (t3, t4) =>
+        "Lam " ^ "(" ^ String.concatWith ", " [showVarname t3, exp_0 t4] ^ ")"
+       | Let (t5, t6, t7) =>
+        "Let "
+        ^ "(" ^ String.concatWith ", " [showVarname t5, exp_0 t6, exp_0 t7]
+        ^ ")"
+    val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
+  in val showExp = fn ? => exp ?
+  end
+  local
+    val rec exp = fn exp_0 =>
+      fn (Var t0, Var t1) => compareVarname (t0, t1)
+       | (Var _, App _) => LESS
+       | (Var _, Lam _) => LESS
+       | (Var _, Let _) => LESS
+       | (App _, Var _) => GREATER
+       | (App (t2, t3), App (t4, t5)) =>
+        (case exp_0 (t2, t4) of
+           EQUAL => exp_0 (t3, t5)
+         | ? => ?)
+       | (App _, Lam _) => LESS
+       | (App _, Let _) => LESS
+       | (Lam _, Var _) => GREATER
+       | (Lam _, App _) => GREATER
+       | (Lam (t6, t7), Lam (t8, t9)) =>
+        (case compareVarname (t6, t8) of
+           EQUAL => exp_0 (t7, t9)
+         | ? => ?)
+       | (Lam _, Let _) => LESS
+       | (Let _, Var _) => GREATER
+       | (Let _, App _) => GREATER
+       | (Let _, Lam _) => GREATER
+       | (Let (t10, t11, t12), Let (t13, t14, t15)) =>
+        (case compareVarname (t10, t13) of
+           EQUAL =>
+             (case exp_0 (t11, t14) of
+                EQUAL => exp_0 (t12, t15)
+              | ? => ?)
+         | ? => ?)
+    val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
+  in val compareExp = fn ? => exp ?
+  end
+end
+
+structure Typ =
+struct
+  type qname = string
+  val qname = let open Generic in string end
+  val showQname = fn t0 => "\"" ^ t0 ^ "\""
+  val compareQname = String.compare
+
+  datatype typ =
+    TVar of tv ref
+  | QVar of qname
+  | TArrow of typ * typ
+  and tv =
+    Link of typ
+  | Unbound of string
+  val tv & typ =
+    let
+      open Tie
+      val Y = Generic.Y
+    in
+      fix (Y *` Y) (fn tv & typ =>
+        let
+          open Generic
+        in
+          data' (C1' "Link" typ +` C1' "Unbound" string)
+            ( fn Unbound ? => INR ? | Link ? => INL ?
+            , fn INR ? => Unbound ? | INL ? => Link ?
+            )
+          &
+          data'
+            (C1' "TVar" (refc tv) +` C1' "QVar" qname
+             +` C1' "TArrow" (tuple2 (typ, typ)))
+            ( fn TArrow ? => INR ?
+               | QVar ? => INL (INR ?)
+               | TVar ? => INL (INL ?)
+            , fn INR ? => TArrow ?
+               | INL (INR ?) => QVar ?
+               | INL (INL ?) => TVar ?
+            )
+        end)
+    end
+  local
+    val rec tv = fn typ_1 =>
+      fn Link t0 => "Link " ^ "(" ^ typ_1 t0 ^ ")"
+       | Unbound t1 => "Unbound " ^ "(" ^ "\"" ^ t1 ^ "\"" ^ ")"
+    and rec typ = fn (typ_1, tv_0) =>
+      fn TVar (ref t0) => "TVar " ^ "(" ^ "ref " ^ tv_0 t0 ^ ")"
+       | QVar t1 => "QVar " ^ "(" ^ showQname t1 ^ ")"
+       | TArrow (t2, t3) =>
+        "TArrow " ^ "(" ^ String.concatWith ", " [typ_1 t2, typ_1 t3] ^ ")"
+    val tv_typ = fn () =>
+      let
+        val rec typ_1 = fn ? => typ (typ_1, tv_0) ?
+        and rec tv_0 = fn ? => tv typ_1 ?
+      in
+        (tv_0, typ_1)
+      end
+  in val showTv = fn ? => #1 (tv_typ ?) val showTyp = fn ? => #2 (tv_typ ?)
+  end
+  local
+    val rec tv = fn typ_1 =>
+      fn (Link t0, Link t1) => typ_1 (t0, t1)
+       | (Link _, Unbound _) => LESS
+       | (Unbound _, Link _) => GREATER
+       | (Unbound t2, Unbound t3) => String.compare (t2, t3)
+    and rec typ = fn (typ_1, tv_0) =>
+      fn (TVar (ref t0), TVar (ref t1)) => tv_0 (t0, t1)
+       | (TVar _, QVar _) => LESS
+       | (TVar _, TArrow _) => LESS
+       | (QVar _, TVar _) => GREATER
+       | (QVar t2, QVar t3) => compareQname (t2, t3)
+       | (QVar _, TArrow _) => LESS
+       | (TArrow _, TVar _) => GREATER
+       | (TArrow _, QVar _) => GREATER
+       | (TArrow (t4, t5), TArrow (t6, t7)) =>
+        (case typ_1 (t4, t6) of
+           EQUAL => typ_1 (t5, t7)
+         | ? => ?)
+    val tv_typ = fn () =>
+      let
+        val rec typ_1 = fn ? => typ (typ_1, tv_0) ?
+        and rec tv_0 = fn ? => tv typ_1 ?
+      in
+        (tv_0, typ_1)
+      end
+  in
+    val compareTv = fn ? => #1 (tv_typ ?)
+    val compareTyp = fn ? => #2 (tv_typ ?)
+  end
+end

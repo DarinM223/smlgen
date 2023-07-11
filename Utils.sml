@@ -86,21 +86,27 @@ struct
     | Ty.Arrow {from, to, ...} => tySize from + tySize to
     | Ty.Parens {ty, ...} => tySize ty
 
+  fun stripParens (Pat.Parens {pat, ...}) = pat
+    | stripParens (ty as Pat.Tuple {elems, ...}) =
+        if ArraySlice.length elems = 1 then ArraySlice.sub (elems, 0) else ty
+    | stripParens pat = pat
+
   fun destructTyPat fresh (Ty.Var _) =
         Pat.Const (fresh tTok)
     | destructTyPat fresh (Ty.Record {elems, ...}) =
         destructRecordPat'
-          (List.map (fn {lab, ty, ...} => (lab, destructTyPat fresh ty))
+          (List.map
+             (fn {lab, ty, ...} => (lab, stripParens (destructTyPat fresh ty)))
              (ArraySlice.foldr (op::) [] elems))
     | destructTyPat fresh (Ty.Tuple {elems, ...}) =
-        destructTuplePat (List.map (destructTyPat fresh)
+        destructTuplePat (List.map (stripParens o destructTyPat fresh)
           (ArraySlice.foldr (op::) [] elems))
     | destructTyPat fresh (Ty.Con {id, args, ...}) =
         let
           val id = MaybeLongToken.getToken id
         in
           case (Token.toString id, syntaxSeqToList args) of
-            ("ref", [ty]) => conPat id (parensPat (destructTyPat fresh ty))
+            ("ref", [ty]) => parensPat (conPat id (destructTyPat fresh ty))
           | ("unit", []) => wildPat
           | _ => Pat.Const (fresh tTok)
         end
