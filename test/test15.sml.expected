@@ -1,0 +1,70 @@
+datatype t = TA of (t * string * t) | TB of int
+val t =
+  let
+    open Tie
+    val Y = Generic.Y
+  in
+    fix Y (fn t =>
+      let
+        open Generic
+      in
+        data' (C1' "TA" (tuple3 (t, string, t)) +` C1' "TB" int)
+          (fn TB ? => INR ? | TA ? => INL ?, fn INR ? => TB ? | INL ? => TA ?)
+      end)
+  end
+local
+  val rec t = fn t_0 =>
+    fn TA (t0, t1, t2) =>
+      "TA " ^ "(" ^ String.concatWith ", " [t_0 t0, "\"" ^ t1 ^ "\"", t_0 t2]
+      ^ ")"
+     | TB t3 => "TB " ^ "(" ^ Int.toString t3 ^ ")"
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val show = t ()
+end
+local
+  val rec t = fn t_0 =>
+    fn (TA (t0, t1, t2), TA (t3, t4, t5)) =>
+      (case t_0 (t0, t3) of
+         EQUAL =>
+           (case String.compare (t1, t4) of
+              EQUAL => t_0 (t2, t5)
+            | ? => ?)
+       | ? => ?)
+     | (TA _, TB _) => LESS
+     | (TB _, TA _) => GREATER
+     | (TB t6, TB t7) => Int.compare (t6, t7)
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val compare = t ()
+end
+datatype result = ResultC of t | ResultD of string list
+val result =
+  let
+    open Generic
+  in
+    data' (C1' "ResultC" t +` C1' "ResultD" (list string))
+      ( fn ResultD ? => INR ? | ResultC ? => INL ?
+      , fn INR ? => ResultD ? | INL ? => ResultC ?
+      )
+  end
+val showResult =
+  fn ResultC t0 => "ResultC " ^ "(" ^ show t0 ^ ")"
+   | ResultD t1 =>
+    "ResultD " ^ "("
+    ^
+    "[" ^ String.concatWith ", " (List.map (fn t0 => "\"" ^ t0 ^ "\"") t1) ^ "]"
+    ^ ")"
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+in
+  val compareResult =
+    fn (ResultC t0, ResultC t1) => compare (t0, t1)
+     | (ResultC _, ResultD _) => LESS
+     | (ResultD _, ResultC _) => GREATER
+     | (ResultD t2, ResultD t3) => compareList String.compare (t2, t3)
+end

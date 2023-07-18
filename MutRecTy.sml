@@ -257,13 +257,15 @@ struct
             case vars of
               v :: _ => v
             | _ => mkToken default
+          fun unpackQuesFn f =
+            if normalizedLen = 0 then f unitExp
+            else singleFnExp (Pat.Const quesTok) (f (Const quesTok))
         in
           if one then
-            singleFnExp (Pat.Const quesTok)
-              (appExp [Const tupledName, Const quesTok])
+            unpackQuesFn (fn exp => (appExp [Const tupledName, exp]))
           else if List.length vars = normalizedLen then
-            singleFnExp (Pat.Const quesTok) (appExp
-              [mkNum i, parensExp (appExp [Const tupledName, Const quesTok])])
+            unpackQuesFn (fn exp =>
+              appExp [mkNum i, parensExp (appExp [Const tupledName, exp])])
           else
             let
               val tuple = tupleExp (List.map Const (padList

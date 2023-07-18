@@ -47,7 +47,7 @@ struct
         ^ "(" ^ String.concatWith ", " [showVarname t5, exp_0 t6, exp_0 t7]
         ^ ")"
     val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
-  in val showExp = fn ? => exp ?
+  in val showExp = exp ()
   end
   local
     val rec exp = fn exp_0 =>
@@ -80,7 +80,7 @@ struct
               | ? => ?)
          | ? => ?)
     val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
-  in val compareExp = fn ? => exp ?
+  in val compareExp = exp ()
   end
 end
 
@@ -140,7 +140,7 @@ struct
       in
         (tv_0, typ_1)
       end
-  in val showTv = fn ? => #1 (tv_typ ?) val showTyp = fn ? => #2 (tv_typ ?)
+  in val showTv = #1 (tv_typ ()) val showTyp = #2 (tv_typ ())
   end
   local
     val rec tv = fn typ_1 =>
@@ -168,8 +168,6 @@ struct
       in
         (tv_0, typ_1)
       end
-  in
-    val compareTv = fn ? => #1 (tv_typ ?)
-    val compareTyp = fn ? => #2 (tv_typ ?)
+  in val compareTv = #1 (tv_typ ()) val compareTyp = #2 (tv_typ ())
   end
 end
