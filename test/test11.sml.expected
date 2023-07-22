@@ -11,6 +11,7 @@ type t =
   , h: char ref * (bool * int) ref * {a: int, b: string} ref
   , i: int ref ref ref
   , j: unit * unit * {a: unit, b: unit}
+  , k: int option ref option option
   }
 val t =
   let
@@ -35,65 +36,90 @@ val t =
             , unit
             , record' (R' "a" unit *` R' "b" unit)
                 (fn {a, b} => a & b, fn a & b => {a = a, b = b})
-            )))
-      ( fn {a, b, c, d, e, f, g, h, i, j} =>
-          a & b & c & d & e & f & g & h & i & j
-      , fn a & b & c & d & e & f & g & h & i & j =>
-          {a = a, b = b, c = c, d = d, e = e, f = f, g = g, h = h, i = i, j = j}
+            )) *` R' "k" (option (option (refc (option int)))))
+      ( fn {a, b, c, d, e, f, g, h, i, j, k} =>
+          a & b & c & d & e & f & g & h & i & j & k
+      , fn a & b & c & d & e & f & g & h & i & j & k =>
+          { a = a
+          , b = b
+          , c = c
+          , d = d
+          , e = e
+          , f = f
+          , g = g
+          , h = h
+          , i = i
+          , j = j
+          , k = k
+          }
       )
   end
-val show =
-  fn { a = t0
-     , b = t1
-     , c = t2
-     , d = t3
-     , e = t4
-     , f = (t5, t6)
-     , g = t7
-     , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
-     , i = ref (ref (ref t13))
-     , j = (_, _, {a = _, b = _})
-     } =>
-    "{"
-    ^
-    String.concatWith ", "
-      [ "a = " ^ Int.toString t0
-      , "b = " ^ Real.toString t1
-      , "c = " ^ "\"" ^ t2 ^ "\""
-      , "d = " ^ "#\"" ^ Char.toString t3 ^ "\""
-      , "e = " ^ Bool.toString t4
-      , "f = "
-        ^ "(" ^ String.concatWith ", " [Int.toString t5, Real.toString t6] ^ ")"
-      , "g = "
-        ^ "[" ^ String.concatWith ", " (List.map (fn t0 => "\"" ^ t0 ^ "\"") t7)
-        ^ "]"
-      , "h = "
-        ^
-        "("
-        ^
-        String.concatWith ", "
-          [ "ref " ^ "#\"" ^ Char.toString t8 ^ "\""
-          , "ref "
-            ^ "(" ^ String.concatWith ", " [Bool.toString t9, Int.toString t10]
-            ^ ")"
-          , "ref "
-            ^
-            "{"
-            ^
-            String.concatWith ", "
-              ["a = " ^ Int.toString t11, "b = " ^ "\"" ^ t12 ^ "\""] ^ "}"
-          ] ^ ")"
-      , "i = " ^ "ref " ^ "ref " ^ "ref " ^ Int.toString t13
-      , "j = "
-        ^
-        "("
-        ^
-        String.concatWith ", "
-          [ "()"
-          , "()"
-          , "{" ^ String.concatWith ", " ["a = " ^ "()", "b = " ^ "()"] ^ "}"
-          ] ^ ")"
-      ] ^ "}"
+local
+  fun showOption f (SOME s) = "SOME " ^ f s
+    | showOption _ NONE = "NONE"
+in
+  val show =
+    fn { a = t0
+       , b = t1
+       , c = t2
+       , d = t3
+       , e = t4
+       , f = (t5, t6)
+       , g = t7
+       , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
+       , i = ref (ref (ref t13))
+       , j = (_, _, {a = _, b = _})
+       , k = t14
+       } =>
+      "{"
+      ^
+      String.concatWith ", "
+        [ "a = " ^ Int.toString t0
+        , "b = " ^ Real.toString t1
+        , "c = " ^ "\"" ^ t2 ^ "\""
+        , "d = " ^ "#\"" ^ Char.toString t3 ^ "\""
+        , "e = " ^ Bool.toString t4
+        , "f = "
+          ^ "(" ^ String.concatWith ", " [Int.toString t5, Real.toString t6]
+          ^ ")"
+        , "g = "
+          ^
+          "[" ^ String.concatWith ", " (List.map (fn t0 => "\"" ^ t0 ^ "\"") t7)
+          ^ "]"
+        , "h = "
+          ^
+          "("
+          ^
+          String.concatWith ", "
+            [ "ref " ^ "#\"" ^ Char.toString t8 ^ "\""
+            , "ref "
+              ^
+              "(" ^ String.concatWith ", " [Bool.toString t9, Int.toString t10]
+              ^ ")"
+            , "ref "
+              ^
+              "{"
+              ^
+              String.concatWith ", "
+                ["a = " ^ Int.toString t11, "b = " ^ "\"" ^ t12 ^ "\""] ^ "}"
+            ] ^ ")"
+        , "i = " ^ "ref " ^ "ref " ^ "ref " ^ Int.toString t13
+        , "j = "
+          ^
+          "("
+          ^
+          String.concatWith ", "
+            [ "()"
+            , "()"
+            , "{" ^ String.concatWith ", " ["a = " ^ "()", "b = " ^ "()"] ^ "}"
+            ] ^ ")"
+        , "k = "
+          ^
+          showOption
+            (showOption (fn (ref t0) => "ref " ^ showOption Int.toString t0))
+            t14
+        ] ^ "}"
+end
 local
   fun compareBool (false, true) = LESS
     | compareBool (true, false) = GREATER
@@ -105,6 +131,10 @@ local
     | compareList _ (_ :: _, []) = GREATER
     | compareList _ ([], _ :: _) = LESS
     | compareList _ _ = EQUAL
+  fun compareOption cmp (SOME x, SOME y) = cmp (x, y)
+    | compareOption _ (SOME _, NONE) = GREATER
+    | compareOption _ (NONE, SOME _) = LESS
+    | compareOption _ (NONE, NONE) = EQUAL
 in
   val compare =
     fn ( { a = t0
@@ -117,58 +147,70 @@ in
          , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
          , i = ref (ref (ref t13))
          , j = (_, _, {a = _, b = _})
+         , k = t14
          }
-       , { a = t14
-         , b = t15
-         , c = t16
-         , d = t17
-         , e = t18
-         , f = (t19, t20)
-         , g = t21
-         , h = (ref t22, ref (t23, t24), ref {a = t25, b = t26})
-         , i = ref (ref (ref t27))
+       , { a = t15
+         , b = t16
+         , c = t17
+         , d = t18
+         , e = t19
+         , f = (t20, t21)
+         , g = t22
+         , h = (ref t23, ref (t24, t25), ref {a = t26, b = t27})
+         , i = ref (ref (ref t28))
          , j = (_, _, {a = _, b = _})
+         , k = t29
          }
        ) =>
-      (case Int.compare (t0, t14) of
+      (case Int.compare (t0, t15) of
          EQUAL =>
-           (case Real.compare (t1, t15) of
+           (case Real.compare (t1, t16) of
               EQUAL =>
-                (case String.compare (t2, t16) of
+                (case String.compare (t2, t17) of
                    EQUAL =>
-                     (case Char.compare (t3, t17) of
+                     (case Char.compare (t3, t18) of
                         EQUAL =>
-                          (case compareBool (t4, t18) of
+                          (case compareBool (t4, t19) of
                              EQUAL =>
                                (case
-                                  (case Int.compare (t5, t19) of
-                                     EQUAL => Real.compare (t6, t20)
+                                  (case Int.compare (t5, t20) of
+                                     EQUAL => Real.compare (t6, t21)
                                    | ? => ?)
                                 of
                                   EQUAL =>
-                                    (case compareList String.compare (t7, t21) of
+                                    (case compareList String.compare (t7, t22) of
                                        EQUAL =>
                                          (case
-                                            (case Char.compare (t8, t22) of
+                                            (case Char.compare (t8, t23) of
                                                EQUAL =>
                                                  (case
-                                                    (case compareBool (t9, t23) of
+                                                    (case compareBool (t9, t24) of
                                                        EQUAL =>
-                                                         Int.compare (t10, t24)
+                                                         Int.compare (t10, t25)
                                                      | ? => ?)
                                                   of
                                                     EQUAL =>
                                                       (case
-                                                         Int.compare (t11, t25)
+                                                         Int.compare (t11, t26)
                                                        of
                                                          EQUAL =>
                                                            String.compare
-                                                             (t12, t26)
+                                                             (t12, t27)
                                                        | ? => ?)
                                                   | ? => ?)
                                              | ? => ?)
                                           of
-                                            EQUAL => Int.compare (t13, t27)
+                                            EQUAL =>
+                                              (case Int.compare (t13, t28) of
+                                                 EQUAL =>
+                                                   compareOption
+                                                     (compareOption
+                                                        (fn ((ref t0), (ref t1)) =>
+                                                           compareOption
+                                                             Int.compare
+                                                             (t0, t1)))
+                                                     (t14, t29)
+                                               | ? => ?)
                                           | ? => ?)
                                      | ? => ?)
                                 | ? => ?)

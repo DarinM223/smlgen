@@ -320,6 +320,9 @@ struct
       , right = mkReservedToken CloseSquareBracket
       }
 
+  fun destructConPat tok pat =
+    Pat.Con {opp = NONE, id = MaybeLongToken.make tok, atpat = pat}
+
   val wildPat = Pat.Wild underTok
 
   fun parensTy ty =

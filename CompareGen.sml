@@ -61,6 +61,43 @@ struct
          , (conTok, [destructTuplePat [wildPat, wildPat]], Const equalCmpTok)
          ]]
     end
+  val compareOptionDec =
+    let
+      val conTok = mkToken "compareOption"
+      val cmpTok = mkToken "cmp"
+      val (xTok, yTok) = (mkToken "x", mkToken "y")
+      val (someTok, noneTok) = (mkToken "SOME", mkToken "NONE")
+    in
+      multFunDec
+        [[ ( conTok
+           , [ Pat.Const cmpTok
+             , destructTuplePat
+                 [ destructConPat someTok (Pat.Const xTok)
+                 , destructConPat someTok (Pat.Const yTok)
+                 ]
+             ]
+           , appExp [Const cmpTok, tupleExp [Const xTok, Const yTok]]
+           )
+         , ( conTok
+           , [ wildPat
+             , destructTuplePat
+                 [destructConPat someTok wildPat, Pat.Const noneTok]
+             ]
+           , Const greaterCmpTok
+           )
+         , ( conTok
+           , [ wildPat
+             , destructTuplePat
+                 [Pat.Const noneTok, destructConPat someTok wildPat]
+             ]
+           , Const lessCmpTok
+           )
+         , ( conTok
+           , [wildPat, destructTuplePat [Pat.Const noneTok, Pat.Const noneTok]]
+           , Const equalCmpTok
+           )
+         ]]
+    end
   val compareListDec =
     let
       val conTok = mkToken "compareList"
@@ -109,12 +146,14 @@ struct
     end
   fun additionalDecs env =
     let
+      fun addCompareOption a =
+        if Env.getOption env "option" then compareOptionDec :: a else a
       fun addCompareList a =
         if Env.getOption env "list" then compareListDec :: a else a
       fun addCompareBool a =
         if Env.getOption env "bool" then compareBoolDec :: a else a
     in
-      (addCompareBool o addCompareList) []
+      (addCompareBool o addCompareList o addCompareOption) []
     end
 
   fun tyCon _ e "string" [] =
@@ -132,6 +171,10 @@ struct
     | tyCon env e "list" [a] =
         ( Env.setOption env ("list", true)
         ; appExp [Const (mkToken "compareList"), parensExp (tyExp' env a), e]
+        )
+    | tyCon env e "option" [a] =
+        ( Env.setOption env ("option", true)
+        ; appExp [Const (mkToken "compareOption"), parensExp (tyExp' env a), e]
         )
     | tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
         let
