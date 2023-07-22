@@ -206,4 +206,4 @@ val t = fn a_ =>
   in
     t_0
   end
-val t = fn ? => t ?
+val t = t

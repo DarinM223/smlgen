@@ -258,8 +258,14 @@ struct
               v :: _ => v
             | _ => mkToken default
           fun unpackQuesFn f =
-            if normalizedLen = 0 then f unitExp
-            else singleFnExp (Pat.Const quesTok) (f (Const quesTok))
+            if normalizedLen = 0 then
+              f unitExp
+            else
+              case f (Const quesTok) of
+                exp as App {left, right = Const quesTok'} =>
+                  if Token.same (quesTok, quesTok') then left
+                  else singleFnExp (Pat.Const quesTok) exp
+              | exp => singleFnExp (Pat.Const quesTok) exp
         in
           if one then
             unpackQuesFn (fn exp => (appExp [Const tupledName, exp]))

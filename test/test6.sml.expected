@@ -27,7 +27,7 @@ struct
         ^ ")"
        | Nil => "Nil"
     val t = fn a_ => let val rec t_0 = fn ? => t (t_0, a_) ? in t_0 end
-  in val show = fn ? => t ?
+  in val show = t
   end
   type foo = {a: int * int, b: int t}
   val showFoo = fn {a = (t0, t1), b = t2} =>

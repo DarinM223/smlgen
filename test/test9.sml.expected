@@ -78,7 +78,7 @@ local
     in
       foo_0
     end
-in val compareFoo = fn ? => foo ?
+in val compareFoo = foo
 end
 
 type ('a, 'b) hello = {a: 'a * 'a * 'b, b: ('a, 'b) stmt}

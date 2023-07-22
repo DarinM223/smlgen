@@ -55,7 +55,7 @@ local
     in
       foo_0
     end
-in val showFoo = fn ? => foo ?
+in val showFoo = foo
 end
 
 type ('a, 'b) hello = {a: 'a * 'a * 'b, b: ('a, 'b) stmt}

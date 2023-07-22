@@ -19,7 +19,7 @@ local
     let val rec t_1 = fn ? => t (t_1, a_) ? and rec t_0 = fn ? => t (t_1, a_) ?
     in t_0
     end
-in val show = fn ? => t ?
+in val show = t
 end
 local
   val rec t = fn (t_1, a_) => fn (T' t0, T' t1) => t_1 (t0, t1)
@@ -27,7 +27,7 @@ local
     let val rec t_1 = fn ? => t (t_1, a_) ? and rec t_0 = fn ? => t (t_1, a_) ?
     in t_0
     end
-in val compare = fn ? => t ?
+in val compare = t
 end
 datatype
   ( 'asuperextremelylongtypevariablethattakesupalotofcharacters
@@ -67,7 +67,7 @@ local
       in
         t_0
       end
-in val show = fn ? => t ?
+in val show = t
 end
 local
   val rec t =
@@ -95,5 +95,5 @@ local
       in
         t_0
       end
-in val compare = fn ? => t ?
+in val compare = t
 end
