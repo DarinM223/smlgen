@@ -1,56 +1,14 @@
 structure CompareGen =
 struct
-  open BuildAst Utils MutRecTy
+  open BuildAst Utils MutRecTy Env
 
-  datatype env =
-    Env of
-      { c: int ref
-      , vars: Token.t list ref
-      , usesList: bool ref
-      , usesBool: bool ref
-      , env: MutRecTy.env
-      }
-  fun emptyEnv env =
-    Env
-      { c = ref 0
-      , vars = ref []
-      , usesList = ref false
-      , usesBool = ref false
-      , env = env
-      }
-  fun updateEnv (Env r) =
-    let
-      fun from c vars usesList usesBool env =
-        { c = c
-        , vars = vars
-        , usesList = usesList
-        , usesBool = usesBool
-        , env = env
-        }
-      fun to ? {c, vars, usesList, usesBool, env} =
-        ?c vars usesList usesBool env
-    in
-      FunctionalRecordUpdate.makeUpdate5 (from, from, to) r
-    end
-  fun freshEnv env =
-    let open FunctionalRecordUpdate
-    in Env (updateEnv env set #c (ref 0) set #vars (ref []) $)
-    end
-
-  fun fresh (Env {c, vars, ...}) t =
-    let
-      val i = !c before c := !c + 1
-      val tok = appendTokens t (mkToken (Int.toString i))
-    in
-      (vars := tok :: !vars; tok)
-    end
   val mkCompare = prependToken "compare"
 
   fun tyPat (env as Env {vars, ...}) ty =
     let
-      val pat1 = destructTyPat (fresh env) ty
+      val pat1 = destructTyPat (Env.fresh env) ty
       val vars1 = !vars before vars := []
-      val pat2 = destructTyPat (fresh env) ty
+      val pat2 = destructTyPat (Env.fresh env) ty
       val vars2 = !vars
       fun interleave (build, x :: xs, y :: ys) =
             interleave (x :: y :: build, xs, ys)
@@ -149,12 +107,12 @@ struct
          , (conTok, [wildPat, wildPat], Const equalCmpTok)
          ]]
     end
-  fun additionalDecs (Env {usesList, usesBool, ...}) =
+  fun additionalDecs env =
     let
       fun addCompareList a =
-        if !usesList then compareListDec :: a else a
+        if Env.getOption env "list" then compareListDec :: a else a
       fun addCompareBool a =
-        if !usesBool then compareBoolDec :: a else a
+        if Env.getOption env "bool" then compareBoolDec :: a else a
     in
       (addCompareBool o addCompareList) []
     end
@@ -167,10 +125,12 @@ struct
         appExp [Const (mkToken "Real.compare"), e]
     | tyCon _ e "char" [] =
         appExp [Const (mkToken "Char.compare"), e]
-    | tyCon (Env {usesBool, ...}) e "bool" [] =
-        (usesBool := true; appExp [Const (mkToken "compareBool"), e])
-    | tyCon (env as Env {usesList, ...}) e "list" [a] =
-        ( usesList := true
+    | tyCon env e "bool" [] =
+        ( Env.setOption env ("bool", true)
+        ; appExp [Const (mkToken "compareBool"), e]
+        )
+    | tyCon env e "list" [a] =
+        ( Env.setOption env ("list", true)
         ; appExp [Const (mkToken "compareList"), parensExp (tyExp' env a), e]
         )
     | tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
@@ -187,7 +147,7 @@ struct
         end
   and tyExp' env ty =
     let
-      val env = freshEnv env
+      val env = Env.freshEnv env
     in
       case (tyPat env ty, tyExp env ty) of
         ( (pat1 as Pat.Const a, pat2 as Pat.Const b)
@@ -235,7 +195,7 @@ struct
 
   fun genConstrs (env, constrs: constr list) : Exp.exp =
     let
-      val env = freshEnv env
+      val env = Env.freshEnv env
       fun conPat' id (SOME _) = conPat id wildPat
         | conPat' id NONE = Pat.Const id
       val tups =
@@ -272,15 +232,13 @@ struct
 
   fun genTypebind ({elems, ...}: typbind) =
     let
-      val env = emptyEnv (mkEnv ())
+      val env = Env.empty (mkEnv ())
       val decs =
         List.map
           (fn {ty, tycon, tyvars, ...} =>
              let
                val vars = syntaxSeqToList tyvars
-               open FunctionalRecordUpdate
-               val env = Env
-                 (updateEnv (freshEnv env) upd #env (envWithVars vars) $)
+               val env = Env.setSubEnv (Env.freshEnv env) (envWithVars vars)
                val header =
                  case vars of
                    [] => (fn e => e)
@@ -291,14 +249,12 @@ struct
                valDec (Pat.Const (mkCompare tycon)) (header (tyExp' env ty))
              end) (ArraySlice.foldr (op::) [] elems)
     in
-      case additionalDecs env of
-        [] => multDec decs
-      | decs' => localDec (multDec decs') (multDec decs)
+      localDecs (additionalDecs env) (multDec decs)
     end
 
   fun genSimpleDatabind (env, ty, vars, constrs) =
     let
-      val env = emptyEnv env
+      val env = Env.empty env
       fun header exp =
         case List.map (Pat.Const o mkTyVar) vars of
           [] => exp
@@ -306,14 +262,12 @@ struct
       val dec = valDec (Pat.Const (mkCompare ty)) (header
         (genConstrs (env, constrs)))
     in
-      case additionalDecs env of
-        [] => dec
-      | decs' => localDec (multDec decs') dec
+      localDecs (additionalDecs env) dec
     end
 
   fun genRecursiveDatabind (env, tycons, tys, vars) =
     let
-      val env as Env {env = env', ...} = emptyEnv env
+      val env as Env {env = env', ...} = Env.empty env
       val varExps = List.map Ty.Var vars
       val dups: IntRedBlackSet.set AtomTable.hash_table =
         AtomTable.mkTable (100, LibBase.NotFound)
@@ -350,7 +304,7 @@ struct
               let
                 val tycon' = baseTyName (Token.toString tycon)
                 val argDups = AtomTable.lookup dups (Atom.atom tycon')
-                val env = freshEnv env
+                val env = Env.freshEnv env
                 val args = applyDuplicates (argDups, tyExp' env, args)
               in
                 ( true

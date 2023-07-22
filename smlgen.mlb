@@ -16,6 +16,7 @@ local
   MutRecTy.sml
   FruGen.sml
   GenericGen.sml
+  Env.sml
   ShowGen.sml
   CompareGen.sml
   FilesData.sml

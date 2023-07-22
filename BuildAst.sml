@@ -35,6 +35,9 @@ struct
   fun stringTok t =
     mkToken ("\"" ^ Token.toString (stripToken t) ^ "\"")
 
+  fun stringTokSpace t =
+    mkToken ("\"" ^ Token.toString (stripToken t) ^ " \"")
+
   val equalTok = mkReservedToken Equal
   val commaTok = mkReservedToken Comma
   val andReservedTok = mkReservedToken And
@@ -250,6 +253,10 @@ struct
       , right_dec = body
       , endd = mkReservedToken End
       }
+  fun localDecs decs body =
+    case decs of
+      [] => body
+    | _ => localDec (multDec decs) body
 
   val genericDec = DecOpen
     {openn = openTok, elems = ArraySlice.full (Array.fromList [genericTok])}
