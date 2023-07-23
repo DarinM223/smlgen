@@ -5,6 +5,8 @@ struct
   structure SCC =
     GraphSCCFn (struct type ord_key = int val compare = Int.compare end)
 
+  datatype type_data = Databind of constr list | Typebind of Ty.ty
+
   datatype env =
     Env of
       { tyToFix: Token.token AtomTable.hash_table
@@ -12,7 +14,7 @@ struct
       , fixToTy: Ty.ty AtomTable.hash_table
       , vars: Token.token list
       , tyTokToId: int AtomTable.hash_table
-      , tyData: (Token.token * Token.token SyntaxSeq.t * constr list) IntHashTable.hash_table
+      , tyData: (Token.token * Token.token SyntaxSeq.t * type_data) IntHashTable.hash_table
       , c: int ref
       }
 
@@ -154,9 +156,8 @@ struct
     (env as Env {c, tyTokToId, tyData, tyToFix, fixToTy, ...}, tycon, substMap) =
     let
       val i = AtomTable.lookup tyTokToId (Atom.atom tycon)
-      val (_, vars, constrs) = IntHashTable.lookup tyData i
+      val (_, vars, dat) = IntHashTable.lookup tyData i
       val ty = subst substMap (tyconToTy (env, tycon))
-      val constrs = List.map (substConstr substMap) constrs
       val tyStrA = Atom.atom (showTy ty)
     in
       if AtomTable.inDomain tyToFix tyStrA then
@@ -205,7 +206,11 @@ struct
                 (go from; go to)
             | go (Ty.Parens {ty, ...}) = go ty
         in
-          List.app (fn {arg = SOME {ty, ...}, ...} => go ty | _ => ()) constrs
+          case dat of
+            Databind constrs =>
+              List.app (fn {arg = SOME {ty, ...}, ...} => go ty | _ => ())
+                (List.map (substConstr substMap) constrs)
+          | Typebind ty => go (subst substMap ty)
         end
     end
 
@@ -222,7 +227,7 @@ struct
   fun tyconIsGeneratedFix (Env {fixToTy, ...}) tycon =
     AtomTable.inDomain fixToTy (Atom.atom tycon)
 
-  fun tyconConstrs (Env {tyTokToId, tyData, ...}) tyconAtom =
+  fun tyconData (Env {tyTokToId, tyData, ...}) tyconAtom =
     let
       val i = AtomTable.lookup tyTokToId tyconAtom
       val (_, _, constrs) = IntHashTable.lookup tyData i
@@ -345,16 +350,19 @@ struct
                val () = AtomTable.insert tyTokToId
                  (Atom.atom (Token.toString ty), i)
                val () = IntHashTable.insert tyLinks (i, IntListSet.empty)
-               val () = IntHashTable.insert tyData (i, (ty, vars, constrs))
+               val () = IntHashTable.insert tyData
+                 (i, (ty, vars, Databind constrs))
              in
                i
              end) tys
+      (* TODO: Initialize tyLinks and tyData for withtype types also *)
       val () =
         List.app
           (fn (i, (_, _, constrs)) =>
              List.app
                (fn {arg = SOME {ty, ...}, ...} => buildLinks i ty | _ => ())
                constrs) (ListPair.zip (roots, tys))
+      (* TODO: Build links for withtype types also *)
       val scc = SCC.topOrder'
         { roots = roots
         , follow = IntListSet.toList o IntHashTable.lookup tyLinks
@@ -397,5 +405,14 @@ struct
               (print "Max type size limit exceeded\n"; DecEmpty)
     in
       multDec (List.map handleComponent (List.rev scc))
+    end
+  fun genSingleTypebind genTypebind (tyTok, vars, ty) =
+    let
+      val elem =
+        {eq = equalTok, tycon = tyTok, ty = ty, tyvars = listToSyntaxSeq vars}
+      val bind: typbind =
+        {elems = Seq.fromList [elem], delims = Seq.fromList []}
+    in
+      genTypebind bind
     end
 end

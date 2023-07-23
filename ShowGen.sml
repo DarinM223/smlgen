@@ -185,18 +185,20 @@ struct
       localDecs (additionalDecs env) (multDec decs)
     end
 
-  fun genSimpleDatabind (env, ty, vars, constrs) =
-    let
-      val env = Env.empty env
-      fun header exp =
-        case List.map (Pat.Const o mkTyVar) vars of
-          [] => exp
-        | vars => singleFnExp (destructTuplePat vars) exp
-      val dec = valDec (Pat.Const (mkShow ty)) (header
-        (genConstrs (env, constrs)))
-    in
-      localDecs (additionalDecs env) dec
-    end
+  fun genSimpleDatabind (env, ty, vars, Databind constrs) =
+        let
+          val env = Env.empty env
+          fun header exp =
+            case List.map (Pat.Const o mkTyVar) vars of
+              [] => exp
+            | vars => singleFnExp (destructTuplePat vars) exp
+          val dec = valDec (Pat.Const (mkShow ty)) (header
+            (genConstrs (env, constrs)))
+        in
+          localDecs (additionalDecs env) dec
+        end
+    | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
+        genSingleTypebind genTypebind (tyTok, vars, ty)
 
   fun genRecursiveDatabind (env, tycons, tys, vars) =
     let
@@ -218,8 +220,10 @@ struct
                val argDups = findDuplicates args
                val () = AtomTable.insert dups (tyconA, argDups)
                val substMap = buildSubstMap env' (Token.toString tycon) varExps
-               val constrs = List.map (substConstr substMap)
-                 (tyconConstrs env' tyconA)
+               val constrs =
+                 case tyconData env' tyconA of
+                   Databind constrs => List.map (substConstr substMap) constrs
+                 | Typebind _ => raise Fail "expected databind"
              in
                ( true
                , Pat.Const tycon

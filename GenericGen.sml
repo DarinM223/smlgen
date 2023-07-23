@@ -208,9 +208,12 @@ struct
       multDec decs
     end
 
-  fun genSimpleDatabind (env, ty, vars, constrs) =
-    valDec (identPat ty) (tyVarFnExp vars (singleLetExp genericDec (genConstrs
-      (envWithVars vars env, constrs))))
+  fun genSimpleDatabind (env, ty, vars, Databind constrs) =
+        valDec (identPat ty)
+          (tyVarFnExp vars (singleLetExp genericDec (genConstrs
+             (envWithVars vars env, constrs))))
+    | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
+        genSingleTypebind genTypebind (tyTok, vars, ty)
 
   fun genRecursiveDatabind (env, tycons, tys, vars) =
     let
@@ -233,8 +236,11 @@ struct
                      let
                        val tycon = Token.toString tycon
                        val substMap = buildSubstMap env tycon varExps
-                       val constrs = List.map (substConstr substMap)
-                         (tyconConstrs env (Atom.atom tycon))
+                       val constrs =
+                         case tyconData env (Atom.atom tycon) of
+                           Databind constrs =>
+                             List.map (substConstr substMap) constrs
+                         | Typebind _ => raise Fail "expected databind"
                      in
                        genConstrs (env, constrs)
                      end) tycons
@@ -260,8 +266,11 @@ struct
                        val () = AtomTable.insert dups (tyconA, argDups)
                        val substMap =
                          buildSubstMap env (Token.toString tycon) varExps
-                       val constrs = List.map (substConstr substMap)
-                         (tyconConstrs env tyconA)
+                       val constrs =
+                         case tyconData env tyconA of
+                           Databind constrs =>
+                             List.map (substConstr substMap) constrs
+                         | Typebind _ => raise Fail "expected databind"
                      in
                        singleFunDec tycon
                          [destructTuplePat
