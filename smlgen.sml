@@ -26,12 +26,12 @@ val pretty = PrettierPrintAst.pretty
 
 type gen =
   { genTypebind: Ast.Exp.typbind -> Ast.Exp.dec
-  , genDatabind: Ast.Exp.datbind -> Ast.Exp.dec
+  , genDatabind: Ast.Exp.datbind -> Ast.Exp.typbind option -> Ast.Exp.dec
   }
 
 val emptyGen: gen =
   { genTypebind = fn _ => Ast.Exp.DecEmpty
-  , genDatabind = fn _ => Ast.Exp.DecEmpty
+  , genDatabind = fn _ => fn _ => Ast.Exp.DecEmpty
   }
 
 fun lookupGen #"g" = GenericGen.gen
@@ -74,8 +74,10 @@ fun combineDecs (Ast.Exp.DecMultiple {elems = elems1, delims = delims1})
 fun addGen (gen1: gen) (gen2: gen) : gen =
   { genTypebind = fn bind =>
       combineDecs (#genTypebind gen1 bind) (#genTypebind gen2 bind)
-  , genDatabind = fn bind =>
-      combineDecs (#genDatabind gen1 bind) (#genDatabind gen2 bind)
+  , genDatabind = fn databind =>
+      fn typebind =>
+        combineDecs (#genDatabind gen1 databind typebind)
+          (#genDatabind gen2 databind typebind)
   }
 
 local
@@ -130,7 +132,7 @@ local
               )
           | NONE => dec
         end
-    | Ast.Exp.DecDatatype {datbind, ...} =>
+    | Ast.Exp.DecDatatype {datbind, withtypee, ...} =>
         let
           val actions: gen option =
             (Option.join
@@ -145,7 +147,8 @@ local
               ( print "Types: "
               ; printDecTypes dec
               ; confirm dec (fn () =>
-                  combineDecs dec (#genDatabind action datbind))
+                  combineDecs dec (#genDatabind action datbind
+                    (Option.map #typbind withtypee)))
               )
           | NONE => dec
         end

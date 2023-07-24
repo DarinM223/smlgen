@@ -306,7 +306,8 @@ struct
       go (1, tyNames)
     end
 
-  fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind) =
+  fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind)
+    (typbind: typbind option) =
     let
       val elems = ArraySlice.foldr (op::) [] elems
       val tys =
@@ -342,7 +343,7 @@ struct
         | buildLinks i (Ty.Arrow {from, to, ...}) =
             (buildLinks i from; buildLinks i to)
         | buildLinks i (Ty.Parens {ty, ...}) = buildLinks i ty
-      val roots =
+      val dataRoots =
         List.map
           (fn (ty, vars, constrs) =>
              let
@@ -355,14 +356,36 @@ struct
              in
                i
              end) tys
-      (* TODO: Initialize tyLinks and tyData for withtype types also *)
+      (* Initialize tyLinks and tyData for withtype types also *)
+      val typeRoots =
+        case typbind of
+          SOME {elems, ...} =>
+            List.map
+              (fn {tycon, tyvars, ty, ...} =>
+                 let
+                   val i = !c before c := !c + 1
+                   val () = AtomTable.insert tyTokToId
+                     (Atom.atom (Token.toString tycon), i)
+                   val () = IntHashTable.insert tyLinks (i, IntListSet.empty)
+                   val () = IntHashTable.insert tyData
+                     (i, (tycon, tyvars, Typebind ty))
+                 in
+                   i
+                 end) (Seq.toList elems)
+        | NONE => []
+      val roots = dataRoots @ typeRoots
       val () =
         List.app
           (fn (i, (_, _, constrs)) =>
              List.app
                (fn {arg = SOME {ty, ...}, ...} => buildLinks i ty | _ => ())
-               constrs) (ListPair.zip (roots, tys))
-      (* TODO: Build links for withtype types also *)
+               constrs) (ListPair.zip (dataRoots, tys))
+      (* Build links for withtype types also *)
+      val () =
+        Option.app
+          (fn {elems, ...} =>
+             List.app (fn (i, {ty, ...}) => buildLinks i ty)
+               (ListPair.zip (typeRoots, Seq.toList elems))) typbind
       val scc = SCC.topOrder'
         { roots = roots
         , follow = IntListSet.toList o IntHashTable.lookup tyLinks

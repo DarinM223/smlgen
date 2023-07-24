@@ -36,6 +36,7 @@ sig
     (env * Token.token * Token.token list * type_data -> Ast.Exp.dec)
     * (env * Token.token list * Ast.Ty.ty list * Token.token list -> Ast.Exp.dec)
     -> Ast.Exp.datbind
+    -> Ast.Exp.typbind option
     -> Ast.Exp.dec
   val genSingleTypebind: (Ast.Exp.typbind -> Ast.Exp.dec)
                          -> Token.token * Token.token list * Ast.Ty.ty
