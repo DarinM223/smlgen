@@ -236,13 +236,12 @@ struct
                      let
                        val tycon = Token.toString tycon
                        val substMap = buildSubstMap env tycon varExps
-                       val constrs =
-                         case tyconData env (Atom.atom tycon) of
-                           Databind constrs =>
-                             List.map (substConstr substMap) constrs
-                         | Typebind _ => raise Fail "expected databind"
                      in
-                       genConstrs (env, constrs)
+                       case tyconData env (Atom.atom tycon) of
+                         Databind constrs =>
+                           genConstrs
+                             (env, List.map (substConstr substMap) constrs)
+                       | Typebind ty => genTy env (subst substMap ty)
                      end) tycons
             in
               singleLetExp genericDec (infixLExp andTok exps)
@@ -266,16 +265,15 @@ struct
                        val () = AtomTable.insert dups (tyconA, argDups)
                        val substMap =
                          buildSubstMap env (Token.toString tycon) varExps
-                       val constrs =
-                         case tyconData env tyconA of
-                           Databind constrs =>
-                             List.map (substConstr substMap) constrs
-                         | Typebind _ => raise Fail "expected databind"
                      in
                        singleFunDec tycon
                          [destructTuplePat
                             (applyDuplicates (argDups, Pat.Const, args))]
-                         (genConstrs (env, constrs))
+                         (case tyconData env tyconA of
+                            Databind constrs =>
+                              genConstrs
+                                (env, List.map (substConstr substMap) constrs)
+                          | Typebind ty => genTy env (subst substMap ty))
                      end) (ListPair.zip (tycons, tys))
               val exps =
                 List.map

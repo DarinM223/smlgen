@@ -220,17 +220,17 @@ struct
                val argDups = findDuplicates args
                val () = AtomTable.insert dups (tyconA, argDups)
                val substMap = buildSubstMap env' (Token.toString tycon) varExps
-               val constrs =
-                 case tyconData env' tyconA of
-                   Databind constrs => List.map (substConstr substMap) constrs
-                 | Typebind _ => raise Fail "expected databind"
              in
                ( true
                , Pat.Const tycon
                , singleFnExp
                    (destructTuplePat
                       (applyDuplicates (argDups, Pat.Const, args)))
-                   (genConstrs (env, constrs))
+                   (case tyconData env' tyconA of
+                      Databind constrs =>
+                        genConstrs
+                          (env, List.map (substConstr substMap) constrs)
+                    | Typebind ty => tyExp env (subst substMap ty))
                )
              end) (ListPair.zip (tycons, tys))
       val concatTys = mkToken (String.concatWith "_"
