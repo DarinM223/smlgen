@@ -230,7 +230,7 @@ struct
                       Databind constrs =>
                         genConstrs
                           (env, List.map (substConstr substMap) constrs)
-                    | Typebind ty => tyExp env (subst substMap ty))
+                    | Typebind ty => tyExp' env (subst substMap ty))
                )
              end) (ListPair.zip (tycons, tys))
       val concatTys = mkToken (String.concatWith "_"

@@ -1,0 +1,165 @@
+(* non-recursive withtype & non-recursive datatype *)
+datatype t =
+  T' of int * string
+| Nil
+withtype t' = t * int
+val t =
+  let
+    open Generic
+  in
+    data' (C1' "T'" (tuple2 (int, string)) +` C0' "Nil")
+      (fn Nil => INR () | T' ? => INL ?, fn INR () => Nil | INL ? => T' ?)
+  end
+val t' = let open Generic in tuple2 (t, int) end
+val show =
+  fn T' (t0, t1) =>
+    "T' " ^ "(" ^ String.concatWith ", " [Int.toString t0, "\"" ^ t1 ^ "\""]
+    ^ ")"
+   | Nil => "Nil"
+val showT' = fn (t0, t1) =>
+  "(" ^ String.concatWith ", " [show t0, Int.toString t1] ^ ")"
+val compare =
+  fn (T' (t0, t1), T' (t2, t3)) =>
+    (case Int.compare (t0, t2) of
+       EQUAL => String.compare (t1, t3)
+     | ? => ?)
+   | (T' _, Nil) => LESS
+   | (Nil, T' _) => GREATER
+   | (Nil, Nil) => EQUAL
+val compareT' = fn ((t0, t1), (t2, t3)) =>
+  (case compare (t0, t2) of
+     EQUAL => Int.compare (t1, t3)
+   | ? => ?)
+
+val () = print (showT' (T' (1, "hello"), 2) ^ "\n")
+
+(* non-recursive withtype with recursive datatype *)
+datatype t =
+  T' of string * t
+| T'' of t * t
+| Nil
+withtype t' = {t: t, other: string}
+val t =
+  let
+    open Tie
+    val Y = Generic.Y
+  in
+    fix Y (fn t =>
+      let
+        open Generic
+      in
+        data'
+          (C1' "T'" (tuple2 (string, t)) +` C1' "T''" (tuple2 (t, t))
+           +` C0' "Nil")
+          ( fn Nil => INR () | T'' ? => INL (INR ?) | T' ? => INL (INL ?)
+          , fn INR () => Nil | INL (INR ?) => T'' ? | INL (INL ?) => T' ?
+          )
+      end)
+  end
+val t' =
+  let
+    open Generic
+  in
+    record' (R' "t" t *` R' "other" string)
+      (fn {t, other} => t & other, fn t & other => {t = t, other = other})
+  end
+local
+  val rec t = fn t_0 =>
+    fn T' (t0, t1) =>
+      "T' " ^ "(" ^ String.concatWith ", " ["\"" ^ t0 ^ "\"", t_0 t1] ^ ")"
+     | T'' (t2, t3) =>
+      "T'' " ^ "(" ^ String.concatWith ", " [t_0 t2, t_0 t3] ^ ")"
+     | Nil => "Nil"
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val show = t ()
+end
+val showT' = fn {t = t0, other = t1} =>
+  "{" ^ String.concatWith ", " ["t = " ^ show t0, "other = " ^ "\"" ^ t1 ^ "\""]
+  ^ "}"
+local
+  val rec t = fn t_0 =>
+    fn (T' (t0, t1), T' (t2, t3)) =>
+      (case String.compare (t0, t2) of
+         EQUAL => t_0 (t1, t3)
+       | ? => ?)
+     | (T' _, T'' _) => LESS
+     | (T' _, Nil) => LESS
+     | (T'' _, T' _) => GREATER
+     | (T'' (t4, t5), T'' (t6, t7)) =>
+      (case t_0 (t4, t6) of
+         EQUAL => t_0 (t5, t7)
+       | ? => ?)
+     | (T'' _, Nil) => LESS
+     | (Nil, T' _) => GREATER
+     | (Nil, T'' _) => GREATER
+     | (Nil, Nil) => EQUAL
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val compare = t ()
+end
+val compareT' = fn ({t = t0, other = t1}, {t = t2, other = t3}) =>
+  (case compare (t0, t2) of
+     EQUAL => String.compare (t1, t3)
+   | ? => ?)
+
+val () = print
+  (showT' {t = T' ("hello", T'' (Nil, Nil)), other = "world"} ^ "\n")
+
+(* recursive withtype with recursive datatype *)
+datatype t =
+  T' of string * t'
+| Nil
+withtype t' = t list
+val t' & t =
+  let
+    open Tie
+    val Y = Generic.Y
+  in
+    fix (Y *` Y) (fn t' & t =>
+      let
+        open Generic
+      in
+        list t
+        &
+        data' (C1' "T'" (tuple2 (string, t')) +` C0' "Nil")
+          (fn Nil => INR () | T' ? => INL ?, fn INR () => Nil | INL ? => T' ?)
+      end)
+  end
+local
+  val rec t' = fn t_1 =>
+    fn t0 => "[" ^ String.concatWith ", " (List.map t_1 t0) ^ "]"
+  and rec t = fn t'_0 =>
+    fn T' (t0, t1) =>
+      "T' " ^ "(" ^ String.concatWith ", " ["\"" ^ t0 ^ "\"", t'_0 t1] ^ ")"
+     | Nil => "Nil"
+  val t'_t = fn () =>
+    let val rec t'_0 = fn ? => t' t_1 ? and rec t_1 = fn ? => t t'_0 ?
+    in (t'_0, t_1)
+    end
+in val showT' = #1 (t'_t ()) val show = #2 (t'_t ())
+end
+local
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+  val rec t' = fn t_1 => compareList t_1
+  and rec t = fn t'_0 =>
+    fn (T' (t0, t1), T' (t2, t3)) =>
+      (case String.compare (t0, t2) of
+         EQUAL => t'_0 (t1, t3)
+       | ? => ?)
+     | (T' _, Nil) => LESS
+     | (Nil, T' _) => GREATER
+     | (Nil, Nil) => EQUAL
+  val t'_t = fn () =>
+    let val rec t'_0 = fn ? => t' t_1 ? and rec t_1 = fn ? => t t'_0 ?
+    in (t'_0, t_1)
+    end
+in val compareT' = #1 (t'_t ()) val compare = #2 (t'_t ())
+end
+
+val () = print
+  (showT' [T' ("hello", [T' ("world", []), Nil]), T' ("foo", [Nil]), Nil] ^ "\n") (* TODO: test with type variables *) (* TODO: test with multiple types in withtype *)
