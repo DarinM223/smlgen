@@ -295,18 +295,20 @@ struct
       localDecs (additionalDecs env) (multDec decs)
     end
 
-  fun genSimpleDatabind (env, ty, vars, constrs) =
-    let
-      val env = Env.empty env
-      fun header exp =
-        case List.map (Pat.Const o mkTyVar) vars of
-          [] => exp
-        | vars => singleFnExp (destructTuplePat vars) exp
-      val dec = valDec (Pat.Const (mkCompare ty)) (header
-        (genConstrs (env, constrs)))
-    in
-      localDecs (additionalDecs env) dec
-    end
+  fun genSimpleDatabind (env, tyTok, vars, Databind constrs) =
+        let
+          val env = Env.empty env
+          fun header exp =
+            case List.map (Pat.Const o mkTyVar) vars of
+              [] => exp
+            | vars => singleFnExp (destructTuplePat vars) exp
+          val dec = valDec (Pat.Const (mkCompare tyTok)) (header
+            (genConstrs (env, constrs)))
+        in
+          localDecs (additionalDecs env) dec
+        end
+    | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
+        genSingleTypebind genTypebind (tyTok, vars, ty)
 
   fun genRecursiveDatabind (env, tycons, tys, vars) =
     let
@@ -328,15 +330,17 @@ struct
                val argDups = findDuplicates args
                val () = AtomTable.insert dups (tyconA, argDups)
                val substMap = buildSubstMap env' (Token.toString tycon) varExps
-               val constrs = List.map (substConstr substMap)
-                 (tyconConstrs env' tyconA)
              in
                ( true
                , Pat.Const tycon
                , singleFnExp
                    (destructTuplePat
                       (applyDuplicates (argDups, Pat.Const, args)))
-                   (genConstrs (env, constrs))
+                   (case tyconData env' tyconA of
+                      Databind constrs =>
+                        genConstrs
+                          (env, List.map (substConstr substMap) constrs)
+                    | Typebind ty => tyExp' env (subst substMap ty))
                )
              end) (ListPair.zip (tycons, tys))
       val concatTys = mkToken (String.concatWith "_"

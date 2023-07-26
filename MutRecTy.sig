@@ -2,6 +2,8 @@ signature MUT_REC_TY =
 sig
   type env
 
+  datatype type_data = Databind of BuildAst.constr list | Typebind of Ast.Ty.ty
+
   val mkEnv: unit -> env
   val envWithVars: Token.token list -> env -> env
 
@@ -16,7 +18,7 @@ sig
   val generatedArgsForTy: env -> Ast.Ty.ty -> Ast.Ty.ty list
   val generatedFixesAndArgs: env -> (Token.token * Ast.Ty.ty list) list
   val tyconIsGeneratedFix: env -> string -> bool
-  val tyconConstrs: env -> Atom.atom -> Utils.constr list
+  val tyconData: env -> Atom.atom -> type_data
 
   val baseTyName: string -> string
 
@@ -31,8 +33,12 @@ sig
 
   val maxTySize: int ref
   val genDatabindHelper:
-    (env * Token.token * Token.token list * Utils.constr list -> Ast.Exp.dec)
+    (env * Token.token * Token.token list * type_data -> Ast.Exp.dec)
     * (env * Token.token list * Ast.Ty.ty list * Token.token list -> Ast.Exp.dec)
     -> Ast.Exp.datbind
+    -> Ast.Exp.typbind option
     -> Ast.Exp.dec
+  val genSingleTypebind: (Ast.Exp.typbind -> Ast.Exp.dec)
+                         -> Token.token * Token.token list * Ast.Ty.ty
+                         -> Ast.Exp.dec
 end

@@ -208,9 +208,12 @@ struct
       multDec decs
     end
 
-  fun genSimpleDatabind (env, ty, vars, constrs) =
-    valDec (identPat ty) (tyVarFnExp vars (singleLetExp genericDec (genConstrs
-      (envWithVars vars env, constrs))))
+  fun genSimpleDatabind (env, ty, vars, Databind constrs) =
+        valDec (identPat ty)
+          (tyVarFnExp vars (singleLetExp genericDec (genConstrs
+             (envWithVars vars env, constrs))))
+    | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
+        genSingleTypebind genTypebind (tyTok, vars, ty)
 
   fun genRecursiveDatabind (env, tycons, tys, vars) =
     let
@@ -233,10 +236,12 @@ struct
                      let
                        val tycon = Token.toString tycon
                        val substMap = buildSubstMap env tycon varExps
-                       val constrs = List.map (substConstr substMap)
-                         (tyconConstrs env (Atom.atom tycon))
                      in
-                       genConstrs (env, constrs)
+                       case tyconData env (Atom.atom tycon) of
+                         Databind constrs =>
+                           genConstrs
+                             (env, List.map (substConstr substMap) constrs)
+                       | Typebind ty => genTy env (subst substMap ty)
                      end) tycons
             in
               singleLetExp genericDec (infixLExp andTok exps)
@@ -260,13 +265,15 @@ struct
                        val () = AtomTable.insert dups (tyconA, argDups)
                        val substMap =
                          buildSubstMap env (Token.toString tycon) varExps
-                       val constrs = List.map (substConstr substMap)
-                         (tyconConstrs env tyconA)
                      in
                        singleFunDec tycon
                          [destructTuplePat
                             (applyDuplicates (argDups, Pat.Const, args))]
-                         (genConstrs (env, constrs))
+                         (case tyconData env tyconA of
+                            Databind constrs =>
+                              genConstrs
+                                (env, List.map (substConstr substMap) constrs)
+                          | Typebind ty => genTy env (subst substMap ty))
                      end) (ListPair.zip (tycons, tys))
               val exps =
                 List.map

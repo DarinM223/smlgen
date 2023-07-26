@@ -34,6 +34,16 @@ struct
     | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) =
         ArraySlice.foldr (op::) [] elems
 
+  fun listToSyntaxSeq [] = SyntaxSeq.Empty
+    | listToSyntaxSeq [e] = SyntaxSeq.One e
+    | listToSyntaxSeq (elems as (_ :: es)) =
+        SyntaxSeq.Many
+          { left = openParenTok
+          , right = closeParenTok
+          , elems = Seq.fromList elems
+          , delims = Seq.fromList (List.map (fn _ => commaTok) es)
+          }
+
   fun syntaxSeqMap _ SyntaxSeq.Empty = SyntaxSeq.Empty
     | syntaxSeqMap f (SyntaxSeq.One e) =
         SyntaxSeq.One (f e)

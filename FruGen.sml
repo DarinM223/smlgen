@@ -76,7 +76,7 @@ struct
            decs)
     end
 
-  fun genDatabind ({elems, ...}: Ast.Exp.datbind) =
+  fun genDatabind ({elems, ...}: Ast.Exp.datbind) _ =
     let
       open BuildAst
       val elems = ArraySlice.foldr (op::) [] elems
