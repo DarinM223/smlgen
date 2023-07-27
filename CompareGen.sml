@@ -29,14 +29,14 @@ struct
       { casee = caseTok
       , exp = exp
       , off = ofTok
-      , elems = ArraySlice.full (Array.fromList
+      , elems = Seq.fromList
           [ { pat = Pat.Const equalCmpTok
             , arrow = fatArrowTok
             , exp = caseChainExp exps
             }
           , {pat = Pat.Const quesTok, arrow = fatArrowTok, exp = Const quesTok}
-          ])
-      , delims = ArraySlice.full (Array.fromList [orTok])
+          ]
+      , delims = Seq.singleton orTok
       , optbar = NONE
       })
   and caseChainExp [] = raise Fail "Empty case chain"
@@ -196,7 +196,7 @@ struct
         ( (pat1 as Pat.Const a, pat2 as Pat.Const b)
         , exp as App {left, right = Tuple {elems, ...}, ...}
         ) =>
-          (case ArraySlice.foldr (op::) [] elems of
+          (case Seq.toList elems of
              [Const a', Const b'] =>
                if Token.same (a, a') andalso Token.same (b, b') then left
                else singleFnExp (destructTuplePat [pat1, pat2]) exp
@@ -207,10 +207,9 @@ struct
         (vars := t; appExp [Const (mkTyVar v), tupleExp [Const a, Const b]])
     | tyExp _ (Ty.Var _) = raise Fail "No vars for var"
     | tyExp env (Ty.Record {elems, ...}) =
-        caseChainExp (List.map (tyExp env o #ty)
-          (ArraySlice.foldr (op::) [] elems))
+        caseChainExp (List.map (tyExp env o #ty) (Seq.toList elems))
     | tyExp env (Ty.Tuple {elems, ...}) =
-        caseChainExp (List.map (tyExp env) (ArraySlice.foldr (op::) [] elems))
+        caseChainExp (List.map (tyExp env) (Seq.toList elems))
     | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
         let
           val id = Token.toString (MaybeLongToken.getToken id)
@@ -290,7 +289,7 @@ struct
                        (List.map (Pat.Const o mkTyVar) vars))
              in
                valDec (Pat.Const (mkCompare tycon)) (header (tyExp' env ty))
-             end) (ArraySlice.foldr (op::) [] elems)
+             end) (Seq.toList elems)
     in
       localDecs (additionalDecs env) (multDec decs)
     end

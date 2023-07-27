@@ -25,22 +25,15 @@ struct
          handle LibBase.NotFound => ty)
     | Ty.Record {left, elems, delims, right} =>
         let
-          val elems = ArraySlice.foldr (op::) [] elems
-          val elems =
-            List.map
-              (fn {colon, lab, ty} =>
-                 {colon = colon, lab = lab, ty = subst map ty}) elems
-          val elems = ArraySlice.full (Array.fromList elems)
+          val substField = fn {colon, lab, ty} =>
+            {colon = colon, lab = lab, ty = subst map ty}
+          val elems = Seq.map substField elems
         in
           Ty.Record {left = left, elems = elems, delims = delims, right = right}
         end
     | Ty.Tuple {elems, delims} =>
-        let
-          val elems = ArraySlice.foldr (op::) [] elems
-          val elems = List.map (subst map) elems
-          val elems = ArraySlice.full (Array.fromList elems)
-        in
-          Ty.Tuple {elems = elems, delims = delims}
+        let val elems = Seq.map (subst map) elems
+        in Ty.Tuple {elems = elems, delims = delims}
         end
     | Ty.Con {args, id} =>
         let
@@ -50,9 +43,7 @@ struct
             | SyntaxSeq.One t => SyntaxSeq.One (subst map t)
             | SyntaxSeq.Many {delims, elems, left, right} =>
                 let
-                  val elems = ArraySlice.foldr (op::) [] elems
-                  val elems = List.map (subst map) elems
-                  val elems = ArraySlice.full (Array.fromList elems)
+                  val elems = Seq.map (subst map) elems
                 in
                   SyntaxSeq.Many
                     {delims = delims, elems = elems, left = left, right = right}
@@ -309,11 +300,10 @@ struct
   fun genDatabindHelper (genSimple, genRecursive) ({elems, ...}: datbind)
     (typbind: typbind option) =
     let
-      val elems = ArraySlice.foldr (op::) [] elems
       val tys =
         List.map
           (fn {tycon, tyvars, elems, ...} =>
-             (stripToken tycon, tyvars, ArraySlice.foldr (op::) [] elems)) elems
+             (stripToken tycon, tyvars, Seq.toList elems)) (Seq.toList elems)
       val c = ref 0
       val env as Env {tyData, tyTokToId, ...} = mkEnv ()
       val tyLinks: IntListSet.set IntHashTable.hash_table =
@@ -433,8 +423,7 @@ struct
     let
       val elem =
         {eq = equalTok, tycon = tyTok, ty = ty, tyvars = listToSyntaxSeq vars}
-      val bind: typbind =
-        {elems = Seq.fromList [elem], delims = Seq.fromList []}
+      val bind: typbind = {elems = Seq.singleton elem, delims = Seq.empty ()}
     in
       genTypebind bind
     end

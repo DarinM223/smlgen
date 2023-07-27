@@ -18,8 +18,7 @@ struct
   fun mkSource (s: string) : Source.t =
     Source.make
       { fileName = FilePath.fromFields ["new"]
-      , contents = ArraySlice.full (Array.tabulate (String.size s, fn i =>
-          String.sub (s, i)))
+      , contents = Seq.tabulate (fn i => String.sub (s, i)) (String.size s)
       }
 
   fun mkToken (s: string) : Token.t =
@@ -65,8 +64,8 @@ struct
       { lett = mkReservedToken Let
       , dec = dec
       , inn = mkReservedToken In
-      , exps = ArraySlice.full (Array.fromList [exp])
-      , delims = ArraySlice.full (Array.fromList [])
+      , exps = Seq.singleton exp
+      , delims = Seq.empty ()
       , endd = mkReservedToken End
       }
 
@@ -75,33 +74,28 @@ struct
     | tupleExp (exps as _ :: tail) =
         Tuple
           { left = openParenTok
-          , elems = ArraySlice.full (Array.fromList exps)
-          , delims = ArraySlice.full (Array.fromList
-              (List.map (fn _ => commaTok) tail))
+          , elems = Seq.fromList exps
+          , delims = Seq.fromList (List.map (fn _ => commaTok) tail)
           , right = closeParenTok
           }
 
   fun recordExp params =
     Record
       { left = mkReservedToken OpenCurlyBracket
-      , elems = ArraySlice.full (Array.fromList
+      , elems = Seq.fromList
           (List.map (fn (a, b) => RecordRow {lab = a, eq = equalTok, exp = b})
-             params))
-      , delims =
-          ArraySlice.full
-            (Array.tabulate (Int.max (0, List.length params - 1), fn _ =>
-               commaTok))
+             params)
+      , delims = Seq.tabulate (fn _ => commaTok) (Int.max
+          (0, List.length params - 1))
       , right = mkReservedToken CloseCurlyBracket
       }
 
   fun listExp exps =
     List
       { left = mkReservedToken OpenSquareBracket
-      , elems = ArraySlice.full (Array.fromList exps)
-      , delims =
-          ArraySlice.full
-            (Array.tabulate (Int.max (0, List.length exps - 1), fn _ =>
-               commaTok))
+      , elems = Seq.fromList exps
+      , delims = Seq.tabulate (fn _ => commaTok) (Int.max
+          (0, List.length exps - 1))
       , right = mkReservedToken CloseSquareBracket
       }
 
@@ -113,21 +107,19 @@ struct
   fun singleFnExp pat exp =
     Fn
       { fnn = mkReservedToken Token.Fn
-      , elems = ArraySlice.full
-          (Array.fromList [{pat = pat, arrow = fatArrowTok, exp = exp}])
-      , delims = ArraySlice.full (Array.fromList [])
+      , elems = Seq.singleton {pat = pat, arrow = fatArrowTok, exp = exp}
+      , delims = Seq.empty ()
       , optbar = NONE
       }
 
   fun multFnExp tups =
     Fn
       { fnn = mkReservedToken Token.Fn
-      , elems = ArraySlice.full (Array.fromList
+      , elems = Seq.fromList
           (List.map
-             (fn (pat, exp) => {pat = pat, arrow = fatArrowTok, exp = exp}) tups))
-      , delims =
-          ArraySlice.full
-            (Array.tabulate (Int.max (0, List.length tups - 1), fn _ => orTok))
+             (fn (pat, exp) => {pat = pat, arrow = fatArrowTok, exp = exp}) tups)
+      , delims = Seq.tabulate (fn _ => orTok) (Int.max
+          (0, List.length tups - 1))
       , optbar = NONE
       }
 
@@ -159,34 +151,30 @@ struct
     DecVal
       { vall = mkReservedToken Val
       , tyvars = SyntaxSeq.Empty
-      , elems = ArraySlice.full (Array.fromList
-          [{recc = NONE, pat = pat, eq = equalTok, exp = exp}])
-      , delims = ArraySlice.full (Array.fromList [])
+      , elems = Seq.singleton {recc = NONE, pat = pat, eq = equalTok, exp = exp}
+      , delims = Seq.empty ()
       }
 
   fun valDecs l =
     DecVal
       { vall = mkReservedToken Val
       , tyvars = SyntaxSeq.Empty
-      , elems = ArraySlice.full (Array.fromList
+      , elems = Seq.fromList
           (List.map
              (fn (recc, pat, exp) =>
                 { recc = if recc then SOME recTok else NONE
                 , pat = pat
                 , eq = equalTok
                 , exp = exp
-                }) l))
-      , delims =
-          ArraySlice.full
-            (Array.tabulate (Int.max (0, List.length l - 1), fn _ =>
-               andReservedTok))
+                }) l)
+      , delims = Seq.tabulate (fn _ => andReservedTok) (Int.max
+          (0, List.length l - 1))
       }
 
   fun multDec decs =
     DecMultiple
-      { elems = (ArraySlice.full o Array.fromList) decs
-      , delims =
-          (ArraySlice.full o Array.fromList o List.map (fn _ => NONE)) decs
+      { elems = Seq.fromList decs
+      , delims = Seq.fromList (List.map (fn _ => NONE) decs)
       }
 
   fun singleFunDec tok args exp =
@@ -194,21 +182,19 @@ struct
       { funn = mkReservedToken Fun
       , tyvars = SyntaxSeq.Empty
       , fvalbind =
-          { elems = ArraySlice.full (Array.fromList
-              [{ elems = ArraySlice.full (Array.fromList
-                   [{ fname_args = PrefixedFun
-                        { opp = NONE
-                        , id = tok
-                        , args = ArraySlice.full (Array.fromList args)
-                        }
-                    , ty = NONE
-                    , eq = equalTok
-                    , exp = exp
-                    }])
-               , delims = ArraySlice.full (Array.fromList [])
-               , optbar = NONE
-               }])
-          , delims = ArraySlice.full (Array.fromList [])
+          { elems = Seq.singleton
+              { elems = Seq.singleton
+                  { fname_args =
+                      PrefixedFun
+                        {opp = NONE, id = tok, args = Seq.fromList args}
+                  , ty = NONE
+                  , eq = equalTok
+                  , exp = exp
+                  }
+              , delims = Seq.empty ()
+              , optbar = NONE
+              }
+          , delims = Seq.empty ()
           }
       }
 
@@ -217,31 +203,28 @@ struct
       { funn = mkReservedToken Fun
       , tyvars = SyntaxSeq.Empty
       , fvalbind =
-          { elems = ArraySlice.full (Array.fromList
+          { elems = Seq.fromList
               (List.map
                  (fn cases =>
-                    { elems = ArraySlice.full (Array.fromList
+                    { elems = Seq.fromList
                         (List.map
                            (fn (tok, args, exp) =>
-                              { fname_args = PrefixedFun
-                                  { opp = NONE
-                                  , id = tok
-                                  , args = ArraySlice.full (Array.fromList args)
-                                  }
+                              { fname_args =
+                                  PrefixedFun
+                                    { opp = NONE
+                                    , id = tok
+                                    , args = Seq.fromList args
+                                    }
                               , ty = NONE
                               , eq = equalTok
                               , exp = exp
-                              }) cases))
-                    , delims =
-                        ArraySlice.full
-                          (Array.tabulate
-                             (Int.max (0, List.length cases - 1), fn _ => orTok))
+                              }) cases)
+                    , delims = Seq.tabulate (fn _ => orTok) (Int.max
+                        (0, List.length cases - 1))
                     , optbar = NONE
-                    }) funs))
-          , delims =
-              ArraySlice.full
-                (Array.tabulate (Int.max (0, List.length funs - 1), fn _ =>
-                   andKeyTok))
+                    }) funs)
+          , delims = Seq.tabulate (fn _ => andKeyTok) (Int.max
+              (0, List.length funs - 1))
           }
       }
 
@@ -258,35 +241,29 @@ struct
       [] => body
     | _ => localDec (multDec decs) body
 
-  val genericDec = DecOpen
-    {openn = openTok, elems = ArraySlice.full (Array.fromList [genericTok])}
-  val tieDec = DecOpen
-    {openn = openTok, elems = ArraySlice.full (Array.fromList [tieTok])}
+  val genericDec = DecOpen {openn = openTok, elems = Seq.singleton genericTok}
+  val tieDec = DecOpen {openn = openTok, elems = Seq.singleton tieTok}
 
   fun destructRecordPat patTokens =
     Pat.Record
       { left = mkReservedToken OpenCurlyBracket
-      , elems = ArraySlice.full (Array.fromList
+      , elems = Seq.fromList
           (List.map (fn tok => Pat.LabAsPat {id = tok, ty = NONE, aspat = NONE})
-             patTokens))
-      , delims =
-          ArraySlice.full
-            (Array.tabulate (Int.max (0, List.length patTokens - 1), fn _ =>
-               commaTok))
+             patTokens)
+      , delims = Seq.tabulate (fn _ => commaTok) (Int.max
+          (0, List.length patTokens - 1))
       , right = mkReservedToken CloseCurlyBracket
       }
 
   fun destructRecordPat' rows =
     Pat.Record
       { left = mkReservedToken OpenCurlyBracket
-      , elems = ArraySlice.full (Array.fromList
+      , elems = Seq.fromList
           (List.map
              (fn (lab, pat) =>
-                Pat.LabEqPat {lab = lab, eq = equalTok, pat = pat}) rows))
-      , delims =
-          ArraySlice.full
-            (Array.tabulate (Int.max (0, List.length rows - 1), fn _ =>
-               commaTok))
+                Pat.LabEqPat {lab = lab, eq = equalTok, pat = pat}) rows)
+      , delims = Seq.tabulate (fn _ => commaTok) (Int.max
+          (0, List.length rows - 1))
       , right = mkReservedToken CloseCurlyBracket
       }
 
@@ -294,11 +271,9 @@ struct
     | destructTuplePat pats =
         Pat.Tuple
           { left = openParenTok
-          , elems = ArraySlice.full (Array.fromList pats)
-          , delims =
-              ArraySlice.full
-                (Array.tabulate (Int.max (0, List.length pats - 1), fn _ =>
-                   commaTok))
+          , elems = Seq.fromList pats
+          , delims = Seq.tabulate (fn _ => commaTok) (Int.max
+              (0, List.length pats - 1))
           , right = closeParenTok
           }
 
@@ -312,11 +287,11 @@ struct
   fun destructListPat pats =
     Pat.List
       { left = mkReservedToken OpenSquareBracket
-      , elems = ArraySlice.full (Array.fromList pats)
-      , delims = ArraySlice.full (Array.fromList
+      , elems = Seq.fromList pats
+      , delims = Seq.fromList
           (case pats of
              [] => []
-           | _ :: pats => List.map (fn _ => commaTok) pats))
+           | _ :: pats => List.map (fn _ => commaTok) pats)
       , right = mkReservedToken CloseSquareBracket
       }
 

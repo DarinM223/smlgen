@@ -66,7 +66,7 @@ struct
       | Ty.Record {elems, ...} =>
           let
             val rTok = mkToken "R'"
-            val elems = ArraySlice.foldr (op::) [] elems
+            val elems = Seq.toList elems
             val labels = List.map #lab elems
             val labelExps =
               List.map
@@ -87,7 +87,7 @@ struct
           end
       | Ty.Tuple {elems, ...} =>
           let
-            val elems = ArraySlice.foldr (op::) [] elems
+            val elems = Seq.toList elems
             val len = List.length elems
             val tTok = mkToken "T"
             val freshToks = List.tabulate (len, fn i =>
@@ -130,8 +130,8 @@ struct
                  | SyntaxSeq.Many {elems, ...} =>
                      App
                        { left = Const id
-                       , right = tupleExp (List.map (genTy env)
-                           (ArraySlice.foldr (op::) [] elems))
+                       , right = tupleExp
+                           (List.map (genTy env) (Seq.toList elems))
                        })
           end
       | Ty.Arrow {from, to, ...} =>
@@ -193,7 +193,6 @@ struct
 
   fun genTypebind ({elems, ...}: typbind) =
     let
-      val elems = ArraySlice.foldr (op::) [] elems
       val decs =
         List.map
           (fn {tycon, ty, tyvars, ...} =>
@@ -203,7 +202,7 @@ struct
              in
                valDec (Pat.Const tycon)
                  (tyVarFnExp tyvars (singleLetExp genericDec (genTy env ty)))
-             end) elems
+             end) (Seq.toList elems)
     in
       multDec decs
     end

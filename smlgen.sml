@@ -44,32 +44,22 @@ fun lookupGen #"g" = GenericGen.gen
 fun combineDecs (Ast.Exp.DecMultiple {elems = elems1, delims = delims1})
       (Ast.Exp.DecMultiple {elems = elems2, delims = delims2}) =
       Ast.Exp.DecMultiple
-        { elems = ArraySlice.full (Array.fromList
-            (ArraySlice.foldr (op::) [] elems1
-             @ ArraySlice.foldr (op::) [] elems2))
-        , delims = ArraySlice.full (Array.fromList
-            (ArraySlice.foldr (op::) [] delims1
-             @ ArraySlice.foldr (op::) [] delims2))
+        { elems = Seq.append (elems1, elems2)
+        , delims = Seq.append (delims1, delims2)
         }
   | combineDecs (Ast.Exp.DecMultiple {elems, delims}) dec =
       Ast.Exp.DecMultiple
-        { elems = ArraySlice.full (Array.fromList
-            (ArraySlice.foldr (op::) [] elems @ [dec]))
-        , delims = ArraySlice.full (Array.fromList
-            (ArraySlice.foldr (op::) [] delims @ [NONE]))
+        { elems = Seq.append (elems, Seq.singleton dec)
+        , delims = Seq.append (delims, Seq.singleton NONE)
         }
   | combineDecs dec (Ast.Exp.DecMultiple {elems, delims}) =
       Ast.Exp.DecMultiple
-        { elems = ArraySlice.full (Array.fromList
-            (dec :: ArraySlice.foldr (op::) [] elems))
-        , delims = ArraySlice.full (Array.fromList
-            (NONE :: ArraySlice.foldr (op::) [] delims))
+        { elems = Seq.fromList (dec :: Seq.toList elems)
+        , delims = Seq.fromList (NONE :: Seq.toList delims)
         }
   | combineDecs dec1 dec2 =
       Ast.Exp.DecMultiple
-        { elems = ArraySlice.full (Array.fromList [dec1, dec2])
-        , delims = ArraySlice.full (Array.fromList [NONE, NONE])
-        }
+        {elems = Seq.fromList [dec1, dec2], delims = Seq.fromList [NONE, NONE]}
 
 fun addGen (gen1: gen) (gen2: gen) : gen =
   { genTypebind = fn bind =>

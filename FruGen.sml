@@ -6,7 +6,7 @@ struct
     | Ast.Ty.Record {elems, ...} =>
         let
           open BuildAst
-          val elems = ArraySlice.foldr (op::) [] elems
+          val elems = Seq.toList elems
           val elems' = (List.concat o List.map (genDecsForTy o #ty)) elems
           val fromTok = mkToken "from"
           val toTok = mkToken "to"
@@ -36,21 +36,19 @@ struct
           f :: elems'
         end
     | Ast.Ty.Tuple {elems, ...} =>
-        (List.concat o List.map genDecsForTy o ArraySlice.foldr (op::) []) elems
+        (List.concat o List.map genDecsForTy o Seq.toList) elems
     | Ast.Ty.Con {args, ...} =>
         (case args of
            Ast.SyntaxSeq.Empty => []
          | Ast.SyntaxSeq.One ty => genDecsForTy ty
          | Ast.SyntaxSeq.Many {elems, ...} =>
-             (List.concat o List.map genDecsForTy o ArraySlice.foldr (op::) [])
-               elems)
+             (List.concat o List.map genDecsForTy o Seq.toList) elems)
     | Ast.Ty.Arrow {from, to, ...} => genDecsForTy from @ genDecsForTy to
     | Ast.Ty.Parens {ty, ...} => genDecsForTy ty
 
   fun genTypebind ({elems, ...}: Ast.Exp.typbind) =
     let
       open BuildAst
-      val elems = ArraySlice.foldr (op::) [] elems
       val decs = List.concat
         (List.map
            (fn {tycon, ty, ...} =>
@@ -67,7 +65,7 @@ struct
                     List.map (fn dec => (mkToken "", dec)) decs
               in
                 List.map (fn (t, dec) => (appendTokens tycon t, dec)) decs
-              end) elems)
+              end) (Seq.toList elems))
     in
       multDec
         (List.map
@@ -79,12 +77,10 @@ struct
   fun genDatabind ({elems, ...}: Ast.Exp.datbind) _ =
     let
       open BuildAst
-      val elems = ArraySlice.foldr (op::) [] elems
       val decs = List.concat
         (List.map
            (fn {elems, tycon, ...} =>
               let
-                val elems = ArraySlice.foldr (op::) [] elems
                 val constrDecs: (token * (token * (token -> dec)) list) list =
                   List.map
                     (fn {id, arg = SOME {ty, ...}, ...} =>
@@ -104,7 +100,7 @@ struct
                        in
                          (id, decs)
                        end
-                      | {id, ...} => (id, [])) elems
+                      | {id, ...} => (id, [])) (Seq.toList elems)
               in
                 List.map (fn (t, decs) => (appendTokens tycon t, decs))
                   (List.concat
@@ -116,7 +112,7 @@ struct
                                decs) constrDecs
                       else
                         List.map #2 constrDecs))
-              end) elems)
+              end) (Seq.toList elems))
     in
       multDec
         (List.map

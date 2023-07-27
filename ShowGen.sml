@@ -99,14 +99,13 @@ struct
     | tyExp env (Ty.Record {elems, ...}) =
         let
           val enclose = fn exp => Const openCurly :: exp :: [Const closeCurly]
-          val elems = ArraySlice.foldr (op::) [] elems
           val fields =
             List.map
               (fn {lab, ty, ...} =>
                  infixLExp concatTok
                    [ Const (stringTok (appendTokens lab equalsTok))
                    , tyExp env ty
-                   ]) elems
+                   ]) (Seq.toList elems)
           val exp = appExp
             [Const concatWithTok, Const (stringTok commaTok), listExp fields]
         in
@@ -115,8 +114,7 @@ struct
     | tyExp env (Ty.Tuple {elems, ...}) =
         let
           val enclose = fn exp => Const openParen :: exp :: [Const closeParen]
-          val elems = ArraySlice.foldr (op::) [] elems
-          val fields = List.map (tyExp env) elems
+          val fields = List.map (tyExp env) (Seq.toList elems)
           val exp = appExp
             [Const concatWithTok, Const (stringTok commaTok), listExp fields]
         in
@@ -180,7 +178,7 @@ struct
                        (List.map (Pat.Const o mkTyVar) vars))
              in
                valDec (Pat.Const (mkShow tycon)) (header (tyExp' env ty))
-             end) (ArraySlice.foldr (op::) [] elems)
+             end) (Seq.toList elems)
     in
       localDecs (additionalDecs env) (multDec decs)
     end

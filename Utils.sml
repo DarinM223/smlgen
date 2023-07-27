@@ -31,8 +31,7 @@ struct
 
   fun syntaxSeqToList SyntaxSeq.Empty = []
     | syntaxSeqToList (SyntaxSeq.One e) = [e]
-    | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) =
-        ArraySlice.foldr (op::) [] elems
+    | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) = Seq.toList elems
 
   fun listToSyntaxSeq [] = SyntaxSeq.Empty
     | listToSyntaxSeq [e] = SyntaxSeq.One e
@@ -49,12 +48,7 @@ struct
         SyntaxSeq.One (f e)
     | syntaxSeqMap f (SyntaxSeq.Many {left, elems, delims, right}) =
         SyntaxSeq.Many
-          { left = left
-          , elems = ArraySlice.full (Array.fromList (List.map f
-              (ArraySlice.foldr (op::) [] elems)))
-          , delims = delims
-          , right = right
-          }
+          {left = left, elems = Seq.map f elems, delims = delims, right = right}
 
   fun showTy ty =
     case ty of
@@ -66,15 +60,12 @@ struct
           (List.map
              (fn {lab, ty, ...} =>
                 Token.toString (stripToken lab) ^ ":" ^ showTy ty)
-             (ArraySlice.foldr (op::) [] elems)) ^ "}"
+             (Seq.toList elems)) ^ "}"
     | Ty.Tuple {elems, ...} =>
         if ArraySlice.length elems = 1 then
           showTy (parensTy (ArraySlice.sub (elems, 0)))
         else
-          "("
-          ^
-          String.concatWith "," (List.map showTy
-            (ArraySlice.foldr (op::) [] elems)) ^ ")"
+          "(" ^ String.concatWith "," (List.map showTy (Seq.toList elems)) ^ ")"
     | Ty.Con {args, id} =>
         "(" ^ String.concatWith "," (List.map showTy (syntaxSeqToList args))
         ^ ")" ^ Token.toString (stripToken (MaybeLongToken.getToken id))
@@ -107,10 +98,10 @@ struct
         destructRecordPat'
           (List.map
              (fn {lab, ty, ...} => (lab, stripParens (destructTyPat fresh ty)))
-             (ArraySlice.foldr (op::) [] elems))
+             (Seq.toList elems))
     | destructTyPat fresh (Ty.Tuple {elems, ...}) =
-        destructTuplePat (List.map (stripParens o destructTyPat fresh)
-          (ArraySlice.foldr (op::) [] elems))
+        destructTuplePat
+          (List.map (stripParens o destructTyPat fresh) (Seq.toList elems))
     | destructTyPat fresh (Ty.Con {id, args, ...}) =
         let
           val id = MaybeLongToken.getToken id
