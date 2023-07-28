@@ -97,6 +97,18 @@ local
     | printDecTypes (Ast.Exp.DecDatatype {datbind = {elems, ...}, ...}) =
         ArraySlice.app (fn e => printToken (#tycon e)) elems
     | printDecTypes _ = raise Fail "Unknown declaration type"
+  fun datbindActions args : Ast.Exp.datbind -> gen option =
+    Option.join
+    o Option.map (fn e => getActions (Token.toString (#tycon e)) args)
+    o
+    ArraySlice.find (fn e =>
+      Option.isSome (getActions (Token.toString (#tycon e)) args)) o #elems
+  fun typbindActions args : Ast.Exp.typbind -> gen option =
+    Option.join
+    o Option.map (fn e => getActions (Token.toString (#tycon e)) args)
+    o
+    ArraySlice.find (fn e =>
+      Option.isSome (getActions (Token.toString (#tycon e)) args)) o #elems
   fun goExp _ (exp: Ast.Exp.exp) = exp
   and goDec args (dec: Ast.Exp.dec) =
     case dec of
@@ -104,33 +116,23 @@ local
     | Ast.Exp.DecVal _ => dec
     | Ast.Exp.DecFun _ => dec
     | Ast.Exp.DecType {typbind, ...} =>
-        let
-          val actions: gen option =
-            (Option.join
-             o Option.map (fn e => getActions (Token.toString (#tycon e)) args)
-             o
-             ArraySlice.find (fn e =>
-               Option.isSome (getActions (Token.toString (#tycon e)) args))
-             o #elems) typbind
-        in
-          case actions of
-            SOME action =>
-              ( print "Types: "
-              ; printDecTypes dec
-              ; confirm dec (fn () =>
-                  combineDecs dec (#genTypebind action typbind))
-              )
-          | NONE => dec
-        end
+        (case typbindActions args typbind of
+           SOME action =>
+             ( print "Types: "
+             ; printDecTypes dec
+             ; confirm dec (fn () =>
+                 combineDecs dec (#genTypebind action typbind))
+             )
+         | NONE => dec)
     | Ast.Exp.DecDatatype {datbind, withtypee, ...} =>
         let
-          val actions: gen option =
-            (Option.join
-             o Option.map (fn e => getActions (Token.toString (#tycon e)) args)
-             o
-             ArraySlice.find (fn e =>
-               Option.isSome (getActions (Token.toString (#tycon e)) args))
-             o #elems) datbind
+          val actions1 = datbindActions args datbind
+          val actions2 = Option.join
+            (Option.map (typbindActions args o #typbind) withtypee)
+          val actions =
+            case actions1 of
+              SOME action => SOME action
+            | NONE => actions2
         in
           case actions of
             SOME action =>
@@ -206,18 +208,15 @@ local
     | Ast.Str.DecCore dec => Ast.Str.DecCore (goDec args dec)
     | Ast.Str.DecStructure {structuree, elems, delims} =>
         let
-          val elems =
-            Seq.map
-              (fn {strid, constraint, eq, strexp} =>
-                 { strid = strid
-                 , constraint = constraint
-                 , eq = eq
-                 , strexp =
-                     goStrExp (filterToken (Token.toString strid) args) strexp
-                 }) elems
+          val go = fn {strid, constraint, eq, strexp} =>
+            { strid = strid
+            , constraint = constraint
+            , eq = eq
+            , strexp = goStrExp (filterToken (Token.toString strid) args) strexp
+            }
         in
           Ast.Str.DecStructure
-            {structuree = structuree, elems = elems, delims = delims}
+            {structuree = structuree, elems = Seq.map go elems, delims = delims}
         end
     | Ast.Str.DecMultiple {elems, delims} =>
         Ast.Str.DecMultiple
@@ -233,20 +232,18 @@ local
     | Ast.Str.MLtonOverload _ => dec
   and goFunDec args (Ast.Fun.DecFunctor {functorr, elems, delims}) =
     let
-      val elems =
-        Seq.map
-          (fn {funid, lparen, funarg, rparen, constraint, eq, strexp} =>
-             { funid = funid
-             , lparen = lparen
-             , funarg = funarg
-             , rparen = rparen
-             , constraint = constraint
-             , eq = eq
-             , strexp =
-                 goStrExp (filterToken (Token.toString funid) args) strexp
-             }) elems
+      val go = fn {funid, lparen, funarg, rparen, constraint, eq, strexp} =>
+        { funid = funid
+        , lparen = lparen
+        , funarg = funarg
+        , rparen = rparen
+        , constraint = constraint
+        , eq = eq
+        , strexp = goStrExp (filterToken (Token.toString funid) args) strexp
+        }
     in
-      Ast.Fun.DecFunctor {functorr = functorr, elems = elems, delims = delims}
+      Ast.Fun.DecFunctor
+        {functorr = functorr, elems = Seq.map go elems, delims = delims}
     end
   and goTopDec args (dec: Ast.topdec) =
     case dec of

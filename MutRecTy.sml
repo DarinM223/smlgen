@@ -32,9 +32,7 @@ struct
           Ty.Record {left = left, elems = elems, delims = delims, right = right}
         end
     | Ty.Tuple {elems, delims} =>
-        let val elems = Seq.map (subst map) elems
-        in Ty.Tuple {elems = elems, delims = delims}
-        end
+        Ty.Tuple {elems = Seq.map (subst map) elems, delims = delims}
     | Ty.Con {args, id} =>
         let
           val args =
