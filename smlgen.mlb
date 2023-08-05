@@ -21,6 +21,7 @@ local
   CompareGen.sml
   FilesData.sml
   FilesGen.sml
-in
   smlgen.sml
+in
+  main.sml
 end
