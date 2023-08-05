@@ -58,7 +58,6 @@ struct
     fun create i = array (i, 0.0)
   end
 end;
-
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-format-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array.sml";
