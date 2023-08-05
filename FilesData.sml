@@ -1,8 +1,11 @@
-datatype files_data =
-  FilesData of {depends: files_data list, data: string, fileName: string}
+structure FilesData =
+struct
+  datatype t = FilesData of {depends: t list, data: string, fileName: string}
+end
 
 structure FoldFile =
 struct
+  open FilesData
   val data =
     "fun $ (a, f) = f a\n\
     \signature FOLD =\n\
@@ -65,6 +68,7 @@ end
 
 structure FruFile =
 struct
+  open FilesData
   val data =
     "structure FunctionalRecordUpdate =\n\
     \ struct\n\
@@ -193,6 +197,7 @@ end
 
 structure LiteralFile =
 struct
+  open FilesData
   val data =
     "structure Literal:>\n\
     \ sig\n\
@@ -237,6 +242,7 @@ end
 
 structure NumFile =
 struct
+  open FilesData
   val data =
     "structure Num =\n\
     \  struct\n\
@@ -277,6 +283,7 @@ end
 
 structure Fold01NFile =
 struct
+  open FilesData
   val data =
     "structure Fold01N =\n\
     \   struct\n\
@@ -347,6 +354,7 @@ end
 
 structure PrintfFile =
 struct
+  open FilesData
   val data =
     "structure Printf =\n\
     \  struct\n\
@@ -372,6 +380,7 @@ end
 
 structure ProductFile =
 struct
+  open FilesData
   val data =
     "structure Product = struct\n\
     \  datatype ('a, 'b) product = & of 'a * 'b\n\
@@ -384,6 +393,7 @@ end
 
 structure OptionalArgFile =
 struct
+  open FilesData
   val data =
     "structure OptionalArg =\n\
     \  struct\n\

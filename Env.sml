@@ -24,11 +24,11 @@ struct
       FunctionalRecordUpdate.makeUpdate4 (from, from, to) r
     end
   fun setSubEnv (Env env) env' =
-    let open FunctionalRecordUpdate
+    let open Fold FunctionalRecordUpdate
     in Env (updateT env upd #env env' $)
     end
   fun freshEnv (Env env) =
-    let open FunctionalRecordUpdate
+    let open Fold FunctionalRecordUpdate
     in Env (updateT env set #c (ref 0) set #vars (ref []) $)
     end
   fun fresh (Env {c, vars, ...}) t =

@@ -1,4 +1,3 @@
-fun $ (a, f) = f a
 signature FOLD =
 sig
   type ('a, 'b, 'c, 'd) step = 'a * ('b -> 'c) -> 'd
@@ -15,6 +14,7 @@ sig
   val step1: ('a11 * 'a12 -> 'a2) -> ('a11, 'a12, 'a2, 'b, 'c, 'd) step1
   val step2: ('a11 * 'a12 * 'a13 -> 'a2)
              -> ('a11, 'a12, 'a13, 'a2, 'b, 'c, 'd) step2
+  val $ : 'a * ('a -> 'b) -> 'b
 end
 structure Fold :> FOLD =
 struct
@@ -26,6 +26,7 @@ struct
   type ('a11, 'a12, 'a13, 'a2, 'b, 'c, 'd) step2 =
     ('a13, 'b, 'c, 'a11 -> 'a12 -> ('a2, 'b, 'c, 'd) t) step
   fun fold (a: 'a, f: 'b -> 'c) (g: ('a, 'b, 'c, 'd) step) : 'd = g (a, f)
+  fun $ (a, f) = f a
   fun step0 (h: 'a1 -> 'a2) (a1: 'a1, f: 'b -> 'c) : ('a2, 'b, 'c, 'd) t =
     fold (h a1, f)
   fun step1 (h: 'a11 * 'a12 -> 'a2) (a12: 'a12, f: 'b -> 'c) (a11: 'a11) :

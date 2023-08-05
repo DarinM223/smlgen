@@ -24,16 +24,6 @@ struct
     fun f18 z = next f17 z
     fun f19 z = next f18 z
     fun f20 z = next f19 z
-    fun f21 z = next f20 z
-    fun f22 z = next f21 z
-    fun f23 z = next f22 z
-    fun f24 z = next f23 z
-    fun f25 z = next f24 z
-    fun f26 z = next f25 z
-    fun f27 z = next f26 z
-    fun f28 z = next f27 z
-    fun f29 z = next f28 z
-    fun f30 z = next f29 z
     fun c0 from = from
     fun c1 from = c0 from f1
     fun c2 from = c1 from f2
@@ -55,16 +45,6 @@ struct
     fun c18 from = c17 from f18
     fun c19 from = c18 from f19
     fun c20 from = c19 from f20
-    fun c21 from = c20 from f21
-    fun c22 from = c21 from f22
-    fun c23 from = c22 from f23
-    fun c24 from = c23 from f24
-    fun c25 from = c24 from f25
-    fun c26 from = c25 from f26
-    fun c27 from = c26 from f27
-    fun c28 from = c27 from f28
-    fun c29 from = c28 from f29
-    fun c30 from = c29 from f30
     fun makeUpdate cX (from, from', to) record =
       let
         fun ops () = cX from'
@@ -94,16 +74,6 @@ struct
     fun makeUpdate18 z = makeUpdate c18 z
     fun makeUpdate19 z = makeUpdate c19 z
     fun makeUpdate20 z = makeUpdate c20 z
-    fun makeUpdate21 z = makeUpdate c21 z
-    fun makeUpdate22 z = makeUpdate c22 z
-    fun makeUpdate23 z = makeUpdate c23 z
-    fun makeUpdate24 z = makeUpdate c24 z
-    fun makeUpdate25 z = makeUpdate c25 z
-    fun makeUpdate26 z = makeUpdate c26 z
-    fun makeUpdate27 z = makeUpdate c27 z
-    fun makeUpdate28 z = makeUpdate c28 z
-    fun makeUpdate29 z = makeUpdate c29 z
-    fun makeUpdate30 z = makeUpdate c30 z
     fun upd z =
       Fold.step2
         (fn (s, f, (vars, ops)) => (fn out => vars (s (ops ()) (out, f)), ops))
