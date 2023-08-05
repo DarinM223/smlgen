@@ -4,8 +4,7 @@ struct datatype t = Data of {depends: t list, data: string, fileName: string} en
 structure FoldFile =
 struct
   val data =
-    "fun $ (a, f) = f a\n\
-    \signature FOLD =\n\
+    "signature FOLD =\n\
     \   sig\n\
     \      type ('a, 'b, 'c, 'd) step = 'a * ('b -> 'c) -> 'd\n\
     \      type ('a, 'b, 'c, 'd) t = ('a, 'b, 'c, 'd) step -> 'd\n\
@@ -25,6 +24,7 @@ struct
     \                 -> ('a11, 'a12, 'a2, 'b, 'c, 'd) step1\n\
     \      val step2: ('a11 * 'a12 * 'a13 -> 'a2)\n\
     \                 -> ('a11, 'a12, 'a13, 'a2, 'b, 'c, 'd) step2\n\
+    \      val $ : 'a * ('a -> 'b) -> 'b\n\
     \   end\n\
     \structure Fold:> FOLD =\n\
     \   struct\n\
@@ -39,6 +39,7 @@ struct
     \      fun fold (a: 'a, f: 'b -> 'c)\n\
     \               (g: ('a, 'b, 'c, 'd) step): 'd =\n\
     \         g (a, f)\n\
+    \      fun $ (a, f) = f a\n\
     \      fun step0 (h: 'a1 -> 'a2)\n\
     \                (a1: 'a1, f: 'b -> 'c): ('a2, 'b, 'c, 'd) t =\n\
     \         fold (h a1, f)\n\
@@ -92,16 +93,6 @@ struct
     \   fun f18 z = next f17 z\n\
     \   fun f19 z = next f18 z\n\
     \   fun f20 z = next f19 z\n\
-    \   fun f21 z = next f20 z\n\
-    \   fun f22 z = next f21 z\n\
-    \   fun f23 z = next f22 z\n\
-    \   fun f24 z = next f23 z\n\
-    \   fun f25 z = next f24 z\n\
-    \   fun f26 z = next f25 z\n\
-    \   fun f27 z = next f26 z\n\
-    \   fun f28 z = next f27 z\n\
-    \   fun f29 z = next f28 z\n\
-    \   fun f30 z = next f29 z\n\
     \   fun c0 from = from\n\
     \   fun c1 from = c0 from f1\n\
     \   fun c2 from = c1 from f2\n\
@@ -123,16 +114,6 @@ struct
     \   fun c18 from = c17 from f18\n\
     \   fun c19 from = c18 from f19\n\
     \   fun c20 from = c19 from f20\n\
-    \   fun c21 from = c20 from f21\n\
-    \   fun c22 from = c21 from f22\n\
-    \   fun c23 from = c22 from f23\n\
-    \   fun c24 from = c23 from f24\n\
-    \   fun c25 from = c24 from f25\n\
-    \   fun c26 from = c25 from f26\n\
-    \   fun c27 from = c26 from f27\n\
-    \   fun c28 from = c27 from f28\n\
-    \   fun c29 from = c28 from f29\n\
-    \   fun c30 from = c29 from f30\n\
     \   fun makeUpdate cX (from, from', to) record =\n\
     \     let\n\
     \       fun ops () = cX from'\n\
@@ -162,16 +143,6 @@ struct
     \   fun makeUpdate18 z = makeUpdate c18 z\n\
     \   fun makeUpdate19 z = makeUpdate c19 z\n\
     \   fun makeUpdate20 z = makeUpdate c20 z\n\
-    \   fun makeUpdate21 z = makeUpdate c21 z\n\
-    \   fun makeUpdate22 z = makeUpdate c22 z\n\
-    \   fun makeUpdate23 z = makeUpdate c23 z\n\
-    \   fun makeUpdate24 z = makeUpdate c24 z\n\
-    \   fun makeUpdate25 z = makeUpdate c25 z\n\
-    \   fun makeUpdate26 z = makeUpdate c26 z\n\
-    \   fun makeUpdate27 z = makeUpdate c27 z\n\
-    \   fun makeUpdate28 z = makeUpdate c28 z\n\
-    \   fun makeUpdate29 z = makeUpdate c29 z\n\
-    \   fun makeUpdate30 z = makeUpdate c30 z\n\
     \   fun upd z =\n\
     \     Fold.step2\n\
     \       (fn (s, f, (vars, ops)) => (fn out => vars (s (ops ()) (out, f)), ops))\n\

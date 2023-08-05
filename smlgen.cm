@@ -1,13 +1,13 @@
 Group is
   $/basis.cm
+  $/smlnj-lib.cm
+  Fold.sml
+  FunctionalRecordUpdate.sml
   ./smlfmt/src/base/sources.cm
   ./smlfmt/src/ast/sources.cm
   ./smlfmt/src/lex/sources.cm
   ./smlfmt/src/parse/sources.cm
   ./smlfmt/src/prettier-print/sources.cm
-  $/smlnj-lib.cm
-  Fold.sml
-  FunctionalRecordUpdate.sml
   BuildAst.sml
   Utils.sml
   MutRecTy.sig
