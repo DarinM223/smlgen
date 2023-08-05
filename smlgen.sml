@@ -1,5 +1,6 @@
 val test = CommandLineArgs.parseFlag "test"
 val fileGen = CommandLineArgs.parseString "gen" ""
+val projGen = CommandLineArgs.parseString "proj" ""
 val maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
 
 fun filterToken tokenString ((token' :: path, actions) :: xs) =
@@ -314,6 +315,8 @@ val () =
       ; FilesGen.genFiles OptionalArgFile.t
       )
   | _ => ()
+
+val () = if String.size projGen > 0 then FilesGen.genProject projGen else ()
 
 val () =
   case CommandLineArgs.positional () of

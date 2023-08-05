@@ -1,5 +1,11 @@
 structure FilesData =
-struct datatype t = Data of {depends: t list, data: string, fileName: string} end
+struct
+  datatype t = Data of {depends: t list, data: string, fileName: string}
+  fun mapFileName f (Data {depends, data, fileName}) =
+    Data {depends = depends, data = data, fileName = f fileName}
+  fun mapData f (Data {depends, data, fileName}) =
+    Data {depends = depends, data = f data, fileName = fileName}
+end
 
 structure FoldFile =
 struct
@@ -389,4 +395,32 @@ struct
       , data = data
       , fileName = "OptionalArg.sml"
       }
+end
+
+structure CMFile =
+struct
+  val data =
+    "Group is\n\
+    \  $/basis.cm\n\
+    \  $/smlnj-lib.cm\n"
+  val t = FilesData.Data {depends = [], data = data, fileName = ".cm"}
+end
+
+structure MLBFile =
+struct
+  val data =
+    "$(SML_LIB)/basis/basis.mlb\n\
+    \$(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb\n"
+  val t = FilesData.Data {depends = [], data = data, fileName = ".mlb"}
+end
+
+structure MilletFile =
+struct
+  val data =
+    "version = 1\n\
+    \[workspace]\n\
+    \root = \"^.mlb\"\n\
+    \[diagnostics]\n\
+    \5043.severity = \"ignore\"\n"
+  val t = FilesData.Data {depends = [], data = data, fileName = "millet.toml"}
 end

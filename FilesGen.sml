@@ -30,4 +30,25 @@ struct
       TextIO.closeOut os
     end
     handle Skip => ()
+
+  fun genProjectFiles projectName =
+    let
+      fun replaceCaret s =
+        let
+          val (l, r) = Substring.splitl (fn ch => ch <> #"^") (Substring.full s)
+        in
+          Substring.concat [l, Substring.full projectName, Substring.triml 1 r]
+        end
+      val cmFile = FilesData.mapFileName (fn s => projectName ^ s) CMFile.t
+      val mlbFile = FilesData.mapFileName (fn s => projectName ^ s) MLBFile.t
+      val milletFile = FilesData.mapData replaceCaret MilletFile.t
+    in
+      List.app genFiles [cmFile, mlbFile, milletFile]
+    end
+
+  fun genProject projectName =
+    ( OS.FileSys.mkDir projectName
+    ; OS.FileSys.chDir projectName
+    ; genProjectFiles projectName
+    )
 end

@@ -75,6 +75,15 @@ The list of file generators is shown below:
 | literal   | [Array & Vector literals](http://www.mlton.org/ArrayLiteral)            |
 | optarg    | [Optional arguments](http://www.mlton.org/OptionalArguments)            |
 
+smlgen also allows you to generate an initial project with the `-proj` option. For example, to generate
+an initial project named `hello`, run:
+
+```
+./smlgen -proj hello
+```
+
+And it will create a `hello` directory with initial project files.
+
 Testing
 -------
 
