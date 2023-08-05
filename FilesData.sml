@@ -1,11 +1,8 @@
 structure FilesData =
-struct
-  datatype t = FilesData of {depends: t list, data: string, fileName: string}
-end
+struct datatype t = Data of {depends: t list, data: string, fileName: string} end
 
 structure FoldFile =
 struct
-  open FilesData
   val data =
     "fun $ (a, f) = f a\n\
     \signature FOLD =\n\
@@ -63,12 +60,11 @@ struct
     \         w (fn (a, h) => s (a, g o h))\n\
     \  end\n"
 
-  val t = FilesData {depends = [], data = data, fileName = "Fold.sml"}
+  val t = FilesData.Data {depends = [], data = data, fileName = "Fold.sml"}
 end
 
 structure FruFile =
 struct
-  open FilesData
   val data =
     "structure FunctionalRecordUpdate =\n\
     \ struct\n\
@@ -188,7 +184,7 @@ struct
     \end"
 
   val t =
-    FilesData
+    FilesData.Data
       { depends = [FoldFile.t]
       , data = data
       , fileName = "FunctionalRecordUpdate.sml"
@@ -197,7 +193,6 @@ end
 
 structure LiteralFile =
 struct
-  open FilesData
   val data =
     "structure Literal:>\n\
     \ sig\n\
@@ -236,13 +231,12 @@ struct
     \ end\n"
 
   val t =
-    FilesData
+    FilesData.Data
       {depends = [FoldFile.t], data = data, fileName = "ArrayLiteral.sml"}
 end
 
 structure NumFile =
 struct
-  open FilesData
   val data =
     "structure Num =\n\
     \  struct\n\
@@ -277,13 +271,12 @@ struct
     \  end\n"
 
   val t =
-    FilesData
+    FilesData.Data
       {depends = [FoldFile.t], data = data, fileName = "NumberLiteral.sml"}
 end
 
 structure Fold01NFile =
 struct
-  open FilesData
   val data =
     "structure Fold01N =\n\
     \   struct\n\
@@ -349,12 +342,12 @@ struct
     \   end\n"
 
   val t =
-    FilesData {depends = [FoldFile.t], data = data, fileName = "Fold01N.sml"}
+    FilesData.Data
+      {depends = [FoldFile.t], data = data, fileName = "Fold01N.sml"}
 end
 
 structure PrintfFile =
 struct
-  open FilesData
   val data =
     "structure Printf =\n\
     \  struct\n\
@@ -375,12 +368,12 @@ struct
     \  end\n"
 
   val t =
-    FilesData {depends = [FoldFile.t], data = data, fileName = "Printf.sml"}
+    FilesData.Data
+      {depends = [FoldFile.t], data = data, fileName = "Printf.sml"}
 end
 
 structure ProductFile =
 struct
-  open FilesData
   val data =
     "structure Product = struct\n\
     \  datatype ('a, 'b) product = & of 'a * 'b\n\
@@ -388,12 +381,11 @@ struct
     \  infix &\n\
     \end\n"
 
-  val t = FilesData {depends = [], data = data, fileName = "Product.sml"}
+  val t = FilesData.Data {depends = [], data = data, fileName = "Product.sml"}
 end
 
 structure OptionalArgFile =
 struct
-  open FilesData
   val data =
     "structure OptionalArg =\n\
     \  struct\n\
@@ -421,7 +413,7 @@ struct
     \  end\n"
 
   val t =
-    FilesData
+    FilesData.Data
       { depends = [FoldFile.t, ProductFile.t]
       , data = data
       , fileName = "OptionalArg.sml"

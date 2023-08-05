@@ -7,7 +7,7 @@ struct
 
   exception Skip
 
-  fun genFiles (FoldFile.FilesData file) =
+  fun genFiles (FilesData.Data file) =
     let
       val () = List.app genFiles (#depends file)
       fun checkFileName (fileName: string) : string =
