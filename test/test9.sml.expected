@@ -26,7 +26,7 @@ local
       (case expr_3 (t4, t6) of
          EQUAL => expr_0 (t5, t7)
        | ? => ?)
-  and rec stmt = fn (stmt_6, stmt_7, expr_0, b_, a_) =>
+  and stmt = fn (stmt_6, stmt_7, expr_0, b_, a_) =>
     fn (Assign (t0, t1), Assign (t2, t3)) =>
       (case a_ (t0, t2) of
          EQUAL => expr_0 (t1, t3)
@@ -43,13 +43,13 @@ local
   val expr_stmt = fn (a_, b_) =>
     let
       val rec expr_0 = fn ? => expr (expr_0, expr_3, stmt_1, b_, a_) ?
-      and rec expr_2 = fn ? => expr (expr_2, expr_2, stmt_1, a_, a_) ?
-      and rec expr_5 = fn ? => expr (expr_5, expr_5, stmt_4, b_, b_) ?
-      and rec stmt_6 = fn ? => stmt (stmt_6, stmt_7, expr_0, b_, a_) ?
-      and rec expr_3 = fn ? => expr (expr_3, expr_0, stmt_4, a_, b_) ?
-      and rec stmt_4 = fn ? => stmt (stmt_4, stmt_4, expr_5, b_, b_) ?
-      and rec stmt_1 = fn ? => stmt (stmt_1, stmt_1, expr_2, a_, a_) ?
-      and rec stmt_7 = fn ? => stmt (stmt_7, stmt_6, expr_3, a_, b_) ?
+      and expr_2 = fn ? => expr (expr_2, expr_2, stmt_1, a_, a_) ?
+      and expr_5 = fn ? => expr (expr_5, expr_5, stmt_4, b_, b_) ?
+      and stmt_6 = fn ? => stmt (stmt_6, stmt_7, expr_0, b_, a_) ?
+      and expr_3 = fn ? => expr (expr_3, expr_0, stmt_4, a_, b_) ?
+      and stmt_4 = fn ? => stmt (stmt_4, stmt_4, expr_5, b_, b_) ?
+      and stmt_1 = fn ? => stmt (stmt_1, stmt_1, expr_2, a_, a_) ?
+      and stmt_7 = fn ? => stmt (stmt_7, stmt_6, expr_3, a_, b_) ?
     in
       (expr_0, stmt_6)
     end
@@ -74,7 +74,7 @@ local
   val foo = fn a_ =>
     let
       val rec foo_0 = fn ? => foo (foo_1, foo_0, a_) ?
-      and rec foo_1 = fn ? => foo (foo_1, foo_1, String.compare) ?
+      and foo_1 = fn ? => foo (foo_1, foo_1, String.compare) ?
     in
       foo_0
     end

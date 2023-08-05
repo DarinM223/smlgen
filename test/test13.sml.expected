@@ -16,7 +16,7 @@ datatype 'a t =
 local
   val rec t = fn (t_1, a_) => fn T' t0 => "T' " ^ "(" ^ t_1 t0 ^ ")"
   val t = fn a_ =>
-    let val rec t_1 = fn ? => t (t_1, a_) ? and rec t_0 = fn ? => t (t_1, a_) ?
+    let val rec t_1 = fn ? => t (t_1, a_) ? and t_0 = fn ? => t (t_1, a_) ?
     in t_0
     end
 in val show = t
@@ -24,7 +24,7 @@ end
 local
   val rec t = fn (t_1, a_) => fn (T' t0, T' t1) => t_1 (t0, t1)
   val t = fn a_ =>
-    let val rec t_1 = fn ? => t (t_1, a_) ? and rec t_0 = fn ? => t (t_1, a_) ?
+    let val rec t_1 = fn ? => t (t_1, a_) ? and t_0 = fn ? => t (t_1, a_) ?
     in t_0
     end
 in val compare = t

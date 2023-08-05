@@ -129,12 +129,12 @@ val t' & t =
 local
   val rec t' = fn t_1 =>
     fn t0 => "[" ^ String.concatWith ", " (List.map t_1 t0) ^ "]"
-  and rec t = fn t'_0 =>
+  and t = fn t'_0 =>
     fn T' (t0, t1) =>
       "T' " ^ "(" ^ String.concatWith ", " ["\"" ^ t0 ^ "\"", t'_0 t1] ^ ")"
      | Nil => "Nil"
   val t'_t = fn () =>
-    let val rec t'_0 = fn ? => t' t_1 ? and rec t_1 = fn ? => t t'_0 ?
+    let val rec t'_0 = fn ? => t' t_1 ? and t_1 = fn ? => t t'_0 ?
     in (t'_0, t_1)
     end
 in val showT' = #1 (t'_t ()) val show = #2 (t'_t ())
@@ -148,7 +148,7 @@ local
     | compareList _ ([], _ :: _) = LESS
     | compareList _ _ = EQUAL
   val rec t' = fn t_1 => compareList t_1
-  and rec t = fn t'_0 =>
+  and t = fn t'_0 =>
     fn (T' (t0, t1), T' (t2, t3)) =>
       (case String.compare (t0, t2) of
          EQUAL => t'_0 (t1, t3)
@@ -157,7 +157,7 @@ local
      | (Nil, T' _) => GREATER
      | (Nil, Nil) => EQUAL
   val t'_t = fn () =>
-    let val rec t'_0 = fn ? => t' t_1 ? and rec t_1 = fn ? => t t'_0 ?
+    let val rec t'_0 = fn ? => t' t_1 ? and t_1 = fn ? => t t'_0 ?
     in (t'_0, t_1)
     end
 in val compareT' = #1 (t'_t ()) val compare = #2 (t'_t ())
@@ -199,14 +199,11 @@ local
       ^
       String.concatWith ", "
         [b_ t0, "[" ^ String.concatWith ", " (List.map t_1 t1) ^ "]"] ^ ")"
-  and rec t = fn (t'_0, b_) =>
+  and t = fn (t'_0, b_) =>
     fn T' t0 => "T' " ^ "(" ^ t'_0 t0 ^ ")" | Nil => "Nil"
   val t'_t = fn b_ =>
-    let
-      val rec t'_0 = fn ? => t' (t_1, b_) ?
-      and rec t_1 = fn ? => t (t'_0, b_) ?
-    in
-      (t'_0, t_1)
+    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    in (t'_0, t_1)
     end
 in val showT' = fn ? => #1 (t'_t ?) val show = fn ? => #2 (t'_t ?)
 end
@@ -223,17 +220,14 @@ local
       (case b_ (t0, t2) of
          EQUAL => compareList t_1 (t1, t3)
        | ? => ?)
-  and rec t = fn (t'_0, b_) =>
+  and t = fn (t'_0, b_) =>
     fn (T' t0, T' t1) => t'_0 (t0, t1)
      | (T' _, Nil) => LESS
      | (Nil, T' _) => GREATER
      | (Nil, Nil) => EQUAL
   val t'_t = fn b_ =>
-    let
-      val rec t'_0 = fn ? => t' (t_1, b_) ?
-      and rec t_1 = fn ? => t (t'_0, b_) ?
-    in
-      (t'_0, t_1)
+    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    in (t'_0, t_1)
     end
 in val compareT' = fn ? => #1 (t'_t ?) val compare = fn ? => #2 (t'_t ?)
 end
@@ -268,17 +262,17 @@ val t = fn ? => #2 (t'_t ?)
 local
   val rec t' = fn (t_1, a_) =>
     fn (t0, t1) => "(" ^ String.concatWith ", " [a_ t0, t_1 t1] ^ ")"
-  and rec t = fn (t'_3, t'_0, b_, a_) =>
+  and t = fn (t'_3, t'_0, b_, a_) =>
     fn T' (t0, t1) =>
       "T' " ^ "(" ^ String.concatWith ", " [t'_0 t0, t'_3 t1] ^ ")"
      | Nil => "Nil"
   val t'_t = fn (a_, b_) =>
     let
       val rec t'_3 = fn ? => t' (t_4, b_) ?
-      and rec t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
-      and rec t'_0 = fn ? => t' (t_1, a_) ?
-      and rec t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
-      and rec t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
+      and t'_0 = fn ? => t' (t_1, a_) ?
+      and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
+      and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
     in
       (t'_0, t_2)
     end
@@ -290,7 +284,7 @@ local
       (case a_ (t0, t2) of
          EQUAL => t_1 (t1, t3)
        | ? => ?)
-  and rec t = fn (t'_3, t'_0, b_, a_) =>
+  and t = fn (t'_3, t'_0, b_, a_) =>
     fn (T' (t0, t1), T' (t2, t3)) =>
       (case t'_0 (t0, t2) of
          EQUAL => t'_3 (t1, t3)
@@ -301,10 +295,10 @@ local
   val t'_t = fn (a_, b_) =>
     let
       val rec t'_3 = fn ? => t' (t_4, b_) ?
-      and rec t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
-      and rec t'_0 = fn ? => t' (t_1, a_) ?
-      and rec t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
-      and rec t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
+      and t'_0 = fn ? => t' (t_1, a_) ?
+      and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
+      and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
     in
       (t'_0, t_2)
     end
@@ -353,25 +347,25 @@ val t' = fn a_ => #3 (t''_t_t' (a_, a_))
 local
   val rec t'' = fn (t_1, a_) =>
     fn (t0, t1) => "(" ^ String.concatWith ", " [t_1 t0, a_ t1] ^ ")"
-  and rec t = fn (t''_8, t'_6, b_, a_) =>
+  and t = fn (t''_8, t'_6, b_, a_) =>
     fn T' (t0, t1) =>
       "T' " ^ "(" ^ String.concatWith ", " [t'_6 t0, t''_8 t1] ^ ")"
      | Nil => "Nil"
-  and rec t' = fn (t_7, a_) =>
+  and t' = fn (t_7, a_) =>
     fn (t0, t1) => "(" ^ String.concatWith ", " [a_ t0, t_7 t1] ^ ")"
   val t''_t_t' = fn (a_, b_) =>
     let
       val rec t_7 = fn ? => t (t''_4, t'_6, Int.toString, a_) ?
-      and rec t'_6 = fn ? => t' (t_7, a_) ?
-      and rec t''_8 = fn ? => t'' (t_9, b_) ?
-      and rec t''_4 = fn ? => t'' (t_3, Int.toString) ?
-      and rec t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
-      and rec t_9 = fn ? => t (t''_8, t'_2, b_, fn t0 => "\"" ^ t0 ^ "\"") ?
-      and rec t_3 = fn ? =>
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t''_8 = fn ? => t'' (t_9, b_) ?
+      and t''_4 = fn ? => t'' (t_3, Int.toString) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t_9 = fn ? => t (t''_8, t'_2, b_, fn t0 => "\"" ^ t0 ^ "\"") ?
+      and t_3 = fn ? =>
         t (t''_4, t'_2, Int.toString, fn t0 => "\"" ^ t0 ^ "\"") ?
-      and rec t''_0 = fn ? => t'' (t_1, a_) ?
-      and rec t_1 = fn ? => t (t''_0, t'_2, a_, fn t0 => "\"" ^ t0 ^ "\"") ?
-      and rec t'_2 = fn ? => t' (t_3, fn t0 => "\"" ^ t0 ^ "\"") ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_1 = fn ? => t (t''_0, t'_2, a_, fn t0 => "\"" ^ t0 ^ "\"") ?
+      and t'_2 = fn ? => t' (t_3, fn t0 => "\"" ^ t0 ^ "\"") ?
     in
       (t''_0, t_5, t'_6)
     end
@@ -386,7 +380,7 @@ local
       (case t_1 (t0, t2) of
          EQUAL => a_ (t1, t3)
        | ? => ?)
-  and rec t = fn (t''_8, t'_6, b_, a_) =>
+  and t = fn (t''_8, t'_6, b_, a_) =>
     fn (T' (t0, t1), T' (t2, t3)) =>
       (case t'_6 (t0, t2) of
          EQUAL => t''_8 (t1, t3)
@@ -394,7 +388,7 @@ local
      | (T' _, Nil) => LESS
      | (Nil, T' _) => GREATER
      | (Nil, Nil) => EQUAL
-  and rec t' = fn (t_7, a_) =>
+  and t' = fn (t_7, a_) =>
     fn ((t0, t1), (t2, t3)) =>
       (case a_ (t0, t2) of
          EQUAL => t_7 (t1, t3)
@@ -402,15 +396,15 @@ local
   val t''_t_t' = fn (a_, b_) =>
     let
       val rec t_7 = fn ? => t (t''_4, t'_6, Int.compare, a_) ?
-      and rec t'_6 = fn ? => t' (t_7, a_) ?
-      and rec t''_8 = fn ? => t'' (t_9, b_) ?
-      and rec t''_4 = fn ? => t'' (t_3, Int.compare) ?
-      and rec t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
-      and rec t_9 = fn ? => t (t''_8, t'_2, b_, String.compare) ?
-      and rec t_3 = fn ? => t (t''_4, t'_2, Int.compare, String.compare) ?
-      and rec t''_0 = fn ? => t'' (t_1, a_) ?
-      and rec t_1 = fn ? => t (t''_0, t'_2, a_, String.compare) ?
-      and rec t'_2 = fn ? => t' (t_3, String.compare) ?
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t''_8 = fn ? => t'' (t_9, b_) ?
+      and t''_4 = fn ? => t'' (t_3, Int.compare) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t_9 = fn ? => t (t''_8, t'_2, b_, String.compare) ?
+      and t_3 = fn ? => t (t''_4, t'_2, Int.compare, String.compare) ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_1 = fn ? => t (t''_0, t'_2, a_, String.compare) ?
+      and t'_2 = fn ? => t' (t_3, String.compare) ?
     in
       (t''_0, t_5, t'_6)
     end

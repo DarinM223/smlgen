@@ -219,8 +219,7 @@ struct
                val () = AtomTable.insert dups (tyconA, argDups)
                val substMap = buildSubstMap env' (Token.toString tycon) varExps
              in
-               ( true
-               , Pat.Const tycon
+               ( Pat.Const tycon
                , singleFnExp
                    (destructTuplePat
                       (applyDuplicates (argDups, Pat.Const, args)))
@@ -233,7 +232,7 @@ struct
              end) (ListPair.zip (tycons, tys))
       val concatTys = mkToken (String.concatWith "_"
         (List.map Token.toString tycons))
-      val mutRecDec = valDecs
+      val mutRecDec = valDecs true
         (List.map
            (fn (tycon, args) =>
               let
@@ -241,8 +240,7 @@ struct
                 val argDups = AtomTable.lookup dups (Atom.atom tycon')
                 val args = applyDuplicates (argDups, tyExp' env, args)
               in
-                ( true
-                , Pat.Const tycon
+                ( Pat.Const tycon
                 , singleFnExp (Pat.Const quesTok) (appExp
                     [Const (mkToken tycon'), tupleExp args, Const quesTok])
                 )
@@ -251,7 +249,7 @@ struct
       val dec = multDec
         (additionalDecs env
          @
-         [ valDecs generatorDecs
+         [ valDecs true generatorDecs
          , valDec (Pat.Const concatTys)
              (singleFnExp
                 (destructTuplePat (List.map (Pat.Const o mkTyVar) vars))

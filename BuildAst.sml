@@ -155,21 +155,21 @@ struct
       , delims = Seq.empty ()
       }
 
-  fun valDecs l =
-    DecVal
-      { vall = mkReservedToken Val
-      , tyvars = SyntaxSeq.Empty
-      , elems = Seq.fromList
-          (List.map
-             (fn (recc, pat, exp) =>
-                { recc = if recc then SOME recTok else NONE
-                , pat = pat
-                , eq = equalTok
-                , exp = exp
-                }) l)
-      , delims = Seq.tabulate (fn _ => andReservedTok) (Int.max
-          (0, List.length l - 1))
-      }
+  fun valDecs _ [] = DecEmpty
+    | valDecs recc ((pat, exp) :: t) =
+        let
+          fun mkRec recc pat exp =
+            {recc = recc, pat = pat, eq = equalTok, exp = exp}
+        in
+          DecVal
+            { vall = mkReservedToken Val
+            , tyvars = SyntaxSeq.Empty
+            , elems = Seq.fromList
+                (mkRec (if recc then SOME recTok else NONE) pat exp
+                 :: (List.map (fn (pat, exp) => mkRec NONE pat exp) t))
+            , delims = Seq.fromList (List.map (fn _ => andReservedTok) t)
+            }
+        end
 
   fun multDec decs =
     DecMultiple

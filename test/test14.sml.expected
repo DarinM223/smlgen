@@ -128,7 +128,7 @@ struct
     val rec tv = fn typ_1 =>
       fn Link t0 => "Link " ^ "(" ^ typ_1 t0 ^ ")"
        | Unbound t1 => "Unbound " ^ "(" ^ "\"" ^ t1 ^ "\"" ^ ")"
-    and rec typ = fn (typ_1, tv_0) =>
+    and typ = fn (typ_1, tv_0) =>
       fn TVar (ref t0) => "TVar " ^ "(" ^ "ref " ^ tv_0 t0 ^ ")"
        | QVar t1 => "QVar " ^ "(" ^ showQname t1 ^ ")"
        | TArrow (t2, t3) =>
@@ -136,7 +136,7 @@ struct
     val tv_typ = fn () =>
       let
         val rec typ_1 = fn ? => typ (typ_1, tv_0) ?
-        and rec tv_0 = fn ? => tv typ_1 ?
+        and tv_0 = fn ? => tv typ_1 ?
       in
         (tv_0, typ_1)
       end
@@ -148,7 +148,7 @@ struct
        | (Link _, Unbound _) => LESS
        | (Unbound _, Link _) => GREATER
        | (Unbound t2, Unbound t3) => String.compare (t2, t3)
-    and rec typ = fn (typ_1, tv_0) =>
+    and typ = fn (typ_1, tv_0) =>
       fn (TVar (ref t0), TVar (ref t1)) => tv_0 (t0, t1)
        | (TVar _, QVar _) => LESS
        | (TVar _, TArrow _) => LESS
@@ -164,7 +164,7 @@ struct
     val tv_typ = fn () =>
       let
         val rec typ_1 = fn ? => typ (typ_1, tv_0) ?
-        and rec tv_0 = fn ? => tv typ_1 ?
+        and tv_0 = fn ? => tv typ_1 ?
       in
         (tv_0, typ_1)
       end
