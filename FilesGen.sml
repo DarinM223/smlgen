@@ -42,8 +42,9 @@ struct
       val cmFile = FilesData.mapFileName (fn s => projectName ^ s) CMFile.t
       val mlbFile = FilesData.mapFileName (fn s => projectName ^ s) MLBFile.t
       val milletFile = FilesData.mapData replaceCaret MilletFile.t
+      val buildPolyFile = FilesData.mapData replaceCaret BuildPolyMLFile.t
     in
-      List.app genFiles [cmFile, mlbFile, milletFile]
+      List.app genFiles [cmFile, mlbFile, milletFile, buildPolyFile]
     end
 
   fun genProject projectName =

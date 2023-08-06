@@ -424,3 +424,79 @@ struct
     \5043.severity = \"ignore\"\n"
   val t = FilesData.Data {depends = [], data = data, fileName = "millet.toml"}
 end
+
+structure BuildPolyMLFile =
+struct
+  val data =
+    "cat > build.sml <<EOL\n\
+    \structure Unsafe =\n\
+    \struct\n\
+    \  structure Basis =\n\
+    \  struct\n\
+    \    structure Array = Array\n\
+    \    structure Vector = Vector\n\
+    \    structure CharArray = CharArray\n\
+    \    structure CharVector = CharVector\n\
+    \    structure Word8Array = Word8Array\n\
+    \    structure Word8Vector = Word8Vector\n\
+    \  end\n\
+    \\n\
+    \  structure Vector = struct val sub = Basis.Vector.sub end\n\
+    \\n\
+    \  structure Array =\n\
+    \  struct\n\
+    \    val sub = Basis.Array.sub\n\
+    \    val update = Basis.Array.update\n\
+    \    val create = Basis.Array.array\n\
+    \  end\n\
+    \\n\
+    \  structure CharArray =\n\
+    \  struct\n\
+    \    open Basis.CharArray\n\
+    \    fun create i =\n\
+    \      array (i, chr 0)\n\
+    \  end\n\
+    \\n\
+    \  structure CharVector =\n\
+    \  struct\n\
+    \    open Basis.CharVector\n\
+    \    fun create i =\n\
+    \      Basis.CharArray.vector (Basis.CharArray.array (i, chr 0))\n\
+    \    fun update (vec, i, el) =\n\
+    \      raise Fail \"Unimplemented: Unsafe.CharVector.update\"\n\
+    \  end\n\
+    \\n\
+    \  structure Word8Array =\n\
+    \  struct\n\
+    \    open Basis.Word8Array\n\
+    \    fun create i = array (i, 0w0)\n\
+    \  end\n\
+    \\n\
+    \  structure Word8Vector =\n\
+    \  struct\n\
+    \    open Basis.Word8Vector\n\
+    \    fun create i =\n\
+    \      Basis.Word8Array.vector (Basis.Word8Array.array (i, 0w0))\n\
+    \    fun update (vec, i, el) =\n\
+    \      raise Fail \"Unimplemented: Unsafe.Word8Vector.update\"\n\
+    \  end\n\
+    \\n\
+    \  structure Real64Array =\n\
+    \  struct\n\
+    \    open Basis.Array\n\
+    \    type elem = Real.real\n\
+    \    type array = elem array\n\
+    \    fun create i = array (i, 0.0)\n\
+    \  end\n\
+    \end;\n\
+    \EOL\n\
+    \\n\
+    \mlton -stop f ^.mlb \\\n\
+    \    | grep -v \".mlb\" \\\n\
+    \    | grep -v \"/lib/mlton/sml/basis/\" \\\n\
+    \    | grep -v \"/lib/mlton/targets/\" \\\n\
+    \    | while read line ; do echo \"use \\\"$line\\\";\" ; done \\\n\
+    \    >> build.sml\n"
+  val t =
+    FilesData.Data {depends = [], data = data, fileName = "build_polyml.sh"}
+end

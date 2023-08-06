@@ -19,7 +19,13 @@ to clone the submodules, then run:
 mlton smlgen.mlb
 ```
 
-to build the project.
+to build the project in MLton.
+
+To build the project in Poly/ML, run:
+
+```
+polyc build.sml -o smlgen
+```
 
 Running
 -------
