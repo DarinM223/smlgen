@@ -489,6 +489,13 @@ struct
     \    fun create i = array (i, 0.0)\n\
     \  end\n\
     \end;\n\
+    \fun useProject root' file =\n\
+    \  let val root = OS.FileSys.getDir ()\n\
+    \  in\n\
+    \    OS.FileSys.chDir root';\n\
+    \    use file;\n\
+    \    OS.FileSys.chDir root\n\
+    \  end;\n\
     \EOL\n\
     \\n\
     \mlton -stop f ^.mlb \\\n\

@@ -58,6 +58,13 @@ struct
     fun create i = array (i, 0.0)
   end
 end;
+fun useProject root' file =
+  let val root = OS.FileSys.getDir ()
+  in
+    OS.FileSys.chDir root';
+    use file;
+    OS.FileSys.chDir root
+  end;
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-format-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array.sml";

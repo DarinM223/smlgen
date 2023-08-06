@@ -4,8 +4,7 @@
 # you have to change smlfmt/src/base/ExnHistory.mlton.sml to
 # smlfmt/src/base/ExnHistory.smlnj.sml and
 # smlfmt/src/base/RunProcess.mlton.sml to
-# smlfmt/src/base/RunProcess.smlnj.sml. Finally, you have to
-# remove the main.sml file from the use list.
+# smlfmt/src/base/RunProcess.smlnj.sml.
 
 cat > build.sml <<EOL
 structure Unsafe =
@@ -68,11 +67,19 @@ struct
     fun create i = array (i, 0.0)
   end
 end;
+fun useProject root' file =
+  let val root = OS.FileSys.getDir ()
+  in
+    OS.FileSys.chDir root';
+    use file;
+    OS.FileSys.chDir root
+  end;
 EOL
 
 mlton -stop f smlgen.mlb \
     | grep -v ".mlb" \
     | grep -v "/usr/local/lib/mlton/sml/basis/" \
     | grep -v "/usr/local/lib/mlton/targets/" \
+    | grep -v "^main.sml" \
     | while read line ; do echo "use \"$line\";" ; done \
     >> build.sml
