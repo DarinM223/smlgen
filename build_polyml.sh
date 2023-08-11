@@ -74,6 +74,11 @@ fun useProject root' file =
     use file;
     OS.FileSys.chDir root
   end;
+(* Uncomment this and put library files in here to prevent reloading them each time. *)
+(*
+PolyML.SaveState.loadState "save" handle _ => (
+PolyML.SaveState.saveState "save" );
+*)
 EOL
 
 mlton -stop f smlgen.mlb \

@@ -65,6 +65,8 @@ fun useProject root' file =
     use file;
     OS.FileSys.chDir root
   end;
+PolyML.SaveState.loadState "save" handle _ => (
+(* Put library files in here to prevent reloading them each time. *)
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-format-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array.sml";
@@ -177,8 +179,6 @@ use "/usr/local/lib/mlton/sml/smlnj-lib/Util/listsort-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-mergesort.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/uref.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/ansi-term.sml";
-use "Fold.sml";
-use "FunctionalRecordUpdate.sml";
 use "smlfmt/src/base/Util.sml";
 use "smlfmt/src/base/SeqBasis.sml";
 use "smlfmt/src/base/ReadFile.sml";
@@ -239,6 +239,9 @@ use "smlfmt/src/prettier-print/PrettierStrUtil.sml";
 use "smlfmt/src/prettier-print/PrettierStr.sml";
 use "smlfmt/src/prettier-print/PrettierFun.sml";
 use "smlfmt/src/prettier-print/PrettierPrintAst.sml";
+PolyML.SaveState.saveState "save" );
+use "Fold.sml";
+use "FunctionalRecordUpdate.sml";
 use "BuildAst.sml";
 use "Utils.sml";
 use "MutRecTy.sig";

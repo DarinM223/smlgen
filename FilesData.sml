@@ -496,6 +496,11 @@ struct
     \    use file;\n\
     \    OS.FileSys.chDir root\n\
     \  end;\n\
+    \(* Uncomment this and put library files in here to prevent reloading them each time. *)\n\
+    \(*\n\
+    \PolyML.SaveState.loadState \"save\" handle _ => (\n\
+    \PolyML.SaveState.saveState \"save\" );\n\
+    \*)\n\
     \EOL\n\
     \\n\
     \mlton -stop f ^.mlb \\\n\
