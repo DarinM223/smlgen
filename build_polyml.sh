@@ -83,6 +83,10 @@ mlton -stop f smlgen.mlb \
     | grep -v "/usr/local/lib/mlton/targets/" \
     | grep -v "^main.sml" \
     | while read line ; do \
-      echo "use \"${line/%.mlton.sml/.smlnj.sml}\";" ; \
+      if [ -f "${line/%.mlton.sml/.polyml.sml}" ]; then \
+        echo "use \"${line/%.mlton.sml/.polyml.sml}\";" ; \
+      elif [ -f "${line/%.mlton.sml/.smlnj.sml}" ]; then \
+        echo "use \"${line/%.mlton.sml/.smlnj.sml}\";" ; \
+      fi
     done \
     >> build.sml
