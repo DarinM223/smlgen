@@ -87,6 +87,6 @@ mlton -stop f smlgen.mlb \
         echo "use \"${line/%.mlton.sml/.polyml.sml}\";" ; \
       elif [ -f "${line/%.mlton.sml/.smlnj.sml}" ]; then \
         echo "use \"${line/%.mlton.sml/.smlnj.sml}\";" ; \
-      fi
+      fi \
     done \
     >> build.sml

@@ -507,7 +507,33 @@ struct
     \    | grep -v \".mlb\" \\\n\
     \    | grep -v \"/lib/mlton/sml/basis/\" \\\n\
     \    | grep -v \"/lib/mlton/targets/\" \\\n\
-    \    | while read line ; do echo \"use \\\"$line\\\";\" ; done \\\n\
+    \    | while read line ; do \\\n\
+    \      if [ -f \"${line/%.mlton.sml/.polyml.sml}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sml/.polyml.sml}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.fun/.polyml.fun}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.fun/.polyml.fun}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.sig/.polyml.sig}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sig/.polyml.sig}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.sml/.default.sml}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sml/.default.sml}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.sig/.default.sig}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sig/.default.sig}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.fun/.default.fun}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.fun/.default.fun}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.sml/.common.sml}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sml/.common.sml}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.sig/.common.sig}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sig/.common.sig}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.fun/.common.fun}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.fun/.common.fun}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.sml/.sml}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sml/.sml}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.sig/.sig}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.sig/.sig}\\\";\" ; \\\n\
+    \      elif [ -f \"${line/%.mlton.fun/.fun}\" ]; then \\\n\
+    \        echo \"use \\\"${line/%.mlton.fun/.fun}\\\";\" ; \\\n\
+    \      fi \\\n\
+    \    done \\\n\
     \    >> build.sml\n"
   val t =
     FilesData.Data {depends = [], data = data, fileName = "build_polyml.sh"}
