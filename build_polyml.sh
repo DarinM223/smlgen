@@ -1,10 +1,6 @@
+#!/bin/bash
+
 # Builds the PolyML's build.sml file from the smlgen.mlb file.
-#
-# The built file doesn't compile out of the box with PolyML,
-# you have to change smlfmt/src/base/ExnHistory.mlton.sml to
-# smlfmt/src/base/ExnHistory.smlnj.sml and
-# smlfmt/src/base/RunProcess.mlton.sml to
-# smlfmt/src/base/RunProcess.smlnj.sml.
 
 cat > build.sml <<EOL
 structure Unsafe =
@@ -86,5 +82,7 @@ mlton -stop f smlgen.mlb \
     | grep -v "/usr/local/lib/mlton/sml/basis/" \
     | grep -v "/usr/local/lib/mlton/targets/" \
     | grep -v "^main.sml" \
-    | while read line ; do echo "use \"$line\";" ; done \
+    | while read line ; do \
+      echo "use \"${line/%.mlton.sml/.smlnj.sml}\";" ; \
+    done \
     >> build.sml
