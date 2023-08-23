@@ -509,7 +509,7 @@ struct
     \    | grep -v \"/lib/mlton/sml/basis/\" \\\n\
     \    | grep -v \"/lib/mlton/targets/\" \\\n\
     \    | while read line ; do \\\n\
-    \     if [[ ${line%.mlton.sml} ]] ; then \\\n\
+    \     if [[ $line == *.mlton.sml ]] ; then \\\n\
     \       if [ -f \"${line/%.mlton.sml/.polyml.sml}\" ]; then \\\n\
     \         echo \"use \\\"${line/%.mlton.sml/.polyml.sml}\\\";\" ; \\\n\
     \       elif [ -f \"${line/%.mlton.sml/.default.sml}\" ]; then \\\n\
@@ -519,7 +519,7 @@ struct
     \       elif [ -f \"${line/%.mlton.sml/.sml}\" ]; then \\\n\
     \         echo \"use \\\"${line/%.mlton.sml/.sml}\\\";\" ; \\\n\
     \       fi \\\n\
-    \     elif [[ ${line%.mlton.fun} ]] ; then \\\n\
+    \     elif [[ $line == *.mlton.fun ]] ; then \\\n\
     \       if [ -f \"${line/%.mlton.fun/.polyml.fun}\" ]; then \\\n\
     \         echo \"use \\\"${line/%.mlton.fun/.polyml.fun}\\\";\" ; \\\n\
     \       elif [ -f \"${line/%.mlton.fun/.default.fun}\" ]; then \\\n\
@@ -529,7 +529,7 @@ struct
     \       elif [ -f \"${line/%.mlton.fun/.fun}\" ]; then \\\n\
     \         echo \"use \\\"${line/%.mlton.fun/.fun}\\\";\" ; \\\n\
     \       fi \\\n\
-    \     elif [[ ${line%.mlton.sig} ]] ; then \\\n\
+    \     elif [[ $line == *.mlton.sig ]] ; then \\\n\
     \       if [ -f \"${line/%.mlton.sig/.polyml.sig}\" ]; then \\\n\
     \         echo \"use \\\"${line/%.mlton.sig/.polyml.sig}\\\";\" ; \\\n\
     \       elif [ -f \"${line/%.mlton.sig/.default.sig}\" ]; then \\\n\
@@ -539,6 +539,8 @@ struct
     \       elif [ -f \"${line/%.mlton.sig/.sig}\" ]; then \\\n\
     \         echo \"use \\\"${line/%.mlton.sig/.sig}\\\";\" ; \\\n\
     \       fi \\\n\
+    \     else\\\n\
+    \       echo \"use \\\"$line\\\";\" ; \\\n\
     \     fi \\\n\
     \    done \\\n\
     \    >> build.sml\n"
