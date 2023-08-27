@@ -547,3 +547,279 @@ struct
   val t =
     FilesData.Data {depends = [], data = data, fileName = "build_polyml.sh"}
 end
+
+structure BuildMLkitFile =
+struct
+  val data =
+    "cat > mlkit-stubs.sml <<EOL\n\
+    \structure Unsafe =\n\
+    \struct\n\
+    \  structure Basis =\n\
+    \  struct\n\
+    \    structure Array = Array\n\
+    \    structure Vector = Vector\n\
+    \    structure CharArray = CharArray\n\
+    \    structure CharVector = CharVector\n\
+    \    structure Word8Array = Word8Array\n\
+    \    structure Word8Vector = Word8Vector\n\
+    \  end\n\
+    \\n\
+    \  structure Vector = struct val sub = Basis.Vector.sub end\n\
+    \\n\
+    \  structure Array =\n\
+    \  struct\n\
+    \    val sub = Basis.Array.sub\n\
+    \    val update = Basis.Array.update\n\
+    \    val create = Basis.Array.array\n\
+    \  end\n\
+    \\n\
+    \  structure CharArray =\n\
+    \  struct\n\
+    \    open Basis.CharArray\n\
+    \    fun create i =\n\
+    \      array (i, chr 0)\n\
+    \  end\n\
+    \\n\
+    \  structure CharVector =\n\
+    \  struct\n\
+    \    open Basis.CharVector\n\
+    \    fun create i =\n\
+    \      Basis.CharArray.vector (Basis.CharArray.array (i, chr 0))\n\
+    \    fun update (vec, i, el) =\n\
+    \      raise Fail \"Unimplemented: Unsafe.CharVector.update\"\n\
+    \  end\n\
+    \\n\
+    \  structure Word8Array =\n\
+    \  struct\n\
+    \    open Basis.Word8Array\n\
+    \    fun create i = array (i, 0w0)\n\
+    \  end\n\
+    \\n\
+    \  structure Word8Vector =\n\
+    \  struct\n\
+    \    open Basis.Word8Vector\n\
+    \    fun create i =\n\
+    \      Basis.Word8Array.vector (Basis.Word8Array.array (i, 0w0))\n\
+    \    fun update (vec, i, el) =\n\
+    \      raise Fail \"Unimplemented: Unsafe.Word8Vector.update\"\n\
+    \  end\n\
+    \\n\
+    \  structure Real64Array =\n\
+    \  struct\n\
+    \    open Basis.Array\n\
+    \    type elem = Real.real\n\
+    \    type array = elem array\n\
+    \    fun create i = array (i, 0.0)\n\
+    \  end\n\
+    \end;\n\
+    \signature IEEE_REAL =\n\
+    \   sig\n\
+    \      exception Unordered\n\
+    \\n\
+    \      datatype real_order = LESS | EQUAL | GREATER | UNORDERED\n\
+    \\n\
+    \      datatype float_class =\n\
+    \         NAN\n\
+    \       | INF\n\
+    \       | ZERO\n\
+    \       | NORMAL\n\
+    \       | SUBNORMAL\n\
+    \\n\
+    \      datatype rounding_mode =\n\
+    \         TO_NEAREST\n\
+    \       | TO_NEGINF\n\
+    \       | TO_POSINF\n\
+    \       | TO_ZERO\n\
+    \\n\
+    \      type decimal_approx = {class: float_class,\n\
+    \                             digits: int list,\n\
+    \                             exp: int,\n\
+    \                             sign: bool}\n\
+    \\n\
+    \      val fromString: string -> decimal_approx option\n\
+    \      val getRoundingMode: unit -> rounding_mode\n\
+    \      val scan: (char, 'a) StringCvt.reader\n\
+    \                -> (decimal_approx, 'a) StringCvt.reader\n\
+    \      val setRoundingMode: rounding_mode -> unit\n\
+    \      val toString: decimal_approx -> string\n\
+    \   end;\n\
+    \structure IEEEReal: IEEE_REAL =\n\
+    \   struct\n\
+    \      exception Unordered\n\
+    \      datatype real_order = LESS | EQUAL | GREATER | UNORDERED\n\
+    \\n\
+    \      datatype float_class =\n\
+    \         INF\n\
+    \       | NAN\n\
+    \       | NORMAL\n\
+    \       | SUBNORMAL\n\
+    \       | ZERO\n\
+    \\n\
+    \      datatype rounding_mode =\n\
+    \         TO_NEAREST\n\
+    \       | TO_NEGINF\n\
+    \       | TO_POSINF\n\
+    \       | TO_ZERO\n\
+    \\n\
+    \      type decimal_approx =\n\
+    \         {class: float_class,\n\
+    \          digits: int list,\n\
+    \          exp: int,\n\
+    \          sign: bool}\n\
+    \\n\
+    \      val setRoundingMode = fn _ => raise Fail \"IEEEReal.setRoundingMode\"\n\
+    \      val getRoundingMode = fn _ => raise Fail \"IEEEReal.getRoundingMode\"\n\
+    \\n\
+    \      fun 'a scan reader (state: 'a) = raise Fail \"IEEEReal.scan\"\n\
+    \\n\
+    \      val fromString = fn _ => raise Fail \"IEEEReal.fromString\"\n\
+    \      val toString = fn _ => raise Fail \"IEEEReal.toString\"\n\
+    \   end;\n\
+    \signature REAL =\n\
+    \   sig\n\
+    \      type real\n\
+    \\n\
+    \      structure Math: MATH where type real = real\n\
+    \\n\
+    \      val != : real * real -> bool\n\
+    \      val * : real * real -> real\n\
+    \      val *+ : real * real * real -> real\n\
+    \      val *- : real * real * real -> real\n\
+    \      val + : real * real -> real\n\
+    \      val - : real * real -> real\n\
+    \      val / : real * real -> real\n\
+    \      val <  : real * real -> bool\n\
+    \      val <= : real * real -> bool\n\
+    \      val == : real * real -> bool\n\
+    \      val >  : real * real -> bool\n\
+    \      val >= : real * real -> bool\n\
+    \      val ?= : real * real -> bool\n\
+    \      val ~ : real -> real\n\
+    \      val abs: real -> real\n\
+    \      val ceil: real -> Int.int\n\
+    \      val checkFloat: real -> real\n\
+    \      val class: real -> IEEEReal.float_class\n\
+    \      val compare: real * real -> order\n\
+    \      val compareReal: real * real -> IEEEReal.real_order\n\
+    \      val copySign: real * real -> real\n\
+    \      val floor: real -> Int.int\n\
+    \      val fmt: StringCvt.realfmt -> real -> string\n\
+    \      val fromDecimal: IEEEReal.decimal_approx -> real option\n\
+    \      val fromInt: int -> real\n\
+    \      val fromLarge: IEEEReal.rounding_mode -> LargeReal.real -> real\n\
+    \      val fromLargeInt: LargeInt.int -> real\n\
+    \      val fromManExp: {man: real, exp: int} -> real\n\
+    \      val fromString: string -> real option\n\
+    \      val isFinite: real -> bool\n\
+    \      val isNan: real -> bool\n\
+    \      val isNormal: real -> bool\n\
+    \      val max: real * real -> real\n\
+    \      val maxFinite: real\n\
+    \      val min: real * real -> real\n\
+    \      val minNormalPos: real\n\
+    \      val minPos: real\n\
+    \      val negInf: real\n\
+    \      val nextAfter: real * real -> real\n\
+    \      val posInf: real\n\
+    \      val precision: int\n\
+    \      val radix: int\n\
+    \      val realCeil: real -> real\n\
+    \      val realFloor: real -> real\n\
+    \      val realMod: real -> real\n\
+    \      val realRound: real -> real\n\
+    \      val realTrunc: real -> real\n\
+    \      val rem: real * real -> real\n\
+    \      val round: real -> Int.int\n\
+    \      val sameSign: real * real -> bool\n\
+    \      val scan: (char, 'a) StringCvt.reader -> (real, 'a) StringCvt.reader\n\
+    \      val sign: real -> int\n\
+    \      val signBit: real -> bool\n\
+    \      val split: real -> {whole: real, frac: real}\n\
+    \      val toDecimal: real -> IEEEReal.decimal_approx\n\
+    \      val toInt: IEEEReal.rounding_mode -> real -> int\n\
+    \      val toLarge: real -> LargeReal.real\n\
+    \      val toLargeInt: IEEEReal.rounding_mode -> real -> LargeInt.int\n\
+    \      val toManExp: real -> {man: real, exp: int}\n\
+    \      val toString: real -> string\n\
+    \      val trunc: real -> Int.int\n\
+    \      val unordered: real * real -> bool\n\
+    \   end;\n\
+    \structure Real : REAL =\n\
+    \struct\n\
+    \   open Real\n\
+    \   val minPos = 4.9406564584124654E~324;\n\
+    \   val minNormalPos = 2.2250738585072014E~308;\n\
+    \   val maxFinite = 1.7976931348623157E308;\n\
+    \   fun *+ (a, b, c) = a * b + c\n\
+    \   fun *- (a, b, c) = a * b - c\n\
+    \   fun ?= (x, y) =\n\
+    \      if isNan x then true\n\
+    \      else if isNan y then true\n\
+    \      else == (x, y)\n\
+    \   fun checkFloat x =\n\
+    \      if isNan x then raise Div\n\
+    \      else if not (isFinite x) then raise Overflow\n\
+    \      else x\n\
+    \   fun class x =\n\
+    \      if isNan x then IEEEReal.NAN\n\
+    \      else if not (isFinite x) then IEEEReal.INF\n\
+    \      else if == (x, 0.0) then IEEEReal.ZERO\n\
+    \      else if (abs x) < minPos then IEEEReal.SUBNORMAL\n\
+    \      else IEEEReal.NORMAL\n\
+    \   fun compareReal (x, y) =\n\
+    \      (case compare (x, y) of\n\
+    \          LESS => IEEEReal.LESS\n\
+    \        | EQUAL => IEEEReal.EQUAL\n\
+    \        | GREATER => IEEEReal.GREATER)\n\
+    \      handle IEEEReal.Unordered => IEEEReal.UNORDERED\n\
+    \   fun copySign (x: real, y: real) : real = raise Fail \"Real.copySign\"\n\
+    \   fun fromDecimal d = raise Fail \"Real.fromDecimal\"\n\
+    \   fun fromLarge (_ : IEEEReal.rounding_mode) (r : LargeReal.real) : real = r\n\
+    \   fun fromLargeInt i = valOf (fromString (LargeInt.toString i))\n\
+    \   fun fromManExp {man: real, exp: int} : real = raise Fail \"Real.fromManExp\"\n\
+    \   fun isNormal x = (class x = IEEEReal.NORMAL)\n\
+    \   fun nextAfter (x: real, y: real) : real = raise Fail \"Real.nextAfter\"\n\
+    \   val precision = 53\n\
+    \   val radix = 2\n\
+    \   fun realCeil (r : real) : real = raise Fail \"Real.realCeil\"\n\
+    \   fun realFloor (_ : real) : real = raise Fail \"Real.realFloor\"\n\
+    \   fun realMod (_ : real) : real = raise Fail \"Real.realMod\"\n\
+    \   fun realRound (_ : real) : real = raise Fail \"Real.realRound\"\n\
+    \   fun realTrunc (_ : real) : real = raise Fail \"Real.realTrunc\"\n\
+    \   fun rem (_ : real, _ : real) : real = raise Fail \"Real.rem\"\n\
+    \   fun signBit r = sameSign (r, ~1.0)\n\
+    \   fun split (_ : real) : {whole : real, frac : real} = raise Fail \"Real.split\"\n\
+    \   fun toDecimal (_ : real) : IEEEReal.decimal_approx = raise Fail \"Real.toDecimal\"\n\
+    \   fun toInt rm r =\n\
+    \      case rm of\n\
+    \         IEEEReal.TO_NEGINF => floor r\n\
+    \       | IEEEReal.TO_POSINF => ceil r\n\
+    \       | IEEEReal.TO_ZERO => trunc r\n\
+    \       | IEEEReal.TO_NEAREST => round r\n\
+    \   fun toLarge (r: real) : LargeReal.real = r\n\
+    \   fun toLargeInt rm r = raise Fail \"Real.toLargeInt\"\n\
+    \   fun toManExp (_ : real) : {man: real, exp: int} = raise Fail \"Real.toManExp\"\n\
+    \   fun unordered (x, y) = isNan x orelse isNan y\n\
+    \end;\n\
+    \EOL\n\
+    \\n\
+    \cat > smlnj-lib.mlb <<EOL\n\
+    \mlkit-stubs.sml\n\
+    \\\$(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb\n\
+    \EOL\n\
+    \\n\
+    \cat > smlnj-lib2.mlb <<EOL\n\
+    \\\$(SML_LIB)/basis/basis.mlb\n\
+    \EOL\n\
+    \\n\
+    \mlton -stop f smlnj-lib.mlb \\\n\
+    \    | grep -v \".mlb\" \\\n\
+    \    | grep -v \"/usr/local/lib/mlton/sml/basis/\" \\\n\
+    \    | grep -v \"/usr/local/lib/mlton/targets/\" \\\n\
+    \    >> smlnj-lib2.mlb\n\
+    \rm smlnj-lib.mlb\n\
+    \mv smlnj-lib2.mlb smlnj-lib.mlb"
+  val t =
+    FilesData.Data
+      {depends = [], data = data, fileName = "build_mlkit_smlnjlib.sh"}
+end

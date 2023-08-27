@@ -44,7 +44,8 @@ struct
       val milletFile = FilesData.mapData replaceCaret MilletFile.t
       val buildPolyFile = FilesData.mapData replaceCaret BuildPolyMLFile.t
     in
-      List.app genFiles [cmFile, mlbFile, milletFile, buildPolyFile]
+      List.app genFiles
+        [cmFile, mlbFile, milletFile, buildPolyFile, BuildMLkitFile.t]
     end
 
   fun genProject projectName =

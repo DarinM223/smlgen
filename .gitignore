@@ -3,4 +3,10 @@ test/test9.sml
 test/test10.sml
 smlgen
 save
+run
 .cm/
+*.d
+*.o
+*.eb
+*.eb1
+*.lnk
