@@ -1,6 +1,7 @@
 fun main () =
   let
     val test = CommandLineArgs.parseFlag "test"
+    val printOnly = CommandLineArgs.parseFlag "print"
     val fileGen = CommandLineArgs.parseString "gen" ""
     val projGen = CommandLineArgs.parseString "proj" ""
     val maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
@@ -29,6 +30,12 @@ fun main () =
 
     val pretty = PrettierPrintAst.pretty
       {ribbonFrac = 1.0, maxWidth = 80, tabWidth = 4, indent = 2, debug = false}
+
+    val prettyDec =
+      pretty
+      o
+      (fn topdec => Ast.Ast (Seq.singleton {topdec = topdec, semicolon = NONE}))
+      o Ast.StrDec o Ast.Str.DecCore
 
     type gen =
       { genTypebind: Ast.Exp.typbind -> Ast.Exp.dec
@@ -79,20 +86,27 @@ fun main () =
       }
 
     local
-      fun confirm default next =
+      fun confirm dec next =
         if test then
-          next ()
+          combineDecs dec (next ())
+        else if printOnly then
+          ( print "\n"
+          ; print (TerminalColorString.toString {colors = true}
+              (prettyDec (next ())))
+          ; print "\n"
+          ; dec
+          )
         else
           ( print "\nConfirm [y/n]? "
           ; case TextIO.inputLine TextIO.stdIn of
-              NONE => default
+              NONE => dec
             | SOME line =>
                 let
                   val line = String.map Char.toUpper line
                 in
-                  if line = "Y\n" then next ()
-                  else if line = "N\n" then default
-                  else confirm default next
+                  if line = "Y\n" then combineDecs dec (next ())
+                  else if line = "N\n" then dec
+                  else confirm dec next
                 end
           )
       fun printToken t =
@@ -128,8 +142,7 @@ fun main () =
                SOME action =>
                  ( print "Types: "
                  ; printDecTypes dec
-                 ; confirm dec (fn () =>
-                     combineDecs dec (#genTypebind action typbind))
+                 ; confirm dec (fn () => #genTypebind action typbind)
                  )
              | NONE => dec)
         | Ast.Exp.DecDatatype {datbind, withtypee, ...} =>
@@ -147,8 +160,8 @@ fun main () =
                   ( print "Types: "
                   ; printDecTypes dec
                   ; confirm dec (fn () =>
-                      combineDecs dec (#genDatabind action datbind
-                        (Option.map #typbind withtypee)))
+                      #genDatabind action datbind
+                        (Option.map #typbind withtypee))
                   )
               | NONE => dec
             end
@@ -291,11 +304,11 @@ fun main () =
           Parser.Ast ast =>
             let
               val ast = gen args ast
-              val outstream = TextIO.openOut hfp
               val result =
                 TerminalColorString.toString {colors = false} (pretty ast)
             in
-              TextIO.output (outstream, result)
+              if printOnly then ()
+              else TextIO.output (TextIO.openOut hfp, result)
             end
         | _ => raise Fail "Just comments"
       end
