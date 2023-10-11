@@ -10,3 +10,5 @@ run
 *.eb
 *.eb1
 *.lnk
+mlkit-stubs.sml
+smlnj-lib.mlb
