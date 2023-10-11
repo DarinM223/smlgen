@@ -54,13 +54,11 @@ The characters corresponding to each generator are listed below:
 
 smlgen will prompt you for every type name that matches to generate code for that type. It will then overwrite the file with the formatted and generated code.
 
-In order to check the output without overwriting the file, you can pass in a `--test` option before the first argument to write to the filename with `.test` appended to it. So:
+In order to print out the generated code without formatting and overwriting the file, you can pass in a `--print` option.
 
-```
-./smlgen --test file.sml ...
-```
-
-will create a `file.sml.test` file in the same directory as `file.sml`.
+To write to a test file, you can pass in a `--test` option.
+`smlgen --test file.sml ...` will create a `file.sml.test` file
+in the same directory as `file.sml`.
 
 smlgen also allows you to generate many commonly used files for things like array literal syntax, printf syntax, etc. To generate these files, run:
 
