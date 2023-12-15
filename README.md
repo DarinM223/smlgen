@@ -27,6 +27,28 @@ To build the project in Poly/ML, run:
 polyc build.sml -o smlgen
 ```
 
+To build the project in MLKit, run:
+
+```
+./build_mlkit.sh
+mlkit -o smlgen smlgen.mlkit.mlb
+```
+
+To build the project in SML/NJ, run:
+
+```
+./build_smlnj.sh
+```
+
+to build a SML/NJ heap image file that looks something like `smlgen.amd64-linux`,
+depending on the target architecture and OS. Then to run this heap image, run:
+
+```
+sml @SMLload smlgen.amd64-linux <args>
+```
+
+where `<args>` is the command line arguments to smlgen.
+
 Running
 -------
 
