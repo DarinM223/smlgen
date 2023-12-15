@@ -19,3 +19,4 @@ Group is
   CompareGen.sml
   FilesData.sml
   FilesGen.sml
+  smlgen.sml

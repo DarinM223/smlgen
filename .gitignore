@@ -12,3 +12,4 @@ run
 *.lnk
 mlkit-stubs.sml
 smlnj-lib.mlb
+smlgen.amd64-linux
