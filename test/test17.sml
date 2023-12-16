@@ -1,0 +1,1 @@
+datatype t = Cons of char * t list | Atom of char

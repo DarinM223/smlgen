@@ -1,0 +1,16 @@
+datatype t = Cons of char * t list | Atom of char
+local
+  val rec t = fn t_0 =>
+    fn Cons (t0, t1) =>
+      "Cons "
+      ^
+      "("
+      ^
+      String.concatWith ", "
+        [ "#\"" ^ Char.toString t0 ^ "\""
+        , "[" ^ String.concatWith ", " (List.map t_0 t1) ^ "]"
+        ] ^ ")"
+     | Atom t2 => "Atom " ^ "(" ^ "#\"" ^ Char.toString t2 ^ "\"" ^ ")"
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val show = t ()
+end

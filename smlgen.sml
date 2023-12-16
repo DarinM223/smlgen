@@ -371,19 +371,18 @@ struct
       val () =
         if String.size projGen > 0 then FilesGen.genProject projGen else ()
 
+      val isFile = fn file => not (Char.contains file #":")
       fun collectSMLFiles (top :: build) (file :: args) =
-            (case OS.Path.ext file of
-               SOME "sml" => collectSMLFiles ([file] :: top :: build) args
-             | _ => collectSMLFiles ((file :: top) :: build) args)
+            if isFile file then collectSMLFiles ([file] :: top :: build) args
+            else collectSMLFiles ((file :: top) :: build) args
         | collectSMLFiles [] (file :: args) =
-            (case OS.Path.ext file of
-               SOME "sml" => collectSMLFiles [[file]] args
-             | _ => collectSMLFiles [] args)
+            if isFile file then collectSMLFiles [[file]] args
+            else collectSMLFiles [] args
         | collectSMLFiles build [] =
             List.map List.rev (List.rev build)
     in
       case CommandLineArgs.positional () of
-        [] => print "No files to run smlgen on\n"
+        [] => ()
       | args =>
           List.app
             (fn file :: args => doSML (file, List.map parseArg args) | _ => ())
