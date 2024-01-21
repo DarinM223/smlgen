@@ -4,6 +4,7 @@ struct
     let
       val test = CommandLineArgs.parseFlag "test"
       val printOnly = CommandLineArgs.parseFlag "print"
+      val recursiveModules = CommandLineArgs.parseFlag "recurmod"
       val fileGen = CommandLineArgs.parseString "gen" ""
       val projGen = CommandLineArgs.parseString "proj" ""
       val maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
@@ -317,6 +318,7 @@ struct
           case result of
             Parser.Ast ast =>
               let
+                val ast = if recursiveModules then RecMod.gen ast else ast
                 val ast = gen args ast
                 val result =
                   TerminalColorString.toString {colors = false} (pretty ast)

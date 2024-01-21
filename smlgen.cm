@@ -12,6 +12,8 @@ Group is
   Utils.sml
   MutRecTy.sig
   MutRecTy.sml
+  RecMod.sig
+  RecMod.sml
   FruGen.sml
   GenericGen.sml
   Env.sml
