@@ -64,6 +64,7 @@ Fold.sml
 FunctionalRecordUpdate.sml
 BuildAst.sml
 Utils.sml
+AstVisitor.sml
 MutRecTy.sig
 MutRecTy.sml
 RecMod.sig

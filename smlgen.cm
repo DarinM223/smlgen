@@ -10,6 +10,7 @@ Group is
   ./smlfmt/src/prettier-print/sources.cm
   BuildAst.sml
   Utils.sml
+  AstVisitor.sml
   MutRecTy.sig
   MutRecTy.sml
   RecMod.sig
