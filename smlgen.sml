@@ -21,13 +21,6 @@ struct
     , extendedText = true
     }
 
-  val pretty = PrettierPrintAst.pretty
-    {ribbonFrac = 1.0, maxWidth = 80, tabWidth = 4, indent = 2, debug = false}
-  val prettyDec =
-    pretty
-    o (fn topdec => Ast.Ast (Seq.singleton {topdec = topdec, semicolon = NONE}))
-    o Ast.StrDec o Ast.Str.DecCore
-
   type gen =
     { genTypebind: Ast.Exp.typbind -> Ast.Exp.dec
     , genDatabind: Ast.Exp.datbind -> Ast.Exp.typbind option -> Ast.Exp.dec
@@ -43,34 +36,12 @@ struct
     | lookupGen ch =
         raise Fail ("unknown lookup character: " ^ Char.toString ch)
 
-  fun combineDecs (Ast.Exp.DecMultiple {elems = elems1, delims = delims1})
-        (Ast.Exp.DecMultiple {elems = elems2, delims = delims2}) =
-        Ast.Exp.DecMultiple
-          { elems = Seq.append (elems1, elems2)
-          , delims = Seq.append (delims1, delims2)
-          }
-    | combineDecs (Ast.Exp.DecMultiple {elems, delims}) dec =
-        Ast.Exp.DecMultiple
-          { elems = Seq.append (elems, Seq.singleton dec)
-          , delims = Seq.append (delims, Seq.singleton NONE)
-          }
-    | combineDecs dec (Ast.Exp.DecMultiple {elems, delims}) =
-        Ast.Exp.DecMultiple
-          { elems = Seq.fromList (dec :: Seq.toList elems)
-          , delims = Seq.fromList (NONE :: Seq.toList delims)
-          }
-    | combineDecs dec1 dec2 =
-        Ast.Exp.DecMultiple
-          { elems = Seq.fromList [dec1, dec2]
-          , delims = Seq.fromList [NONE, NONE]
-          }
-
   fun addGen (gen1: gen) (gen2: gen) : gen =
     { genTypebind = fn bind =>
-        combineDecs (#genTypebind gen1 bind) (#genTypebind gen2 bind)
+        Utils.combineDecs (#genTypebind gen1 bind) (#genTypebind gen2 bind)
     , genDatabind = fn databind =>
         fn typebind =>
-          combineDecs (#genDatabind gen1 databind typebind)
+          Utils.combineDecs (#genDatabind gen1 databind typebind)
             (#genDatabind gen2 databind typebind)
     }
 
@@ -129,11 +100,11 @@ struct
 
       fun confirm dec next =
         if test then
-          combineDecs dec (next ())
+          Utils.combineDecs dec (next ())
         else if printOnly then
           ( print "\n"
           ; print (TerminalColorString.toString {colors = true}
-              (prettyDec (next ())))
+              (Utils.prettyDec (next ())))
           ; print "\n"
           ; dec
           )
@@ -145,7 +116,7 @@ struct
                 let
                   val line = String.map Char.toUpper line
                 in
-                  if line = "Y\n" then combineDecs dec (next ())
+                  if line = "Y\n" then Utils.combineDecs dec (next ())
                   else if line = "N\n" then dec
                   else confirm dec next
                 end
@@ -182,7 +153,7 @@ struct
                 | NONE => dec
               end
         , onStructure = fn strid => filterToken (Token.toString strid)
-        , onFunctor = fn strid => filterToken (Token.toString strid)
+        , onFunctor = fn funid => filterToken (Token.toString funid)
         }
       fun gen args (Ast.Ast topdecs : Ast.t) =
         Ast.Ast
@@ -207,7 +178,8 @@ struct
                 val ast = if recursiveModules then RecMod.gen ast else ast
                 val ast = gen args ast
                 val result =
-                  TerminalColorString.toString {colors = false} (pretty ast)
+                  TerminalColorString.toString {colors = false}
+                    (Utils.pretty ast)
               in
                 if printOnly then ()
                 else TextIO.output (TextIO.openOut hfp, result)

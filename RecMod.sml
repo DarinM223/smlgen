@@ -1,3 +1,43 @@
+structure GatherTypes =
+struct
+  fun visitor typenameToBind =
+    { state = []
+    , goDecType = fn (_, dec, _) => dec
+    , goDecDatatype =
+        fn ( path
+           , dec
+           , datbind as {elems, ...}: Ast.Exp.datbind
+           , _: AstVisitor.withtypee
+           ) =>
+          let
+            val types =
+              Seq.map
+                (String.concatWith "." o List.rev o (fn tycon => tycon :: path)
+                 o Token.toString o #tycon) elems
+          in (* TODO: rewrite datbind with withtypees *)
+            ArraySlice.app
+              (fn typ =>
+                 AtomTable.insert typenameToBind (Atom.atom typ, datbind)) types;
+            dec
+          end
+    , onStructure = fn strid => fn path => Token.toString strid :: path
+    , onFunctor = fn funid => fn path => Token.toString funid :: path
+    }
+
+  fun run (Ast.Ast topdecs : Ast.t) =
+    let
+      val typenameToBind: Ast.Exp.datbind AtomTable.hash_table =
+        AtomTable.mkTable (20, LibBase.NotFound)
+    in
+      Seq.map
+        (fn {topdec, semicolon} =>
+           { topdec = AstVisitor.goTopDec (visitor typenameToBind) topdec
+           , semicolon = semicolon
+           }) topdecs;
+      typenameToBind
+    end
+end
+
 structure RecMod: RECURSIVE_MODULES =
 struct
   (*
@@ -14,5 +54,17 @@ struct
 
   TODO: handle type aliases
   *)
-  fun gen _ = raise Fail "Gen not implemented"
+  fun gen ast =
+    let
+      val typenameToBind = GatherTypes.run ast
+    in
+      AtomTable.appi
+        (fn (typ, datbind) =>
+           ( print (Atom.toString typ ^ ":\n")
+           ; print
+               (TerminalColorString.toString {colors = true}
+                  (Utils.prettyDatbind datbind) ^ "\n\n")
+           )) typenameToBind;
+      ast
+    end
 end
