@@ -40,6 +40,13 @@ end
 
 structure RecMod: RECURSIVE_MODULES =
 struct
+  structure AtomSCC =
+    GraphSCCFn (struct type ord_key = Atom.atom val compare = Atom.compare end)
+
+  fun addLinks (followTable, typename, datbind) =
+    (* TODO: Iterate over all types in datbind *)
+    raise Fail "unimplemented"
+
   (*
   1. Track structure levels in environment.
      First pass: For every datatype, make a map from full name (including structures) to the datatype.
@@ -59,6 +66,19 @@ struct
       val typenameToBind = GatherTypes.run ast
       val datbinds =
         AtomTable.fold (fn (datbind, acc) => datbind :: acc) [] typenameToBind
+      val followTable: Atom.atom list AtomTable.hash_table =
+        AtomTable.mkTable (AtomTable.numItems typenameToBind, LibBase.NotFound)
+      val () =
+        AtomTable.appi
+          (fn (typename, _) => AtomTable.insert followTable (typename, []))
+          typenameToBind
+      val () =
+        AtomTable.appi
+          (fn (typename, datbind) => addLinks (followTable, typename, datbind))
+          typenameToBind
+      val roots = List.map #1 (AtomTable.listItemsi followTable)
+      val components =
+        AtomSCC.topOrder' {roots = roots, follow = AtomTable.lookup followTable}
     in
       AtomTable.appi
         (fn (typ, datbind) =>
