@@ -57,6 +57,8 @@ struct
   fun gen ast =
     let
       val typenameToBind = GatherTypes.run ast
+      val datbinds =
+        AtomTable.fold (fn (datbind, acc) => datbind :: acc) [] typenameToBind
     in
       AtomTable.appi
         (fn (typ, datbind) =>
@@ -65,6 +67,10 @@ struct
                (TerminalColorString.toString {colors = true}
                   (Utils.prettyDatbind datbind) ^ "\n\n")
            )) typenameToBind;
+      print "Merged: \n";
+      print
+        (TerminalColorString.toString {colors = true}
+           (Utils.prettyDatbind (Utils.concatDatbinds datbinds)) ^ "\n\n");
       ast
     end
 end

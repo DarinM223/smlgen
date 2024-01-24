@@ -149,4 +149,15 @@ struct
          , datbind = datbind
          , withtypee = NONE
          })
+
+  fun concatDatbinds (datbinds: Ast.Exp.datbind list) : Ast.Exp.datbind =
+    let
+      val datbinds = List.concat
+        (List.map (fn datbind => Seq.toList (#elems datbind)) datbinds)
+    in
+      { delims = Seq.tabulate (fn _ => BuildAst.andKeyTok) (Int.max
+          (0, List.length datbinds - 1))
+      , elems = Seq.fromList datbinds
+      }
+    end
 end
