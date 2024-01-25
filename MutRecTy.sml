@@ -34,20 +34,8 @@ struct
     | Ty.Tuple {elems, delims} =>
         Ty.Tuple {elems = Seq.map (subst map) elems, delims = delims}
     | Ty.Con {args, id} =>
-        let
-          val args =
-            case args of
-              SyntaxSeq.Empty => SyntaxSeq.Empty
-            | SyntaxSeq.One t => SyntaxSeq.One (subst map t)
-            | SyntaxSeq.Many {delims, elems, left, right} =>
-                let
-                  val elems = Seq.map (subst map) elems
-                in
-                  SyntaxSeq.Many
-                    {delims = delims, elems = elems, left = left, right = right}
-                end
-        in
-          Ty.Con {args = args, id = id}
+        let val args = syntaxSeqMap (subst map) args
+        in Ty.Con {args = args, id = id}
         end
     | Ty.Arrow {from, arrow, to} =>
         Ty.Arrow {from = subst map from, arrow = arrow, to = subst map to}
@@ -322,11 +310,7 @@ struct
               case AtomTable.find tyTokToId tok of
                 SOME j => addLink i j
               | NONE => ();
-              case args of
-                SyntaxSeq.Empty => ()
-              | SyntaxSeq.One ty => buildLinks i ty
-              | SyntaxSeq.Many {elems, ...} =>
-                  ArraySlice.app (buildLinks i) elems
+              ignore (syntaxSeqMap (buildLinks i) args)
             end
         | buildLinks i (Ty.Arrow {from, to, ...}) =
             (buildLinks i from; buildLinks i to)

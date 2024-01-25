@@ -9,8 +9,8 @@ Group is
   ./smlfmt/src/parse/sources.cm
   ./smlfmt/src/prettier-print/sources.cm
   BuildAst.sml
-  Utils.sml
   AstVisitor.sml
+  Utils.sml
   MutRecTy.sig
   MutRecTy.sml
   RecMod.sig

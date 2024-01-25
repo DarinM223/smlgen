@@ -150,4 +150,27 @@ struct
     | Ast.FunDec dec => Ast.FunDec (goFunDec visitor dec)
     | Ast.TopExp {exp, semicolon} =>
         Ast.TopExp {exp = goExp visitor exp, semicolon = semicolon}
+
+  type datbind_visitor =
+    { mapTy: Ast.Ty.ty -> Ast.Ty.ty
+    , mapTycon: Token.t -> Token.t
+    , mapConbind: Token.t -> Token.t
+    }
+  fun goDatbind (visitor: datbind_visitor) ({elems, delims}: Ast.Exp.datbind) =
+    let
+      fun goArg {off, ty} =
+        {off = off, ty = #mapTy visitor ty}
+      fun goElem {opp, id, arg} =
+        {opp = opp, id = #mapConbind visitor id, arg = Option.map goArg arg}
+      fun goCon {tyvars, tycon, eq, elems, delims, optbar} =
+        { tyvars = tyvars
+        , tycon = #mapTycon visitor tycon
+        , eq = eq
+        , elems = Seq.map goElem elems
+        , delims = delims
+        , optbar = optbar
+        }
+    in
+      {delims = delims, elems = Seq.map goCon elems}
+    end
 end

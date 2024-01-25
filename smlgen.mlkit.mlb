@@ -63,8 +63,8 @@ smlfmt/src/prettier-print/PrettierPrintAst.sml
 Fold.sml
 FunctionalRecordUpdate.sml
 BuildAst.sml
-Utils.sml
 AstVisitor.sml
+Utils.sml
 MutRecTy.sig
 MutRecTy.sml
 RecMod.sig

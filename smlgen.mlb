@@ -11,8 +11,8 @@ local
   Fold.sml
   FunctionalRecordUpdate.sml
   BuildAst.sml
-  Utils.sml
   AstVisitor.sml
+  Utils.sml
   MutRecTy.sig
   MutRecTy.sml
   RecMod.sig
