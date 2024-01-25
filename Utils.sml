@@ -160,4 +160,39 @@ struct
       , elems = Seq.fromList datbinds
       }
     end
+
+  type datbind_visitor =
+    { mapTy: Ast.Ty.ty -> Ast.Ty.ty
+    , mapTycon: Token.t -> Token.t
+    , mapConbind: Token.t -> Token.t
+    }
+  fun visitDatbind (visitor: datbind_visitor) ({elems, delims}: Ast.Exp.datbind) =
+    let
+      fun goArg {off, ty} =
+        {off = off, ty = #mapTy visitor ty}
+      fun goElem {opp, id, arg} =
+        {opp = opp, id = #mapConbind visitor id, arg = Option.map goArg arg}
+      fun goCon {tyvars, tycon, eq, elems, delims, optbar} =
+        { tyvars = tyvars
+        , tycon = #mapTycon visitor tycon
+        , eq = eq
+        , elems = Seq.map goElem elems
+        , delims = delims
+        , optbar = optbar
+        }
+    in
+      {delims = delims, elems = Seq.map goCon elems}
+    end
+  val datbindTys = fn datbind =>
+    let
+      val result: Ast.Ty.ty list ref = ref []
+      val visitor: datbind_visitor =
+        { mapTy = fn ty => (result := ty :: !result; ty)
+        , mapTycon = fn t => t
+        , mapConbind = fn t => t
+        }
+    in
+      ignore (visitDatbind visitor datbind);
+      List.rev (!result)
+    end
 end

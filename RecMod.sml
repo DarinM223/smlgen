@@ -44,8 +44,8 @@ struct
     GraphSCCFn (struct type ord_key = Atom.atom val compare = Atom.compare end)
 
   fun addLinks (followTable, typename, datbind) =
-    (* TODO: Iterate over all types in datbind *)
-    raise Fail "unimplemented"
+    List.app (fn _ => (* TODO: visit type *) raise Fail "")
+      (Utils.datbindTys datbind)
 
   (*
   1. Track structure levels in environment.
