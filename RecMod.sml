@@ -44,8 +44,30 @@ struct
     GraphSCCFn (struct type ord_key = Atom.atom val compare = Atom.compare end)
 
   fun addLinks (followTable, typename, datbind) =
-    List.app (fn _ => (* TODO: visit type *) raise Fail "")
-      (Utils.datbindTys datbind)
+    let
+      open Ast Utils
+      fun go (Ty.Var _) = ()
+        | go (Ty.Record {elems, ...}) =
+            ArraySlice.app (go o #ty) elems
+        | go (Ty.Tuple {elems, ...}) = ArraySlice.app go elems
+        | go (Ty.Con {id, args, ...}) =
+            let
+              val idAtom = Atom.atom
+                (Token.toString (MaybeLongToken.getToken id))
+            in
+              if AtomTable.inDomain followTable idAtom then
+                AtomTable.insert followTable (typename, AtomSet.add
+                  (AtomTable.lookup followTable typename, idAtom))
+              else
+                ();
+              ignore (syntaxSeqMap go args)
+            end
+        | go (Ty.Arrow {from, to, ...}) =
+            (go from; go to)
+        | go (Ty.Parens {ty, ...}) = go ty
+    in
+      List.app go (datbindTys datbind)
+    end
 
   (*
   1. Track structure levels in environment.
@@ -64,33 +86,41 @@ struct
   fun gen ast =
     let
       val typenameToBind = GatherTypes.run ast
-      val datbinds =
-        AtomTable.fold (fn (datbind, acc) => datbind :: acc) [] typenameToBind
-      val followTable: Atom.atom list AtomTable.hash_table =
+      val followTable: AtomSet.set AtomTable.hash_table =
         AtomTable.mkTable (AtomTable.numItems typenameToBind, LibBase.NotFound)
       val () =
         AtomTable.appi
-          (fn (typename, _) => AtomTable.insert followTable (typename, []))
+          (fn (typename, _) =>
+             AtomTable.insert followTable (typename, AtomSet.empty))
           typenameToBind
       val () =
         AtomTable.appi
           (fn (typename, datbind) => addLinks (followTable, typename, datbind))
           typenameToBind
       val roots = List.map #1 (AtomTable.listItemsi followTable)
-      val components =
-        AtomSCC.topOrder' {roots = roots, follow = AtomTable.lookup followTable}
+      val components = AtomSCC.topOrder'
+        {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
+      val components = List.map (List.map (AtomTable.lookup typenameToBind))
+        (List.mapPartial
+           (fn AtomSCC.SIMPLE _ => NONE | AtomSCC.RECURSIVE nodes => SOME nodes)
+           components)
+      fun printComponents i (component :: rest) =
+            ( print ("Component " ^ Int.toString i ^ ":\n")
+            ; List.app
+                (fn datbind =>
+                   print
+                     (TerminalColorString.toString {colors = true}
+                        (Utils.prettyDatbind datbind) ^ "\n")) component
+            ; print "Merged:\n"
+            ; print (TerminalColorString.toString {colors = true}
+                (Utils.prettyDatbind (Utils.concatDatbinds component)))
+            ; print "\n\n"
+            ; printComponents (i + 1) rest
+            )
+        | printComponents _ [] = ()
     in
-      AtomTable.appi
-        (fn (typ, datbind) =>
-           ( print (Atom.toString typ ^ ":\n")
-           ; print
-               (TerminalColorString.toString {colors = true}
-                  (Utils.prettyDatbind datbind) ^ "\n\n")
-           )) typenameToBind;
-      print "Merged: \n";
-      print
-        (TerminalColorString.toString {colors = true}
-           (Utils.prettyDatbind (Utils.concatDatbinds datbinds)) ^ "\n\n");
+      print "Components: \n";
+      printComponents 1 components;
       ast
     end
 end
