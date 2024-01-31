@@ -69,6 +69,93 @@ struct
       List.app go (datbindTys datbind)
     end
 
+  type 'a track =
+    {trackTypename: Token.token -> 'a, trackConstructor: Token.token -> 'a}
+
+  (* For every datatype in the component,
+     track how many times the typename and the constructor name appear.
+  *)
+  fun countTypesAndConstructors (component: Ast.Exp.datbind list) =
+    let
+      val typenameCount: int AtomTable.hash_table =
+        AtomTable.mkTable (20, LibBase.NotFound)
+      val constrCount: int AtomTable.hash_table =
+        AtomTable.mkTable (20, LibBase.NotFound)
+      fun incr (table, atom) =
+        if AtomTable.inDomain table atom then
+          AtomTable.insert table (atom, AtomTable.lookup table atom + 1)
+        else
+          AtomTable.insert table (atom, 1)
+    in
+      List.app
+        (fn {elems, ...} =>
+           ArraySlice.app
+             (fn {tycon, elems, ...} =>
+                ( incr (typenameCount, Atom.atom (Token.toString tycon))
+                ; ArraySlice.app
+                    (fn {id, ...} =>
+                       incr (constrCount, Atom.atom (Token.toString id))) elems
+                )) elems) component;
+      { trackTypename =
+          AtomTable.lookup typenameCount o Atom.atom o Token.toString
+      , trackConstructor =
+          AtomTable.lookup constrCount o Atom.atom o Token.toString
+      }
+    end
+
+  val qualifiedTypePart =
+    Substring.string o #1 o (Substring.splitr (fn #"." => false | _ => true))
+    o Substring.full
+  val serialize = String.map (fn #"." => #"_" | ch => ch)
+
+  fun componentSubstMap ({trackTypename, trackConstructor}: int track)
+    (component: (string * Ast.Exp.datbind) list) =
+    let
+      val typenameRename: string AtomTable.hash_table =
+        AtomTable.mkTable (20, LibBase.NotFound)
+      val constrRename: string AtomTable.hash_table =
+        AtomTable.mkTable (20, LibBase.NotFound)
+    in
+      List.app
+        (fn (typename, {elems, ...}) =>
+           ArraySlice.app
+             (fn {tycon, elems, ...} =>
+                ( if trackTypename tycon > 1 then
+                    AtomTable.insert typenameRename
+                      ( Atom.atom
+                          (qualifiedTypePart typename ^ Token.toString tycon)
+                      , serialize
+                          (qualifiedTypePart typename ^ Token.toString tycon)
+                      )
+                  else
+                    ()
+                ; ArraySlice.app
+                    (fn {id, ...} =>
+                       if trackConstructor id > 1 then
+                         AtomTable.insert constrRename
+                           ( Atom.atom
+                               (qualifiedTypePart typename ^ Token.toString id)
+                           , serialize
+                               (qualifiedTypePart typename
+                                ^ Token.toString tycon ^ "." ^ Token.toString id)
+                           )
+                       else
+                         ()) elems
+                )) elems) component;
+      (* TODO: debugging printing remove this after *)
+      AtomTable.appi (fn (a, s) => print (Atom.toString a ^ " -> " ^ s ^ "\n"))
+        typenameRename;
+      AtomTable.appi (fn (a, s) => print (Atom.toString a ^ " -> " ^ s ^ "\n"))
+        constrRename;
+      { trackTypename =
+          Utils.mkToken o AtomTable.lookup typenameRename o Atom.atom
+          o Token.toString
+      , trackConstructor =
+          Utils.mkToken o AtomTable.lookup constrRename o Atom.atom
+          o Token.toString
+      }
+    end
+
   (*
   1. Track structure levels in environment.
      First pass: For every datatype, make a map from full name (including structures) to the datatype.
@@ -100,23 +187,35 @@ struct
       val roots = List.map #1 (AtomTable.listItemsi followTable)
       val components = AtomSCC.topOrder'
         {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
-      val components = List.map (List.map (AtomTable.lookup typenameToBind))
-        (List.mapPartial
-           (fn AtomSCC.SIMPLE _ => NONE | AtomSCC.RECURSIVE nodes => SOME nodes)
-           components)
+      val components: (string * Ast.Exp.datbind) list list =
+        List.map
+          (List.map (fn a =>
+             (Atom.toString a, AtomTable.lookup typenameToBind a)))
+          (List.mapPartial
+             (fn AtomSCC.SIMPLE _ => NONE
+               | AtomSCC.RECURSIVE nodes =>
+                SOME (AtomSet.toList (AtomSet.fromList nodes))) components)
       fun printComponents i (component :: rest) =
-            ( print ("Component " ^ Int.toString i ^ ":\n")
-            ; List.app
-                (fn datbind =>
+            let
+              val trackCount = countTypesAndConstructors (List.map #2 component)
+              val trackSubst = componentSubstMap trackCount component
+            in
+              print ("Component " ^ Int.toString i ^ ":\n");
+              List.app
+                (fn (typename, datbind) =>
                    print
-                     (TerminalColorString.toString {colors = true}
-                        (Utils.prettyDatbind datbind) ^ "\n")) component
-            ; print "Merged:\n"
-            ; print (TerminalColorString.toString {colors = true}
-                (Utils.prettyDatbind (Utils.concatDatbinds component)))
-            ; print "\n\n"
-            ; printComponents (i + 1) rest
-            )
+                     (typename ^ " "
+                      ^
+                      TerminalColorString.toString {colors = true}
+                        (Utils.prettyDatbind datbind) ^ "\n")) component;
+              print "Merged:\n";
+              print
+                (TerminalColorString.toString {colors = true}
+                   (Utils.prettyDatbind (Utils.concatDatbinds
+                      (List.map #2 component))));
+              print "\n\n";
+              printComponents (i + 1) rest
+            end
         | printComponents _ [] = ()
     in
       print "Components: \n";

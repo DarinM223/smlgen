@@ -5,3 +5,7 @@ structure Bar =
 struct datatype bar = Foo of Foo.foo | World datatype northis = A | B end
 
 datatype no = No
+
+structure A = struct datatype a = B of int * B.a and c = C of string end
+
+structure B = struct datatype a = B of int * A.a and c = C of string end
