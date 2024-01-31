@@ -120,28 +120,27 @@ struct
         (fn (typename, {elems, ...}) =>
            ArraySlice.app
              (fn {tycon, elems, ...} =>
-                ( if trackTypename tycon > 1 then
+                let
+                  val qualifiedTycon =
+                    qualifiedTypePart typename ^ Token.toString tycon
+                in
+                  if trackTypename tycon > 1 then
                     AtomTable.insert typenameRename
-                      ( Atom.atom
-                          (qualifiedTypePart typename ^ Token.toString tycon)
-                      , serialize
-                          (qualifiedTypePart typename ^ Token.toString tycon)
-                      )
+                      (Atom.atom qualifiedTycon, serialize qualifiedTycon)
                   else
-                    ()
-                ; ArraySlice.app
+                    ();
+                  ArraySlice.app
                     (fn {id, ...} =>
                        if trackConstructor id > 1 then
                          AtomTable.insert constrRename
                            ( Atom.atom
-                               (qualifiedTypePart typename ^ Token.toString id)
+                               (qualifiedTycon ^ "." ^ Token.toString id)
                            , serialize
-                               (qualifiedTypePart typename
-                                ^ Token.toString tycon ^ "." ^ Token.toString id)
+                               (qualifiedTycon ^ "." ^ Token.toString id)
                            )
                        else
                          ()) elems
-                )) elems) component;
+                end) elems) component;
       (* TODO: debugging printing remove this after *)
       AtomTable.appi (fn (a, s) => print (Atom.toString a ^ " -> " ^ s ^ "\n"))
         typenameRename;
@@ -154,6 +153,56 @@ struct
           Utils.mkToken o AtomTable.lookup constrRename o Atom.atom
           o Token.toString
       }
+    end
+
+  fun substDatbind ({trackTypename, trackConstructor}: Token.token track)
+    (qualifiedPart: string) ({elems, delims}: Ast.Exp.datbind) =
+    let
+      open Ast Utils MaybeLongToken
+      fun goTy (Ty.Var var) = Ty.Var var
+        | goTy (Ty.Record {left, elems, delims, right}) =
+            Ty.Record
+              { left = left
+              , elems =
+                  Seq.map
+                    (fn {lab, colon, ty} =>
+                       {lab = lab, colon = colon, ty = goTy ty}) elems
+              , delims = delims
+              , right = right
+              }
+        | goTy (Ty.Tuple {elems, delims}) =
+            Ty.Tuple {elems = Seq.map goTy elems, delims = delims}
+        | goTy (Ty.Con {args, id}) =
+            Ty.Con
+              { args = syntaxSeqMap goTy args
+              , id = make (trackTypename (getToken id)) handle _ => id
+              }
+        | goTy (Ty.Arrow {from, arrow, to}) =
+            Ty.Arrow {from = goTy from, arrow = arrow, to = goTy to}
+        | goTy (Ty.Parens {left, ty, right}) =
+            Ty.Parens {left = left, ty = goTy ty, right = right}
+      fun goConstr qualifiedTycon {opp, id, arg} =
+        { opp = opp
+        , id =
+            trackConstructor (mkToken
+              (qualifiedTycon ^ "." ^ Token.toString id))
+            handle _ => id
+        , arg = Option.map (fn {off, ty} => {off = off, ty = goTy ty}) arg
+        }
+      fun goTycon {tyvars, tycon, eq, elems, delims, optbar} =
+        let
+          val qualifiedTycon = qualifiedPart ^ Token.toString tycon
+        in
+          { tyvars = tyvars
+          , tycon = trackTypename (mkToken qualifiedTycon) handle _ => tycon
+          , eq = eq
+          , elems = Seq.map (goConstr qualifiedTycon) elems
+          , delims = delims
+          , optbar = optbar
+          }
+        end
+    in
+      {elems = Seq.map goTycon elems, delims = delims}
     end
 
   (*
@@ -212,7 +261,10 @@ struct
               print
                 (TerminalColorString.toString {colors = true}
                    (Utils.prettyDatbind (Utils.concatDatbinds
-                      (List.map #2 component))));
+                      (List.map
+                         (fn (typename, datbind) =>
+                            substDatbind trackSubst (qualifiedTypePart typename)
+                              datbind) component))));
               print "\n\n";
               printComponents (i + 1) rest
             end
