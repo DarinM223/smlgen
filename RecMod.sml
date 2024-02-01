@@ -1,5 +1,7 @@
 structure GatherTypes =
 struct
+  val c = ref 0
+
   fun visitor typenameToBind =
     { state = []
     , goDecType = fn (_, dec, _) => dec
@@ -14,10 +16,12 @@ struct
               Seq.map
                 (String.concatWith "." o List.rev o (fn tycon => tycon :: path)
                  o Token.toString o #tycon) elems
+            val datbindId = !c before c := !c + 1
           in (* TODO: rewrite datbind with withtypees *)
             ArraySlice.app
               (fn typ =>
-                 AtomTable.insert typenameToBind (Atom.atom typ, datbind)) types;
+                 AtomTable.insert typenameToBind
+                   (Atom.atom typ, (datbindId, datbind))) types;
             dec
           end
     , onStructure = fn strid => fn path => Token.toString strid :: path
@@ -26,7 +30,7 @@ struct
 
   fun run (Ast.Ast topdecs : Ast.t) =
     let
-      val typenameToBind: Ast.Exp.datbind AtomTable.hash_table =
+      val typenameToBind: (int * Ast.Exp.datbind) AtomTable.hash_table =
         AtomTable.mkTable (20, LibBase.NotFound)
     in
       Seq.map
@@ -205,6 +209,14 @@ struct
       {elems = Seq.map goTycon elems, delims = delims}
     end
 
+  fun removeDuplicateDatbinds seen ((s, (i, datbind)) :: rest) =
+        if IntRedBlackSet.member (seen, i) then
+          removeDuplicateDatbinds seen rest
+        else
+          (s, datbind)
+          :: removeDuplicateDatbinds (IntRedBlackSet.add (seen, i)) rest
+    | removeDuplicateDatbinds _ [] = []
+
   (*
   1. Track structure levels in environment.
      First pass: For every datatype, make a map from full name (including structures) to the datatype.
@@ -231,19 +243,20 @@ struct
           typenameToBind
       val () =
         AtomTable.appi
-          (fn (typename, datbind) => addLinks (followTable, typename, datbind))
-          typenameToBind
+          (fn (typename, (_, datbind)) =>
+             addLinks (followTable, typename, datbind)) typenameToBind
       val roots = List.map #1 (AtomTable.listItemsi followTable)
       val components = AtomSCC.topOrder'
         {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
       val components: (string * Ast.Exp.datbind) list list =
         List.map
-          (List.map (fn a =>
+          (removeDuplicateDatbinds IntRedBlackSet.empty
+           o
+           List.map (fn a =>
              (Atom.toString a, AtomTable.lookup typenameToBind a)))
           (List.mapPartial
              (fn AtomSCC.SIMPLE _ => NONE
-               | AtomSCC.RECURSIVE nodes =>
-                SOME (AtomSet.toList (AtomSet.fromList nodes))) components)
+               | AtomSCC.RECURSIVE nodes => SOME nodes) components)
       fun printComponents i (component :: rest) =
             let
               val trackCount = countTypesAndConstructors (List.map #2 component)
