@@ -242,9 +242,9 @@ struct
 
   TODO: handle type aliases
   *)
-  fun gen ast =
+  fun gen (Ast.Ast topdecs) =
     let
-      val typenameToBind = GatherTypes.run ast
+      val typenameToBind = GatherTypes.run (Ast.Ast topdecs)
       val followTable: AtomSet.set AtomTable.hash_table =
         AtomTable.mkTable (AtomTable.numItems typenameToBind, LibBase.NotFound)
       val () =
@@ -268,10 +268,10 @@ struct
           (List.mapPartial
              (fn AtomSCC.SIMPLE _ => NONE
                | AtomSCC.RECURSIVE nodes => SOME nodes) components)
-      val idToRenamedDatbinds: Ast.Exp.typbind list IntHashTable.hash_table =
+      val idToRenamedDec: Ast.Exp.dec IntHashTable.hash_table =
         IntHashTable.mkTable (20, LibBase.NotFound)
       (* TODO: modify this to accumulate an ArraySlice of topdecs to append to ast *)
-      fun printComponents i (component :: rest) =
+      fun handleComponents i build (component :: rest) =
             let
               val trackCount = countTypesAndConstructors (List.map #3 component)
               val trackSubst = componentSubstMap trackCount component
@@ -294,16 +294,60 @@ struct
                             substDatbind trackSubst (qualifiedTypePart typename)
                               datbind) component))));
               print "\n\n";
-              (* TODO: For every datbind, add list of typbinds that unpack the substituted type *)
-              printComponents (i + 1) rest
+              (* For every datbind, add dec of typbinds that unpack the substituted type *)
+              List.app
+                (fn (typename, id, {elems, ...}) =>
+                   let
+                     val qualifiedPart = qualifiedTypePart typename
+                     val decs =
+                       ArraySlice.foldl
+                         (fn ({tyvars, tycon, ...}, acc) =>
+                            let
+                              val tycon' = Utils.mkToken
+                                (qualifiedPart ^ Token.toString tycon)
+                              val tycon' = #trackTypename trackSubst tycon'
+                                           handle _ => tycon
+                              val tyvars = Utils.syntaxSeqToList tyvars
+                              val dec =
+                                MutRecTy.genSingleTypebind
+                                  (fn tybind =>
+                                     Ast.Exp.DecType
+                                       { typee =
+                                           Utils.mkReservedToken Token.Type
+                                       , typbind = tybind
+                                       })
+                                  ( tycon
+                                  , tyvars
+                                  , Ast.Ty.Con
+                                      { args = Utils.listToSyntaxSeq
+                                          (List.map Ast.Ty.Var tyvars)
+                                      , id = MaybeLongToken.make tycon'
+                                      }
+                                  )
+                            in
+                              dec :: acc
+                            end) [] elems
+                     val dec =
+                       List.foldl (fn (a, b) => Utils.combineDecs a b)
+                         Ast.Exp.DecEmpty decs
+                   in
+                     IntHashTable.insert idToRenamedDec (id, dec)
+                   end) component;
+              (* TODO: add structure topdec with merged datatype to build *)
+              handleComponents (i + 1) build rest
             end
-        | printComponents _ [] = ()
+        | handleComponents _ build [] = build
       val () = print "Components: \n"
-      val () = printComponents 1 components
-    (* TODO: Then visit every datatype declaration and substitute each datatype Dec with a Dec
-       of the list of unpacked type aliases based on datatype id.
-    *)
+      val prependDecs: Ast.topdec list = handleComponents 1 [] components
+      val prependDecs: {topdec: Ast.topdec, semicolon: Token.token option} Seq.t =
+        Seq.fromList
+          (List.map (fn topdec => {topdec = topdec, semicolon = NONE})
+             prependDecs)
+      (* TODO: Then visit every datatype declaration in topdecs and substitute each datatype Dec with a Dec
+         of the list of unpacked type aliases based on datatype id.
+      *)
+      val ast' = Ast.Ast (Seq.append (prependDecs, topdecs))
     in
-      ast
+      Ast.Ast topdecs
     end
 end
