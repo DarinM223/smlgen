@@ -1,8 +1,6 @@
 structure GatherTypes =
 struct
-  val c = ref 0
-
-  fun visitor typenameToBind =
+  fun visitor {c, typenameToBind} =
     { state = []
     , goDecType = fn (_, dec, _) => dec
     , goDecDatatype =
@@ -35,7 +33,9 @@ struct
     in
       Seq.map
         (fn {topdec, semicolon} =>
-           { topdec = AstVisitor.goTopDec (visitor typenameToBind) topdec
+           { topdec =
+               AstVisitor.goTopDec
+                 (visitor {typenameToBind = typenameToBind, c = ref 0}) topdec
            , semicolon = semicolon
            }) topdecs;
       typenameToBind
@@ -76,6 +76,17 @@ struct
   type 'a track =
     {trackTypename: Token.token -> 'a, trackConstructor: Token.token -> 'a}
 
+  val emptyTrack: 'a track =
+    { trackTypename = fn _ => raise LibBase.NotFound
+    , trackConstructor = fn _ => raise LibBase.NotFound
+    }
+
+  fun combineTracks (a: 'a track) (b: 'a track) : 'a track =
+    { trackTypename = fn t => #trackTypename a t handle _ => #trackTypename b t
+    , trackConstructor = fn t => #trackConstructor a t
+                                 handle _ => #trackConstructor b t
+    }
+
   (* For every datatype in the component,
      track how many times the typename and the constructor name appear.
   *)
@@ -113,7 +124,7 @@ struct
   val serialize = String.map (fn #"." => #"_" | ch => ch)
 
   fun componentSubstMap ({trackTypename, trackConstructor}: int track)
-    (component: (string * Ast.Exp.datbind) list) =
+    (component: (string * int * Ast.Exp.datbind) list) =
     let
       val typenameRename: string AtomTable.hash_table =
         AtomTable.mkTable (20, LibBase.NotFound)
@@ -121,7 +132,7 @@ struct
         AtomTable.mkTable (20, LibBase.NotFound)
     in
       List.app
-        (fn (typename, {elems, ...}) =>
+        (fn (typename, _, {elems, ...}) =>
            ArraySlice.app
              (fn {tycon, elems, ...} =>
                 let
@@ -213,7 +224,7 @@ struct
         if IntRedBlackSet.member (seen, i) then
           removeDuplicateDatbinds seen rest
         else
-          (s, datbind)
+          (s, i, datbind)
           :: removeDuplicateDatbinds (IntRedBlackSet.add (seen, i)) rest
     | removeDuplicateDatbinds _ [] = []
 
@@ -248,7 +259,7 @@ struct
       val roots = List.map #1 (AtomTable.listItemsi followTable)
       val components = AtomSCC.topOrder'
         {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
-      val components: (string * Ast.Exp.datbind) list list =
+      val components: (string * int * Ast.Exp.datbind) list list =
         List.map
           (removeDuplicateDatbinds IntRedBlackSet.empty
            o
@@ -257,14 +268,18 @@ struct
           (List.mapPartial
              (fn AtomSCC.SIMPLE _ => NONE
                | AtomSCC.RECURSIVE nodes => SOME nodes) components)
+      val idToRenamedDatbinds: Ast.Exp.typbind list IntHashTable.hash_table =
+        IntHashTable.mkTable (20, LibBase.NotFound)
+      (* TODO: modify this to accumulate an ArraySlice of topdecs to append to ast *)
       fun printComponents i (component :: rest) =
             let
-              val trackCount = countTypesAndConstructors (List.map #2 component)
+              val trackCount = countTypesAndConstructors (List.map #3 component)
               val trackSubst = componentSubstMap trackCount component
+              val componentName = Utils.mkToken ("Component" ^ Int.toString i)
             in
-              print ("Component " ^ Int.toString i ^ ":\n");
+              print (Token.toString componentName ^ ":\n");
               List.app
-                (fn (typename, datbind) =>
+                (fn (typename, _, datbind) =>
                    print
                      (typename ^ " "
                       ^
@@ -275,16 +290,20 @@ struct
                 (TerminalColorString.toString {colors = true}
                    (Utils.prettyDatbind (Utils.concatDatbinds
                       (List.map
-                         (fn (typename, datbind) =>
+                         (fn (typename, _, datbind) =>
                             substDatbind trackSubst (qualifiedTypePart typename)
                               datbind) component))));
               print "\n\n";
+              (* TODO: For every datbind, add list of typbinds that unpack the substituted type *)
               printComponents (i + 1) rest
             end
         | printComponents _ [] = ()
+      val () = print "Components: \n"
+      val () = printComponents 1 components
+    (* TODO: Then visit every datatype declaration and substitute each datatype Dec with a Dec
+       of the list of unpacked type aliases based on datatype id.
+    *)
     in
-      print "Components: \n";
-      printComponents 1 components;
       ast
     end
 end
