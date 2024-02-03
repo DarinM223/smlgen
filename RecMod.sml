@@ -310,6 +310,9 @@ struct
                                 (qualifiedPart ^ Token.toString tycon)
                               val tycon' = #trackTypename trackSubst tycon'
                                            handle _ => tycon
+                              val tycon' = mkToken
+                                (Token.toString componentName ^ "."
+                                 ^ Token.toString tycon')
                               val tyvars = syntaxSeqToList tyvars
                               val dec =
                                 MutRecTy.genSingleTypebind
@@ -344,11 +347,31 @@ struct
         Seq.fromList
           (List.map (fn topdec => {topdec = topdec, semicolon = NONE})
              prependDecs)
-      (* TODO: Then visit every datatype declaration in topdecs and substitute each datatype Dec with a Dec
+      val c = ref 0
+      val visitor =
+        { state = ()
+        , goDecType = fn (_, dec, _) => dec
+        , goDecDatatype = fn ((), dec, _, _) =>
+            let val datbindId = !c before c := !c + 1
+            in IntHashTable.lookup idToRenamedDec datbindId handle _ => dec
+            end
+        , onStructure = fn _ => fn () => ()
+        , onFunctor = fn _ => fn () => ()
+        }
+      (* Visit every datatype declaration in topdecs and substitute each datatype Dec with a Dec
          of the list of unpacked type aliases based on datatype id.
       *)
-      val ast' = Ast.Ast (Seq.append (prependDecs, topdecs))
+      val topdecs' =
+        Seq.map
+          (fn {topdec, semicolon} =>
+             { topdec = AstVisitor.goTopDec visitor topdec
+             , semicolon = semicolon
+             }) topdecs
+      val ast' = Ast.Ast (Seq.append (prependDecs, topdecs'))
     in
+      print "New ast:\n";
+      print (TerminalColorString.toString {colors = true} (Utils.pretty ast'));
+      print "\n";
       Ast.Ast topdecs
     end
 end
