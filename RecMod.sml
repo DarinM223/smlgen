@@ -270,12 +270,19 @@ struct
                | AtomSCC.RECURSIVE nodes => SOME nodes) components)
       val idToRenamedDec: Ast.Exp.dec IntHashTable.hash_table =
         IntHashTable.mkTable (20, LibBase.NotFound)
-      (* TODO: modify this to accumulate an ArraySlice of topdecs to append to ast *)
       fun handleComponents i build (component :: rest) =
             let
+              open Utils BuildAst
               val trackCount = countTypesAndConstructors (List.map #3 component)
               val trackSubst = componentSubstMap trackCount component
-              val componentName = Utils.mkToken ("Component" ^ Int.toString i)
+              val componentName = mkToken ("Component" ^ Int.toString i)
+              val merged = concatDatbinds
+                (List.map
+                   (fn (typename, _, datbind) =>
+                      substDatbind trackSubst (qualifiedTypePart typename)
+                        datbind) component)
+              val topdec = Ast.StrDec (simpleStructStrDec componentName
+                (Ast.Str.DecCore (simpleDatatypeDec merged)))
             in
               print (Token.toString componentName ^ ":\n");
               List.app
@@ -284,15 +291,11 @@ struct
                      (typename ^ " "
                       ^
                       TerminalColorString.toString {colors = true}
-                        (Utils.prettyDatbind datbind) ^ "\n")) component;
+                        (prettyDatbind datbind) ^ "\n")) component;
               print "Merged:\n";
               print
                 (TerminalColorString.toString {colors = true}
-                   (Utils.prettyDatbind (Utils.concatDatbinds
-                      (List.map
-                         (fn (typename, _, datbind) =>
-                            substDatbind trackSubst (qualifiedTypePart typename)
-                              datbind) component))));
+                   (prettyDatbind merged));
               print "\n\n";
               (* For every datbind, add dec of typbinds that unpack the substituted type *)
               List.app
@@ -303,23 +306,22 @@ struct
                        ArraySlice.foldl
                          (fn ({tyvars, tycon, ...}, acc) =>
                             let
-                              val tycon' = Utils.mkToken
+                              val tycon' = mkToken
                                 (qualifiedPart ^ Token.toString tycon)
                               val tycon' = #trackTypename trackSubst tycon'
                                            handle _ => tycon
-                              val tyvars = Utils.syntaxSeqToList tyvars
+                              val tyvars = syntaxSeqToList tyvars
                               val dec =
                                 MutRecTy.genSingleTypebind
                                   (fn tybind =>
                                      Ast.Exp.DecType
-                                       { typee =
-                                           Utils.mkReservedToken Token.Type
+                                       { typee = mkReservedToken Token.Type
                                        , typbind = tybind
                                        })
                                   ( tycon
                                   , tyvars
                                   , Ast.Ty.Con
-                                      { args = Utils.listToSyntaxSeq
+                                      { args = listToSyntaxSeq
                                           (List.map Ast.Ty.Var tyvars)
                                       , id = MaybeLongToken.make tycon'
                                       }
@@ -328,13 +330,12 @@ struct
                               dec :: acc
                             end) [] elems
                      val dec =
-                       List.foldl (fn (a, b) => Utils.combineDecs a b)
+                       List.foldl (fn (a, b) => combineDecs a b)
                          Ast.Exp.DecEmpty decs
                    in
                      IntHashTable.insert idToRenamedDec (id, dec)
                    end) component;
-              (* TODO: add structure topdec with merged datatype to build *)
-              handleComponents (i + 1) build rest
+              handleComponents (i + 1) (topdec :: build) rest
             end
         | handleComponents _ build [] = build
       val () = print "Components: \n"

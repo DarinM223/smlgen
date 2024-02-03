@@ -56,6 +56,10 @@ struct
   val trueTok = mkToken "true"
   val openParenTok = mkReservedToken OpenParen
   val closeParenTok = mkReservedToken CloseParen
+  val structureTok = mkReservedToken Structure
+  val structTok = mkReservedToken Struct
+  val endTok = mkReservedToken End
+  val datatypeTok = mkReservedToken Token.Datatype
 
   val unitExp = Unit {left = openParenTok, right = closeParenTok}
 
@@ -302,4 +306,22 @@ struct
 
   fun parensTy ty =
     Ty.Parens {left = openParenTok, ty = ty, right = closeParenTok}
+
+  fun simpleStructStrDec (strid: Token.t) (strdec: Ast.Str.strdec) =
+    Ast.Str.DecStructure
+      { structuree = structureTok
+      , elems = Seq.singleton
+          { strid = strid
+          , constraint = NONE
+          , eq = equalTok
+          , strexp =
+              Ast.Str.Struct
+                {structt = structTok, strdec = strdec, endd = endTok}
+          }
+      , delims = Seq.empty ()
+      }
+
+  fun simpleDatatypeDec (datbind: Ast.Exp.datbind) =
+    Ast.Exp.DecDatatype
+      {datatypee = datatypeTok, datbind = datbind, withtypee = NONE}
 end
