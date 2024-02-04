@@ -121,6 +121,9 @@ struct
   val qualifiedTypePart =
     Substring.string o #1 o (Substring.splitr (fn #"." => false | _ => true))
     o Substring.full
+  val typenameTypePart =
+    Substring.string o #2 o (Substring.splitr (fn #"." => false | _ => true))
+    o Substring.full
   val serialize = String.map (fn #"." => #"_" | ch => ch)
 
   fun componentSubstMap ({trackTypename, trackConstructor}: int track)
@@ -143,7 +146,10 @@ struct
                     AtomTable.insert typenameRename
                       (Atom.atom qualifiedTycon, serialize qualifiedTycon)
                   else
-                    ();
+                    AtomTable.insert typenameRename
+                      ( Atom.atom qualifiedTycon
+                      , typenameTypePart qualifiedTycon
+                      );
                   ArraySlice.app
                     (fn {id, ...} =>
                        if trackConstructor id > 1 then
