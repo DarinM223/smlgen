@@ -1,4 +1,4 @@
-structure GatherTypes =
+structure GatherTypes :> GATHER_TYPES =
 struct
   fun visitor {c, typenameToBind} =
     { state = []
@@ -42,7 +42,7 @@ struct
     end
 end
 
-structure RecMod: RECURSIVE_MODULES =
+structure RecMod :> RECURSIVE_MODULES =
 struct
   structure AtomSCC =
     GraphSCCFn (struct type ord_key = Atom.atom val compare = Atom.compare end)
