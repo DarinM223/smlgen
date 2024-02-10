@@ -167,7 +167,12 @@ struct
         let
           val fp = FilePath.fromUnixPath filepath
           val hfp = FilePath.toHostPath
-            (if test then FilePath.fromUnixPath (filepath ^ ".test") else fp)
+            (if test then
+               FilePath.fromUnixPath (filepath ^ ".test")
+             else if recursiveModules then
+               Utils.mapBasename (Utils.mapBase (fn base => base ^ ".rec")) fp
+             else
+               fp)
           val source = Source.loadFromFile fp
           val allTokens = Lexer.tokens allows source
           val result = Parser.parse allows allTokens

@@ -162,11 +162,6 @@ struct
                        else
                          ()) elems
                 end) elems) component;
-      (* TODO: debugging printing remove this after *)
-      AtomTable.appi (fn (a, s) => print (Atom.toString a ^ " -> " ^ s ^ "\n"))
-        typenameRename;
-      AtomTable.appi (fn (a, s) => print (Atom.toString a ^ " -> " ^ s ^ "\n"))
-        constrRename;
       { trackTypename =
           Utils.mkToken o AtomTable.lookup typenameRename o Atom.atom
           o Token.toString
@@ -236,11 +231,9 @@ struct
 
   (*
   1. Track structure levels in environment.
-     First pass: For every datatype, make a map from full name (including structures) to the datatype.
-     Second pass: Track the current environment of structure name to datatype as well as the current
-     structure level. If there is a link to the global environment and the current environment it should
-     prefer the current environment.
-  2. For every datatype, add links to other datatypes and also store the datatype constructors and types.
+     First pass: For every datatype, make a hashtable from full name (including structures) to a
+     tuple of databind id (uniquely generated for every datatype in the topdec) and databind.
+  2. For every datatype in the map, put links to other datatypes into another hashtable.
   3. Calculate the SCCs of the datatypes to find the connected datatype components.
   4. For each component, generate a merged structure name at the beginning and merge the datatypes
      into a single mutually recursive datatype.
@@ -290,19 +283,6 @@ struct
               val topdec = Ast.StrDec (simpleStructStrDec componentName
                 (Ast.Str.DecCore (simpleDatatypeDec merged)))
             in
-              print (Token.toString componentName ^ ":\n");
-              List.app
-                (fn (typename, _, datbind) =>
-                   print
-                     (typename ^ " "
-                      ^
-                      TerminalColorString.toString {colors = true}
-                        (prettyDatbind datbind) ^ "\n")) component;
-              print "Merged:\n";
-              print
-                (TerminalColorString.toString {colors = true}
-                   (prettyDatbind merged));
-              print "\n\n";
               (* For every datbind, add dec of typbinds that unpack the substituted type *)
               List.app
                 (fn (typename, id, {elems, ...}) =>
@@ -347,7 +327,6 @@ struct
               handleComponents (i + 1) (topdec :: build) rest
             end
         | handleComponents _ build [] = build
-      val () = print "Components: \n"
       val prependDecs: Ast.topdec list = handleComponents 1 [] components
       val prependDecs: {topdec: Ast.topdec, semicolon: Token.token option} Seq.t =
         Seq.fromList
@@ -373,11 +352,7 @@ struct
              { topdec = AstVisitor.goTopDec visitor topdec
              , semicolon = semicolon
              }) topdecs
-      val ast' = Ast.Ast (Seq.append (prependDecs, topdecs'))
     in
-      print "New ast:\n";
-      print (TerminalColorString.toString {colors = true} (Utils.pretty ast'));
-      print "\n";
-      Ast.Ast topdecs
+      Ast.Ast (Seq.append (prependDecs, topdecs'))
     end
 end

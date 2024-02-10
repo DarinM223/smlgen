@@ -173,4 +173,17 @@ struct
       ignore (AstVisitor.goDatbind visitor datbind);
       List.rev (!result)
     end
+
+  fun mapBase (f: string -> string) (file: string) =
+    let val {base, ext} = OS.Path.splitBaseExt file
+    in OS.Path.joinBaseExt {base = f base, ext = ext}
+    end
+  fun mapBasename (f: string -> string) (fp: FilePath.t) =
+    let
+      val basename = FilePath.toUnixPath (FilePath.basename fp)
+      val dirname = FilePath.dirname fp
+      val basename = FilePath.fromUnixPath (f basename)
+    in
+      FilePath.join (dirname, basename)
+    end
 end
