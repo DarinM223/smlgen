@@ -99,7 +99,7 @@ struct
       val maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
 
       fun confirm dec next =
-        if test then
+        if test orelse recursiveModules then
           Utils.combineDecs dec (next ())
         else if printOnly then
           ( print "\n"
@@ -182,12 +182,15 @@ struct
               let
                 val ast = if recursiveModules then RecMod.gen ast else ast
                 val ast = gen args ast
-                val result =
-                  TerminalColorString.toString {colors = false}
+                val prettyAst = fn colors =>
+                  TerminalColorString.toString {colors = colors}
                     (Utils.pretty ast)
               in
-                if printOnly then ()
-                else TextIO.output (TextIO.openOut hfp, result)
+                if printOnly then
+                  if recursiveModules then (print (prettyAst true); print "\n")
+                  else ()
+                else
+                  TextIO.output (TextIO.openOut hfp, prettyAst false)
               end
           | _ => raise Fail "Just comments"
         end
