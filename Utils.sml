@@ -186,4 +186,10 @@ struct
     in
       FilePath.join (dirname, basename)
     end
+  val qualifiedTypePart =
+    Substring.string o #1 o (Substring.splitr (fn #"." => false | _ => true))
+    o Substring.full
+  val typenameTypePart =
+    Substring.string o #2 o (Substring.splitr (fn #"." => false | _ => true))
+    o Substring.full
 end

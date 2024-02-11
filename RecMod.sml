@@ -56,10 +56,16 @@ struct
         | go (Ty.Tuple {elems, ...}) = ArraySlice.app go elems
         | go (Ty.Con {id, args, ...}) =
             let
-              val idAtom = Atom.atom
-                (Token.toString (MaybeLongToken.getToken id))
+              val id = Token.toString (MaybeLongToken.getToken id)
+              val idAtom = Atom.atom id
+              val qualifiedIdAtom = Atom.atom
+                (Utils.qualifiedTypePart (Atom.toString typename) ^ id)
             in
-              if AtomTable.inDomain followTable idAtom then
+              (* Check if the type constructor is in the same structure first *)
+              if AtomTable.inDomain followTable qualifiedIdAtom then
+                AtomTable.insert followTable (typename, AtomSet.add
+                  (AtomTable.lookup followTable typename, qualifiedIdAtom))
+              else if AtomTable.inDomain followTable idAtom then
                 AtomTable.insert followTable (typename, AtomSet.add
                   (AtomTable.lookup followTable typename, idAtom))
               else
@@ -118,12 +124,6 @@ struct
       }
     end
 
-  val qualifiedTypePart =
-    Substring.string o #1 o (Substring.splitr (fn #"." => false | _ => true))
-    o Substring.full
-  val typenameTypePart =
-    Substring.string o #2 o (Substring.splitr (fn #"." => false | _ => true))
-    o Substring.full
   val serialize = String.map (fn #"." => #"_" | ch => ch)
 
   fun componentSubstMap ({trackTypename, trackConstructor}: int track)
@@ -140,7 +140,7 @@ struct
              (fn {tycon, elems, ...} =>
                 let
                   val qualifiedTycon =
-                    qualifiedTypePart typename ^ Token.toString tycon
+                    Utils.qualifiedTypePart typename ^ Token.toString tycon
                 in
                   if trackTypename tycon > 1 then
                     AtomTable.insert typenameRename
@@ -148,7 +148,7 @@ struct
                   else
                     AtomTable.insert typenameRename
                       ( Atom.atom qualifiedTycon
-                      , typenameTypePart qualifiedTycon
+                      , Utils.typenameTypePart qualifiedTycon
                       );
                   ArraySlice.app
                     (fn {id, ...} =>
@@ -229,6 +229,13 @@ struct
           :: removeDuplicateDatbinds (IntRedBlackSet.add (seen, i)) rest
     | removeDuplicateDatbinds _ [] = []
 
+  val traceFollowTable = AtomTable.appi (fn (a, b) =>
+    ( print (Atom.toString a)
+    ; print " -> ["
+    ; AtomSet.app (fn c => (print (Atom.toString c); print ",")) b
+    ; print "]\n"
+    ))
+
   (*
   1. Track structure levels in environment.
      First pass: For every datatype, make a hashtable from full name (including structures) to a
@@ -255,6 +262,7 @@ struct
         AtomTable.appi
           (fn (typename, (_, datbind)) =>
              addLinks (followTable, typename, datbind)) typenameToBind
+      val () = traceFollowTable followTable
       val roots = List.map #1 (AtomTable.listItemsi followTable)
       val components = AtomSCC.topOrder'
         {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
