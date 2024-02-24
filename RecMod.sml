@@ -221,13 +221,15 @@ struct
       {elems = Seq.map goTycon elems, delims = delims}
     end
 
-  fun removeDuplicateDatbinds seen ((s, (i, datbind)) :: rest) =
-        if IntRedBlackSet.member (seen, i) then
-          removeDuplicateDatbinds seen rest
-        else
-          (s, i, datbind)
-          :: removeDuplicateDatbinds (IntRedBlackSet.add (seen, i)) rest
-    | removeDuplicateDatbinds _ [] = []
+  val removeDuplicateDatbinds =
+    let
+      fun go seen ((s: string, i, datbind: Ast.Exp.datbind) :: rest) =
+            if IntRedBlackSet.member (seen, i) then go seen rest
+            else (s, i, datbind) :: go (IntRedBlackSet.add (seen, i)) rest
+        | go _ [] = []
+    in
+      go IntRedBlackSet.empty
+    end
 
   val traceFollowTable = AtomTable.appi (fn (a, b) =>
     ( print (Atom.toString a)
@@ -266,15 +268,20 @@ struct
       val roots = List.map #1 (AtomTable.listItemsi followTable)
       val components = AtomSCC.topOrder'
         {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
+      val components =
+        List.mapPartial
+          (fn AtomSCC.SIMPLE _ => NONE | AtomSCC.RECURSIVE nodes => SOME nodes)
+          components
+      fun tyToData (tyName: Atom.atom) : string * int * Ast.Exp.datbind =
+        let val (id, datbind) = AtomTable.lookup typenameToBind tyName
+        in (Atom.toString tyName, id, datbind)
+        end
+      val followTys: Atom.atom list -> Atom.atom list =
+        List.concat o List.map (AtomSet.toList o AtomTable.lookup followTable)
+      fun appendFollowTys tys = tys @ followTys tys
       val components: (string * int * Ast.Exp.datbind) list list =
-        List.map
-          (removeDuplicateDatbinds IntRedBlackSet.empty
-           o
-           List.map (fn a =>
-             (Atom.toString a, AtomTable.lookup typenameToBind a)))
-          (List.mapPartial
-             (fn AtomSCC.SIMPLE _ => NONE
-               | AtomSCC.RECURSIVE nodes => SOME nodes) components)
+        List.map (removeDuplicateDatbinds o List.map tyToData o appendFollowTys)
+          components
       val idToRenamedDec: Ast.Exp.dec IntHashTable.hash_table =
         IntHashTable.mkTable (20, LibBase.NotFound)
       fun handleComponents i build (component :: rest) =
