@@ -189,10 +189,17 @@ struct
         | goTy (Ty.Tuple {elems, delims}) =
             Ty.Tuple {elems = Seq.map goTy elems, delims = delims}
         | goTy (Ty.Con {args, id}) =
-            Ty.Con
-              { args = syntaxSeqMap goTy args
-              , id = make (trackTypename (getToken id)) handle _ => id
-              }
+            let
+              val tycon = getToken id
+              val qualifiedTycon = qualifiedPart ^ Token.toString tycon
+              val substTycon = trackTypename (mkToken qualifiedTycon)
+                               handle _ => trackTypename tycon handle _ => tycon
+            in
+              Ty.Con
+                { args = syntaxSeqMap goTy args
+                , id = make substTycon handle _ => id
+                }
+            end
         | goTy (Ty.Arrow {from, arrow, to}) =
             Ty.Arrow {from = goTy from, arrow = arrow, to = goTy to}
         | goTy (Ty.Parens {left, ty, right}) =
