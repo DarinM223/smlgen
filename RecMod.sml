@@ -63,6 +63,10 @@ struct
   structure AtomSCC =
     GraphSCCFn (struct type ord_key = Atom.atom val compare = Atom.compare end)
 
+  fun addLink table (typename, atom) =
+    AtomTable.insert table (typename, AtomSet.add
+      (AtomTable.lookup table typename, atom))
+
   fun addLinks (followTable, typename, datbind) =
     let
       open Ast Utils
@@ -79,11 +83,9 @@ struct
             in
               (* Check if the type constructor is in the same structure first *)
               if AtomTable.inDomain followTable qualifiedIdAtom then
-                AtomTable.insert followTable (typename, AtomSet.add
-                  (AtomTable.lookup followTable typename, qualifiedIdAtom))
+                addLink followTable (typename, qualifiedIdAtom)
               else if AtomTable.inDomain followTable idAtom then
-                AtomTable.insert followTable (typename, AtomSet.add
-                  (AtomTable.lookup followTable typename, idAtom))
+                addLink followTable (typename, idAtom)
               else
                 ();
               ignore (syntaxSeqMap go args)
@@ -119,10 +121,8 @@ struct
       val constrCount: int AtomTable.hash_table =
         AtomTable.mkTable (20, LibBase.NotFound)
       fun incr (table, atom) =
-        if AtomTable.inDomain table atom then
-          AtomTable.insert table (atom, AtomTable.lookup table atom + 1)
-        else
-          AtomTable.insert table (atom, 1)
+        AtomTable.insert table
+          (atom, AtomTable.lookup table atom + 1 handle LibBase.NotFound => 1)
     in
       List.app
         (fn {elems, ...} =>
