@@ -1,8 +1,25 @@
 structure GatherTypes :> GATHER_TYPES =
 struct
-  fun visitor {c, typenameToBind} =
+  (* TODO: For every typbind make mapping from tycon to typbind
+  Then inside substDatbind's goTy, for every tycon that is inside the mapping,
+  apply the rewrite and then call it again until all rewrites are applied.
+  *)
+  fun mkQualified path =
+    String.concatWith "." o List.rev o (fn tycon => tycon :: path)
+    o Token.toString
+
+  fun visitor {c, typenameToDatbind, typenameToTypbind} =
     { state = []
-    , goDecType = fn (_, dec, _) => dec
+    , goDecType = fn (path, dec, typbind as {elems, ...}: Ast.Exp.typbind) =>
+        let
+          val types = Seq.map (mkQualified path o #tycon) elems
+        in
+          ArraySlice.app
+            (fn typ =>
+               AtomTable.insert typenameToTypbind (Atom.atom typ, typbind))
+            types;
+          dec
+        end
     , goDecDatatype =
         fn ( path
            , dec
@@ -10,15 +27,12 @@ struct
            , _: AstVisitor.withtypee
            ) =>
           let
-            val types =
-              Seq.map
-                (String.concatWith "." o List.rev o (fn tycon => tycon :: path)
-                 o Token.toString o #tycon) elems
+            val types = Seq.map (mkQualified path o #tycon) elems
             val datbindId = !c before c := !c + 1
           in (* TODO: rewrite datbind with withtypees *)
             ArraySlice.app
               (fn typ =>
-                 AtomTable.insert typenameToBind
+                 AtomTable.insert typenameToDatbind
                    (Atom.atom typ, (datbindId, datbind))) types;
             dec
           end
@@ -28,17 +42,23 @@ struct
 
   fun run (Ast.Ast topdecs : Ast.t) =
     let
-      val typenameToBind: (int * Ast.Exp.datbind) AtomTable.hash_table =
+      val typenameToDatbind: (int * Ast.Exp.datbind) AtomTable.hash_table =
+        AtomTable.mkTable (20, LibBase.NotFound)
+      val typenameToTypbind: Ast.Exp.typbind AtomTable.hash_table =
         AtomTable.mkTable (20, LibBase.NotFound)
     in
       Seq.map
         (fn {topdec, semicolon} =>
            { topdec =
                AstVisitor.goTopDec
-                 (visitor {typenameToBind = typenameToBind, c = ref 0}) topdec
+                 (visitor
+                    { typenameToDatbind = typenameToDatbind
+                    , typenameToTypbind = typenameToTypbind
+                    , c = ref 0
+                    }) topdec
            , semicolon = semicolon
            }) topdecs;
-      typenameToBind
+      (typenameToDatbind, typenameToTypbind)
     end
 end
 
@@ -259,7 +279,7 @@ struct
   *)
   fun gen (Ast.Ast topdecs) =
     let
-      val typenameToBind = GatherTypes.run (Ast.Ast topdecs)
+      val (typenameToBind, _) = GatherTypes.run (Ast.Ast topdecs)
       val followTable: AtomSet.set AtomTable.hash_table =
         AtomTable.mkTable (AtomTable.numItems typenameToBind, LibBase.NotFound)
       val () =
