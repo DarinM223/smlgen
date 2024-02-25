@@ -1,9 +1,5 @@
 structure GatherTypes :> GATHER_TYPES =
 struct
-  (* TODO: For every typbind make mapping from tycon to typbind
-  Then inside substDatbind's goTy, for every tycon that is inside the mapping,
-  apply the rewrite and then call it again until all rewrites are applied.
-  *)
   fun mkQualified path =
     String.concatWith "." o List.rev o (fn tycon => tycon :: path)
     o Token.toString
@@ -191,10 +187,25 @@ struct
       }
     end
 
-  fun substDatbind ({trackTypename, trackConstructor}: Token.token track)
-    (qualifiedPart: string) ({elems, delims}: Ast.Exp.datbind) =
+  type subst_opts =
+    { track: Token.token track
+    , qualifiedPart: string
+    , typenameToTypbind: Ast.Exp.typbind AtomTable.hash_table
+    }
+
+  fun rewriteTy (typbind: Ast.Exp.typbind) (ty: Ast.Ty.ty) =
+    (* 1. Find the correct type alias in the typbind
+       2. Check that the # of tyvars matches with the args of the ty.
+       3. Go into the ty of the typbind, and rewrite the tyvar with the argument.
+       4. Return the ty of the typbind.
+    *)
+    raise Fail ""
+
+  fun substDatbind (opts: subst_opts) ({elems, delims}: Ast.Exp.datbind) =
     let
       open Ast Utils MaybeLongToken
+      val {trackTypename, trackConstructor} = #track opts
+      val typenameToTypbind = #typenameToTypbind opts
       fun goTy (Ty.Var var) = Ty.Var var
         | goTy (Ty.Record {left, elems, delims, right}) =
             Ty.Record
@@ -208,17 +219,21 @@ struct
               }
         | goTy (Ty.Tuple {elems, delims}) =
             Ty.Tuple {elems = Seq.map goTy elems, delims = delims}
-        | goTy (Ty.Con {args, id}) =
+        | goTy (ty as Ty.Con {args, id}) =
             let
               val tycon = getToken id
-              val qualifiedTycon = qualifiedPart ^ Token.toString tycon
+              val qualifiedTycon = #qualifiedPart opts ^ Token.toString tycon
               val substTycon = trackTypename (mkToken qualifiedTycon)
                                handle _ => trackTypename tycon handle _ => tycon
+              val atom = Atom.atom qualifiedTycon
             in
-              Ty.Con
-                { args = syntaxSeqMap goTy args
-                , id = make substTycon handle _ => id
-                }
+              (* If qualifiedTycon is in typenameToTypbind, rewrite entire type with the typbind *)
+              goTy (rewriteTy (AtomTable.lookup typenameToTypbind atom) ty)
+              handle _ =>
+                Ty.Con
+                  { args = syntaxSeqMap goTy args
+                  , id = make substTycon handle _ => id
+                  }
             end
         | goTy (Ty.Arrow {from, arrow, to}) =
             Ty.Arrow {from = goTy from, arrow = arrow, to = goTy to}
@@ -234,7 +249,7 @@ struct
         }
       fun goTycon {tyvars, tycon, eq, elems, delims, optbar} =
         let
-          val qualifiedTycon = qualifiedPart ^ Token.toString tycon
+          val qualifiedTycon = #qualifiedPart opts ^ Token.toString tycon
         in
           { tyvars = tyvars
           , tycon = trackTypename (mkToken qualifiedTycon) handle _ => tycon
@@ -279,18 +294,20 @@ struct
   *)
   fun gen (Ast.Ast topdecs) =
     let
-      val (typenameToBind, _) = GatherTypes.run (Ast.Ast topdecs)
+      val (typenameToDatbind, typenameToTypbind) =
+        GatherTypes.run (Ast.Ast topdecs)
       val followTable: AtomSet.set AtomTable.hash_table =
-        AtomTable.mkTable (AtomTable.numItems typenameToBind, LibBase.NotFound)
+        AtomTable.mkTable
+          (AtomTable.numItems typenameToDatbind, LibBase.NotFound)
       val () =
         AtomTable.appi
           (fn (typename, _) =>
              AtomTable.insert followTable (typename, AtomSet.empty))
-          typenameToBind
+          typenameToDatbind
       val () =
         AtomTable.appi
           (fn (typename, (_, datbind)) =>
-             addLinks (followTable, typename, datbind)) typenameToBind
+             addLinks (followTable, typename, datbind)) typenameToDatbind
       val () = traceFollowTable followTable
       val roots = List.map #1 (AtomTable.listItemsi followTable)
       val components = AtomSCC.topOrder'
@@ -300,7 +317,7 @@ struct
           (fn AtomSCC.SIMPLE _ => NONE | AtomSCC.RECURSIVE nodes => SOME nodes)
           components
       fun tyToData (tyName: Atom.atom) : string * int * Ast.Exp.datbind =
-        let val (id, datbind) = AtomTable.lookup typenameToBind tyName
+        let val (id, datbind) = AtomTable.lookup typenameToDatbind tyName
         in (Atom.toString tyName, id, datbind)
         end
       val followTys: Atom.atom list -> Atom.atom list =
@@ -320,8 +337,11 @@ struct
               val merged = concatDatbinds
                 (List.map
                    (fn (typename, _, datbind) =>
-                      substDatbind trackSubst (qualifiedTypePart typename)
-                        datbind) component)
+                      substDatbind
+                        { track = trackSubst
+                        , qualifiedPart = qualifiedTypePart typename
+                        , typenameToTypbind = typenameToTypbind
+                        } datbind) component)
               val topdec = Ast.StrDec (simpleStructStrDec componentName
                 (Ast.Str.DecCore (simpleDatatypeDec merged)))
             in
