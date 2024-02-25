@@ -33,6 +33,8 @@ struct
     | syntaxSeqToList (SyntaxSeq.One e) = [e]
     | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) = Seq.toList elems
 
+  val syntaxSeqLen = fn seq => List.length (syntaxSeqToList seq)
+
   fun listToSyntaxSeq [] = SyntaxSeq.Empty
     | listToSyntaxSeq [e] = SyntaxSeq.One e
     | listToSyntaxSeq (elems as (_ :: es)) =

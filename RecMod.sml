@@ -193,13 +193,35 @@ struct
     , typenameToTypbind: Ast.Exp.typbind AtomTable.hash_table
     }
 
-  fun rewriteTy (typbind: Ast.Exp.typbind) (ty: Ast.Ty.ty) =
-    (* 1. Find the correct type alias in the typbind
-       2. Check that the # of tyvars matches with the args of the ty.
-       3. Go into the ty of the typbind, and rewrite the tyvar with the argument.
-       4. Return the ty of the typbind.
-    *)
-    raise Fail ""
+  exception NoTypbindFound
+
+  (* Finds the type alias from the typbind that matches
+     the type constructor, and then returns the type aliases type with the
+     type variables substituted with the type constructor's type arguments.
+  *)
+  fun rewriteTy ({elems, ...}: Ast.Exp.typbind)
+        (Ast.Ty.Con {args, id} : Ast.Ty.ty) =
+        let
+          open Utils
+          val id = MaybeLongToken.getToken id
+          fun matchesTypbind {tycon, tyvars, eq = _, ty = _} =
+            Token.same (tycon, id)
+            andalso syntaxSeqLen tyvars = syntaxSeqLen args
+          val elems = Seq.filter matchesTypbind elems
+        in
+          case ArraySlice.getItem elems of
+            SOME ({ty, tyvars, ...}, _) =>
+              let
+                val tyvars = syntaxSeqMap (Atom.atom o Token.toString) tyvars
+                val zipped =
+                  ListPair.zip (syntaxSeqToList tyvars, syntaxSeqToList args)
+                val map = List.foldl AtomMap.insert' AtomMap.empty zipped
+              in
+                MutRecTy.subst map ty
+              end
+          | NONE => raise NoTypbindFound
+        end
+    | rewriteTy _ _ = raise Fail "Type is not a tycon"
 
   fun substDatbind (opts: subst_opts) ({elems, delims}: Ast.Exp.datbind) =
     let
