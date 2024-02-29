@@ -333,6 +333,25 @@ struct
     ; print "]\n"
     ))
 
+  val traceTypenameToTypbind =
+    AtomTable.appi (fn (a, {elems, ...}: Ast.Exp.typbind) =>
+      ( print (Atom.toString a)
+      ; print " -> [\n"
+      ; ArraySlice.app
+          (fn {tyvars, tycon, ty, ...} =>
+             ( print "type ("
+             ; ignore
+                 (Utils.syntaxSeqMap
+                    (fn v => (print (Token.toString v); print ",")) tyvars)
+             ; print ") "
+             ; print (Token.toString tycon)
+             ; print " = "
+             ; print (Utils.showTy ty)
+             ; print "\n"
+             )) elems
+      ; print "]\n"
+      ))
+
   (*
   1. Track structure levels in environment.
      First pass: For every datatype, make a hashtable from full name (including structures) to a
@@ -349,6 +368,8 @@ struct
     let
       val (typenameToDatbind, typenameToTypbind) =
         GatherTypes.run (Ast.Ast topdecs)
+      val () = print "typenameToTypbind:\n"
+      val () = traceTypenameToTypbind typenameToTypbind
       (* Rewrite typenameToDatbind with applied typbinds from typenameToTypbind *)
       val typenameToDatbind =
         AtomTable.mapi

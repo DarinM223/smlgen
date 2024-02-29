@@ -37,7 +37,7 @@ struct datatype t = T of {func: Function.t, type_: Type.t, decl_loc: Loc.t} end
 
 structure Instruction =
 struct
-  structure Phi = struct type t = {args: Use.t IntRedBlackMap.t ref} end
+  structure Phi = struct type t = {args: Use.t list ref} end
 
   structure GetPointer =
   struct
