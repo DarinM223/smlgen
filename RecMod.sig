@@ -8,5 +8,10 @@ end
 
 signature RECURSIVE_MODULES =
 sig
-  val gen: Ast.ast -> Ast.ast
+  type subst_table
+  val emptySubstTable: unit -> subst_table
+  val gen: Ast.ast -> Ast.ast * subst_table
+  val substArgs: subst_table
+                 -> (string list * Utils.gen) list
+                 -> (string list * Utils.gen) list
 end

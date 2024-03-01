@@ -21,29 +21,12 @@ struct
     , extendedText = true
     }
 
-  type gen =
-    { genTypebind: Ast.Exp.typbind -> Ast.Exp.dec
-    , genDatabind: Ast.Exp.datbind -> Ast.Exp.typbind option -> Ast.Exp.dec
-    }
-  val emptyGen: gen =
-    { genTypebind = fn _ => Ast.Exp.DecEmpty
-    , genDatabind = fn _ => fn _ => Ast.Exp.DecEmpty
-    }
   fun lookupGen #"g" = GenericGen.gen
     | lookupGen #"u" = FruGen.gen
     | lookupGen #"s" = ShowGen.gen
     | lookupGen #"c" = CompareGen.gen
     | lookupGen ch =
         raise Fail ("unknown lookup character: " ^ Char.toString ch)
-
-  fun addGen (gen1: gen) (gen2: gen) : gen =
-    { genTypebind = fn bind =>
-        Utils.combineDecs (#genTypebind gen1 bind) (#genTypebind gen2 bind)
-    , genDatabind = fn databind =>
-        fn typebind =>
-          Utils.combineDecs (#genDatabind gen1 databind typebind)
-            (#genDatabind gen2 databind typebind)
-    }
 
   fun printToken t =
     ( print (Token.toString t ^ ":")
@@ -56,25 +39,25 @@ struct
         ArraySlice.app (fn e => printToken (#tycon e)) elems
     | printDecTypes _ = raise Fail "Unknown declaration type"
 
-  fun datbindActions args : Ast.Exp.datbind -> gen option =
+  fun datbindActions args : Ast.Exp.datbind -> Utils.gen option =
     Option.join
     o Option.map (fn e => getActions (Token.toString (#tycon e)) args)
     o
     ArraySlice.find (fn e =>
       Option.isSome (getActions (Token.toString (#tycon e)) args)) o #elems
-  fun typbindActions args : Ast.Exp.typbind -> gen option =
+  fun typbindActions args : Ast.Exp.typbind -> Utils.gen option =
     Option.join
     o Option.map (fn e => getActions (Token.toString (#tycon e)) args)
     o
     ArraySlice.find (fn e =>
       Option.isSome (getActions (Token.toString (#tycon e)) args)) o #elems
 
-  fun parseArg (arg: string) : string list * gen =
+  fun parseArg (arg: string) : string list * Utils.gen =
     case String.tokens (fn ch => ch = #":") arg of
       typ :: opts :: [] =>
         ( String.tokens (fn ch => ch = #".") typ
-        , CharVector.foldl (fn (ch, acc) => addGen acc (lookupGen ch)) emptyGen
-            opts
+        , CharVector.foldl (fn (ch, acc) => Utils.addGen acc (lookupGen ch))
+            Utils.emptyGen opts
         )
     | _ =>
         raise Fail "Invalid generator syntax: should be format type:generators"
@@ -180,7 +163,10 @@ struct
           case result of
             Parser.Ast ast =>
               let
-                val ast = if recursiveModules then RecMod.gen ast else ast
+                val (ast, substTable) =
+                  if recursiveModules then RecMod.gen ast
+                  else (ast, RecMod.emptySubstTable ())
+                val args = RecMod.substArgs substTable args
                 val ast = gen args ast
                 val prettyAst = fn colors =>
                   TerminalColorString.toString {colors = colors}

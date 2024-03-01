@@ -60,6 +60,10 @@ end
 
 structure RecMod :> RECURSIVE_MODULES =
 struct
+  type subst_table = string AtomTable.hash_table
+
+  val emptySubstTable = fn () => AtomTable.mkTable (20, LibBase.NotFound)
+
   structure AtomSCC =
     GraphSCCFn (struct type ord_key = Atom.atom val compare = Atom.compare end)
 
@@ -446,8 +450,6 @@ struct
   4. For each component, generate a merged structure name at the beginning and merge the datatypes
      into a single mutually recursive datatype.
   5. Rewrite the original structures to unpack the corresponding type in the recursive datatype.
-
-  TODO: handle type aliases
   *)
   fun gen (Ast.Ast topdecs) =
     let
@@ -491,11 +493,12 @@ struct
         List.map (List.map tyToData) components
       val idToRenamedDec: Ast.Exp.dec IntHashTable.hash_table =
         IntHashTable.mkTable (20, LibBase.NotFound)
+      val globalTypenameTable: subst_table = emptySubstTable ()
       val prependDecs: Ast.topdec list = List.rev (handleComponents
         { idToRenamedDec = idToRenamedDec
+        , globalTypenameTable = globalTypenameTable
         , componentId = 1
         , topdecs = []
-        , globalTypenameTable = AtomTable.mkTable (20, LibBase.NotFound)
         , components = List.rev components
         })
       val prependDecs: {topdec: Ast.topdec, semicolon: Token.token option} Seq.t =
@@ -523,6 +526,17 @@ struct
              , semicolon = semicolon
              }) topdecs
     in
-      Ast.Ast (Seq.append (prependDecs, topdecs'))
+      (Ast.Ast (Seq.append (prependDecs, topdecs')), globalTypenameTable)
     end
+
+  fun substArgs (table: subst_table) ((path, gen) :: rest) =
+        (let
+           val path' = String.concatWith "." path
+           val path' = AtomTable.lookup table (Atom.atom path')
+           val path' = String.tokens (fn ch => ch = #".") path'
+         in
+           (path, gen) :: (path', gen) :: substArgs table rest
+         end
+         handle _ => (path, gen) :: substArgs table rest)
+    | substArgs _ [] = []
 end

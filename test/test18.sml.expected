@@ -1,4 +1,4 @@
-structure Component2 =
+structure Component1 =
 struct
   datatype B_a =
     B_a_B of int * A_a
@@ -11,17 +11,26 @@ struct
   and d =
     real
 end
-structure Component1 =
+structure Component2 =
+struct datatype a = B of int * Component1.B_a and c = C of string and d = real end
+structure Component3 = struct datatype no = No val showNo = fn No => "No" end
+structure Component4 = struct datatype notthis = Blah | Bleargh end
+structure Component5 =
+struct datatype a = B of int * Component2.a and c = C of string end
+structure Component6 =
 struct datatype foo = Bar of bar | Hello and bar = Foo of foo | World end
+structure Component7 =
+struct datatype a = B of int * Component5.a and c = C of string and d = real end
+structure Component8 = struct datatype northis = A | B end
 structure Foo =
-struct type foo = Component1.foo datatype notthis = Blah | Bleargh end
+struct type foo = Component6.foo type notthis = Component4.notthis end
 
-structure Bar = struct type bar = Component1.bar datatype northis = A | B end
-
-datatype no = No
-val showNo = fn No => "No"
+structure Bar =
+struct type bar = Component6.bar type northis = Component8.northis end
+type no = Component3.no
+val showNo = Component3.showNo
 
 structure A =
-struct type a = Component2.A_a type c = Component2.A_c type d = Component2.d end
+struct type a = Component7.a type c = Component7.c type d = Component7.d end
 
-structure B = struct type a = Component2.B_a type c = Component2.B_c end
+structure B = struct type a = Component5.a type c = Component5.c end

@@ -194,4 +194,22 @@ struct
   val typenameTypePart =
     Substring.string o #2 o (Substring.splitr (fn #"." => false | _ => true))
     o Substring.full
+
+  type gen =
+    { genTypebind: Ast.Exp.typbind -> Ast.Exp.dec
+    , genDatabind: Ast.Exp.datbind -> Ast.Exp.typbind option -> Ast.Exp.dec
+    }
+
+  val emptyGen: gen =
+    { genTypebind = fn _ => Ast.Exp.DecEmpty
+    , genDatabind = fn _ => fn _ => Ast.Exp.DecEmpty
+    }
+  fun addGen (gen1: gen) (gen2: gen) : gen =
+    { genTypebind = fn bind =>
+        combineDecs (#genTypebind gen1 bind) (#genTypebind gen2 bind)
+    , genDatabind = fn databind =>
+        fn typebind =>
+          combineDecs (#genDatabind gen1 databind typebind)
+            (#genDatabind gen2 databind typebind)
+    }
 end
