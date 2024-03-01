@@ -1,3 +1,40 @@
+structure Loc = struct type t = string * int end
+
+type label = string
+type aggregate_id = int
+
+structure Type =
+struct
+  datatype t =
+    Bool
+  | Byte
+  | Short
+  | Int
+  | Long
+  | Double
+  | Function
+  | Pointer of t
+  | Aggregate of Aggregate.t
+  | Array of t * int
+end
+
+structure Builtin =
+struct
+  type t = {name: string, param_types: Type.t list, return_type: Type.t option}
+end
+
+structure Aggregate =
+struct
+  type t =
+    { id: aggregate_id
+    , name: string
+    , loc: Loc.t
+    , (* Elements along with their name. For records this is the field name, for tuples this is a
+         string of the tuple index. Also may be special cases `$tag` or `$padding`. *)
+      elements: (string * Type.t) list ref
+    }
+end
+
 structure Use =
 struct
   datatype t =
@@ -110,9 +147,9 @@ structure Program =
 struct
   datatype t =
     T of
-      { globals: Global.t AtomMap.t ref
-      , funcs: Function.t AtomMap.t ref
-      , types: Aggregate.t AtomMap.t ref
+      { globals: Global.t list ref
+      , funcs: Function.t list ref
+      , types: Aggregate.t list ref
       , main_func: Function.t ref
       }
 end

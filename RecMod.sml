@@ -73,9 +73,10 @@ struct
         (Ast.Ty.Con {args, id} : Ast.Ty.ty) =
         let
           open Utils
-          val id = MaybeLongToken.getToken id
+          val id = typenameTypePart
+            (Token.toString (MaybeLongToken.getToken id))
           fun matchesTypbind {tycon, tyvars, eq = _, ty = _} =
-            Token.same (tycon, id)
+            Token.toString tycon = id
             andalso syntaxSeqLen tyvars = syntaxSeqLen args
           val elems = Seq.filter matchesTypbind elems
         in
