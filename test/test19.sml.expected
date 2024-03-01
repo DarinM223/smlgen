@@ -1,16 +1,15 @@
-structure Component1 =
+structure Component1 = struct datatype value = Instr of int end
+structure Component2 =
 struct
   datatype Use_t =
     Use of {value: Value_t ref, user: Value_t, prev: Use_t ref, next: Use_t ref}
   and Value_t =
-    Value of {id: int, value: value ref, uses: Use_t option ref}
-  and value =
-    Instr of int
+    Value of {id: int, value: Component1.value ref, uses: Use_t option ref}
 end
-structure Use = struct type t = Component1.Use_t end
+structure Use = struct type t = Component2.Use_t end
 
 structure Value =
-struct type id = int type value = Component1.value type t = Component1.Value_t end
+struct type id = int type value = Component1.value type t = Component2.Value_t end
 
 structure Literal = struct end
 

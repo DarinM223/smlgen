@@ -213,6 +213,9 @@ struct
 
   val serialize = String.map (fn #"." => #"_" | ch => ch)
 
+  fun atomTableToTrack table =
+    Utils.mkToken o AtomTable.lookup table o Atom.atom o Token.toString
+
   fun componentSubstMap ({trackTypename, trackConstructor}: int track)
     (component: (string * int * Ast.Exp.datbind) list) =
     let
@@ -249,12 +252,8 @@ struct
                        else
                          ()) elems
                 end) elems) component;
-      { trackTypename =
-          Utils.mkToken o AtomTable.lookup typenameRename o Atom.atom
-          o Token.toString
-      , trackConstructor =
-          Utils.mkToken o AtomTable.lookup constrRename o Atom.atom
-          o Token.toString
+      { trackTypename = atomTableToTrack typenameRename
+      , trackConstructor = atomTableToTrack constrRename
       }
     end
 
@@ -277,7 +276,7 @@ struct
               }
         | goTy (Ty.Tuple {elems, delims}) =
             Ty.Tuple {elems = Seq.map goTy elems, delims = delims}
-        | goTy (ty as Ty.Con {args, id}) =
+        | goTy (Ty.Con {args, id}) =
             let
               val tycon = getToken id
               val qualifiedTycon = #qualifiedPart opts ^ Token.toString tycon
@@ -353,6 +352,91 @@ struct
       ; print "]\n"
       ))
 
+  fun handleComponents
+        { idToRenamedDec
+        , componentId
+        , globalTypenameTable
+        , topdecs
+        , components = component :: rest
+        } =
+        let
+          open Utils BuildAst
+          val trackCount = countTypesAndConstructors (List.map #3 component)
+          val trackSubst = componentSubstMap trackCount component
+          val globalTrack: Token.t track =
+            { trackTypename = atomTableToTrack globalTypenameTable
+            , trackConstructor = fn _ => raise LibBase.NotFound
+            }
+          val componentName = mkToken ("Component" ^ Int.toString componentId)
+          val merged = concatDatbinds
+            (List.map
+               (fn (typename, _, datbind) =>
+                  (* Merge trackSubst with a global substitution map before calling substDatbind *)
+                  substDatbind
+                    { track = combineTracks trackSubst globalTrack
+                    , qualifiedPart = qualifiedTypePart typename
+                    } datbind) component)
+          val topdec = Ast.StrDec (simpleStructStrDec componentName
+            (Ast.Str.DecCore (simpleDatatypeDec merged)))
+        in
+          (* For every datbind, add dec of typbinds that unpack the substituted type *)
+          List.app
+            (fn (typename, id, {elems, ...}) =>
+               let
+                 val qualifiedPart = qualifiedTypePart typename
+                 val decs =
+                   ArraySlice.foldl
+                     (fn ({tyvars, tycon, ...}, acc) =>
+                        let
+                          val tycon' = mkToken
+                            (qualifiedPart ^ Token.toString tycon)
+                          val tycon' = #trackTypename trackSubst tycon'
+                                       handle _ => tycon
+                          val tycon' = mkToken
+                            (Token.toString componentName ^ "."
+                             ^ Token.toString tycon')
+                          (* add the current datatypes to the global substitution map like:
+                             A.B.C.t -> Component1.t
+                          *)
+                          val () = AtomTable.insert globalTypenameTable
+                            ( Atom.atom (qualifiedPart ^ Token.toString tycon)
+                            , Token.toString tycon'
+                            )
+                          val tyvars = syntaxSeqToList tyvars
+                          val dec =
+                            MutRecTy.genSingleTypebind
+                              (fn tybind =>
+                                 Ast.Exp.DecType
+                                   { typee = mkReservedToken Token.Type
+                                   , typbind = tybind
+                                   })
+                              ( tycon
+                              , tyvars
+                              , Ast.Ty.Con
+                                  { args = listToSyntaxSeq
+                                      (List.map Ast.Ty.Var tyvars)
+                                  , id = MaybeLongToken.make tycon'
+                                  }
+                              )
+                        in
+                          dec :: acc
+                        end) [] elems
+                 val dec =
+                   List.foldl (fn (a, b) => combineDecs a b) Ast.Exp.DecEmpty
+                     decs
+               in
+                 IntHashTable.insert idToRenamedDec (id, dec)
+               end) component;
+          handleComponents
+            { idToRenamedDec = idToRenamedDec
+            , componentId = componentId + 1
+            , globalTypenameTable = globalTypenameTable
+            , topdecs = topdec :: topdecs
+            , components = rest
+            }
+        end
+    | handleComponents {topdecs, ...} = topdecs
+
   (*
   1. Track structure levels in environment.
      First pass: For every datatype, make a hashtable from full name (including structures) to a
@@ -396,82 +480,24 @@ struct
       val components = AtomSCC.topOrder'
         {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
       val components =
-        List.mapPartial
-          (fn AtomSCC.SIMPLE _ => NONE | AtomSCC.RECURSIVE nodes => SOME nodes)
+        List.map
+          (fn AtomSCC.SIMPLE node => [node] | AtomSCC.RECURSIVE nodes => nodes)
           components
       fun tyToData (tyName: Atom.atom) : string * int * Ast.Exp.datbind =
         let val (id, datbind) = AtomTable.lookup typenameToDatbind tyName
         in (Atom.toString tyName, id, datbind)
         end
-      val followTys: Atom.atom list -> Atom.atom list =
-        List.concat o List.map (AtomSet.toList o AtomTable.lookup followTable)
-      fun appendFollowTys tys = tys @ followTys tys
       val components: (string * int * Ast.Exp.datbind) list list =
-        List.map (removeDuplicateDatbinds o List.map tyToData o appendFollowTys)
-          components
+        List.map (List.map tyToData) components
       val idToRenamedDec: Ast.Exp.dec IntHashTable.hash_table =
         IntHashTable.mkTable (20, LibBase.NotFound)
-      fun handleComponents i build (component :: rest) =
-            let
-              open Utils BuildAst
-              val trackCount = countTypesAndConstructors (List.map #3 component)
-              val trackSubst = componentSubstMap trackCount component
-              val componentName = mkToken ("Component" ^ Int.toString i)
-              val merged = concatDatbinds
-                (List.map
-                   (fn (typename, _, datbind) =>
-                      substDatbind
-                        { track = trackSubst
-                        , qualifiedPart = qualifiedTypePart typename
-                        } datbind) component)
-              val topdec = Ast.StrDec (simpleStructStrDec componentName
-                (Ast.Str.DecCore (simpleDatatypeDec merged)))
-            in
-              (* For every datbind, add dec of typbinds that unpack the substituted type *)
-              List.app
-                (fn (typename, id, {elems, ...}) =>
-                   let
-                     val qualifiedPart = qualifiedTypePart typename
-                     val decs =
-                       ArraySlice.foldl
-                         (fn ({tyvars, tycon, ...}, acc) =>
-                            let
-                              val tycon' = mkToken
-                                (qualifiedPart ^ Token.toString tycon)
-                              val tycon' = #trackTypename trackSubst tycon'
-                                           handle _ => tycon
-                              val tycon' = mkToken
-                                (Token.toString componentName ^ "."
-                                 ^ Token.toString tycon')
-                              val tyvars = syntaxSeqToList tyvars
-                              val dec =
-                                MutRecTy.genSingleTypebind
-                                  (fn tybind =>
-                                     Ast.Exp.DecType
-                                       { typee = mkReservedToken Token.Type
-                                       , typbind = tybind
-                                       })
-                                  ( tycon
-                                  , tyvars
-                                  , Ast.Ty.Con
-                                      { args = listToSyntaxSeq
-                                          (List.map Ast.Ty.Var tyvars)
-                                      , id = MaybeLongToken.make tycon'
-                                      }
-                                  )
-                            in
-                              dec :: acc
-                            end) [] elems
-                     val dec =
-                       List.foldl (fn (a, b) => combineDecs a b)
-                         Ast.Exp.DecEmpty decs
-                   in
-                     IntHashTable.insert idToRenamedDec (id, dec)
-                   end) component;
-              handleComponents (i + 1) (topdec :: build) rest
-            end
-        | handleComponents _ build [] = build
-      val prependDecs: Ast.topdec list = handleComponents 1 [] components
+      val prependDecs: Ast.topdec list = List.rev (handleComponents
+        { idToRenamedDec = idToRenamedDec
+        , componentId = 1
+        , topdecs = []
+        , globalTypenameTable = AtomTable.mkTable (20, LibBase.NotFound)
+        , components = List.rev components
+        })
       val prependDecs: {topdec: Ast.topdec, semicolon: Token.token option} Seq.t =
         Seq.fromList
           (List.map (fn topdec => {topdec = topdec, semicolon = NONE})
