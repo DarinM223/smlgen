@@ -1,0 +1,268 @@
+structure Component1 =
+struct
+  datatype t =
+    Bool
+  | Byte
+  | Short
+  | Int
+  | Long
+  | Double
+  | Function
+  | Pointer of t
+  | Aggregate of
+      {id: int, name: string, loc: string * int, elements: string * t list ref}
+  | Array of t * int
+end
+structure Component2 =
+struct
+  datatype binary_operation =
+    Add
+  | Sub
+  | Mul
+  | Div
+  | Rem
+  | And
+  | Or
+  | Xor
+  | Shl
+  | Shr
+  | Shrl
+end
+structure Component3 =
+struct datatype comparison = Eq | Neq | Lt | LtEq | Gt | GtEq end
+structure Component4 = struct datatype unary_operation = Neg | Not end
+structure Component5 =
+struct datatype 'a offset = PointerIndex of 'a | FieldIndex of int end
+structure Component6 =
+struct
+  datatype Instruction_instr =
+    Instruction_instr_Phi of {args: Use_t list ref}
+  | Instruction_instr_Call of Instruction_Call_t
+  | Instruction_instr_StackAlloc of Component1.t
+  | Instruction_instr_Load of Use_t
+  | Instruction_instr_Store of Use_t * Use_t
+  | Instruction_instr_GetPointer of Instruction_GetPointer_t
+  | Instruction_instr_Unary of Component4.unary_operation * Use_t
+  | Instruction_instr_Binary of Component2.binary_operation * Use_t * Use_t
+  | Instruction_instr_Cmp of Component3.comparison * Use_t * Use_t
+  | Instruction_instr_Cast of Use_t
+  | Instruction_instr_Trunc of Use_t
+  | Instruction_instr_SExt of Use_t
+  | Instruction_instr_ZExt of Use_t
+  | Instruction_instr_IntToFloat of Use_t
+  | Instruction_instr_FloatToInt of Use_t
+  | Instruction_instr_Ret of Use_t option
+  | Instruction_instr_Continue of Block_t
+  | Instruction_instr_Branch of {test: Use_t, continue: Block_t, jump: Block_t}
+  | Instruction_instr_Unreachable
+  | Instruction_instr_Mov of Use_t
+  and Instruction_t =
+    Instruction_t_T of
+      { type_: Component1.t ref
+      , instr: Instruction_instr ref
+      , block: Block_t ref
+      , prev: Value_t ref
+      , next: Value_t ref
+      }
+  and Use_t =
+    Use_t_T of
+      {value: Value_t ref, user: Value_t, prev: Use_t ref, next: Use_t ref}
+  and Value_t =
+    Value_t_T of {id: int, value: value ref, uses: Use_t option ref}
+  and value =
+    Instr of Instruction_t
+  | Lit of Literal_t
+  | Argument of Argument_t
+  and Literal_t =
+    Bool of bool
+  | Byte of int
+  | Int of int
+  | Long of int
+  | Double of real
+  | Global of Global_t
+  | NullPointer of Component1.t
+  | Function of Function_t
+  | ArrayString of string
+  | ArrayVtable of int * Use_t list
+  | AggregateClosure of Component1.t * Use_t
+  and Function_t =
+    Function_t_T of
+      { name: string
+      , loc: string * int ref
+      , params: Value_t list ref
+      , return_type: Component1.t option ref
+      , start_block: Block_t ref
+      , blocks: Block_t list ref
+      , value: Value_t ref
+      }
+  and Block_t =
+    Block_t_T of
+      { id: int
+      , func: Function_t
+      , instructions: Block_instructions option ref
+      , prev_blocks: Block_t list ref
+      }
+  and Block_instructions =
+    Block_instructions_Instructions of {first: Value_t ref, last: Value_t ref}
+  and Block_t =
+    Block_t_T of
+      { id: int
+      , func: Function_t
+      , instructions: Block_instructions option ref
+      , prev_blocks: Block_t list ref
+      }
+  and Block_instructions =
+    Block_instructions_Instructions of {first: Value_t ref, last: Value_t ref}
+  and Global_t =
+    Global_t_T of
+      { name: string
+      , loc: string * int
+      , type_: Component1.t
+      , init_val: Use_t option ref
+      , is_constant: bool
+      , value: Value_t ref
+      }
+  and Argument_t =
+    Argument_t_T of
+      {func: Function_t, type_: Component1.t, decl_loc: string * int}
+  and Instruction_instr =
+    Instruction_instr_Phi of {args: Use_t list ref}
+  | Instruction_instr_Call of Instruction_Call_t
+  | Instruction_instr_StackAlloc of Component1.t
+  | Instruction_instr_Load of Use_t
+  | Instruction_instr_Store of Use_t * Use_t
+  | Instruction_instr_GetPointer of Instruction_GetPointer_t
+  | Instruction_instr_Unary of Component4.unary_operation * Use_t
+  | Instruction_instr_Binary of Component2.binary_operation * Use_t * Use_t
+  | Instruction_instr_Cmp of Component3.comparison * Use_t * Use_t
+  | Instruction_instr_Cast of Use_t
+  | Instruction_instr_Trunc of Use_t
+  | Instruction_instr_SExt of Use_t
+  | Instruction_instr_ZExt of Use_t
+  | Instruction_instr_IntToFloat of Use_t
+  | Instruction_instr_FloatToInt of Use_t
+  | Instruction_instr_Ret of Use_t option
+  | Instruction_instr_Continue of Block_t
+  | Instruction_instr_Branch of {test: Use_t, continue: Block_t, jump: Block_t}
+  | Instruction_instr_Unreachable
+  | Instruction_instr_Mov of Use_t
+  and Instruction_t =
+    Instruction_t_T of
+      { type_: Component1.t ref
+      , instr: Instruction_instr ref
+      , block: Block_t ref
+      , prev: Value_t ref
+      , next: Value_t ref
+      }
+  and Instruction_GetPointer_t =
+    Instruction_GetPointer_t_T of
+      { pointer: Use_t
+      , pointer_offset: Use_t option
+      , offsets: Use_t Component5.offset list
+      }
+  and Instruction_Call_t =
+    Instruction_Call_t_T of
+      {func: Instruction_Call_func, args: Use_t list, has_return: bool}
+  and Instruction_Call_func =
+    Instruction_Call_func_Value of Use_t
+  | Instruction_Call_func_MirBuiltin of
+      { name: string
+      , param_types: Component1.t list
+      , return_type: Component1.t option
+      }
+  and Instruction_Call_t =
+    Instruction_Call_t_T of
+      {func: Instruction_Call_func, args: Use_t list, has_return: bool}
+  and Instruction_Call_func =
+    Instruction_Call_func_Value of Use_t
+  | Instruction_Call_func_MirBuiltin of
+      { name: string
+      , param_types: Component1.t list
+      , return_type: Component1.t option
+      }
+end
+structure Component7 =
+struct
+  datatype t =
+    T of
+      { globals: Component6.Global_t list ref
+      , funcs: Component6.Function_t list ref
+      , types:
+          { id: int
+          , name: string
+          , loc: string * int
+          , elements: string * Component1.t list ref
+          } list ref
+      , main_func: Component6.Function_t ref
+      }
+end
+structure Loc = struct type t = string * int end
+
+type label = string
+type aggregate_id = int
+
+structure Type = struct type t = Component1.t end
+
+structure Builtin =
+struct
+  type t = {name: string, param_types: Type.t list, return_type: Type.t option}
+end
+
+structure Aggregate =
+struct
+  type t =
+    { id: aggregate_id
+    , name: string
+    , loc: Loc.t
+    , elements: (string * Type.t) list ref
+    }
+end
+
+structure Use = struct type t = Component6.Use_t end
+
+structure Value =
+struct type id = int type value = Component6.value type t = Component6.Value_t end
+
+structure Literal = struct type t = Component6.Literal_t end
+
+structure Argument = struct type t = Component6.Argument_t end
+
+structure Instruction =
+struct
+  structure Phi = struct type t = {args: Use.t list ref} end
+
+  structure GetPointer =
+  struct
+    type 'a offset = 'a Component5.offset
+    type value_offset = Value.t offset
+    type use_offset = Use.t offset
+    type t = Component6.Instruction_GetPointer_t
+
+  end
+  structure Call =
+  struct
+    type t = Component6.Instruction_Call_t
+    type func = Component6.Instruction_Call_func
+
+  end
+  type comparison = Component3.comparison
+  type unary_operation = Component4.unary_operation
+  type binary_operation = Component2.binary_operation
+  type instr = Component6.Instruction_instr
+  type t = Component6.Instruction_t
+
+end
+
+structure Program = struct type t = Component7.t end
+
+structure Block =
+struct
+  type id = int
+  type t = Component6.Block_t
+  type instructions = Component6.Block_instructions
+
+end
+
+structure Global = struct type t = Component6.Global_t end
+
+structure Function = struct type t = Component6.Function_t end

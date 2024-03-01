@@ -29,9 +29,7 @@ struct
     { id: aggregate_id
     , name: string
     , loc: Loc.t
-    , (* Elements along with their name. For records this is the field name, for tuples this is a
-         string of the tuple index. Also may be special cases `$tag` or `$padding`. *)
-      elements: (string * Type.t) list ref
+    , elements: (string * Type.t) list ref
     }
 end
 
