@@ -448,8 +448,6 @@ struct
     let
       val (typenameToDatbind, typenameToTypbind) =
         GatherTypes.run (Ast.Ast topdecs)
-      val () = print "typenameToTypbind:\n"
-      val () = traceTypenameToTypbind typenameToTypbind
       (* Rewrite typenameToDatbind with applied typbinds from typenameToTypbind *)
       val typenameToDatbind =
         AtomTable.mapi
@@ -470,7 +468,6 @@ struct
         AtomTable.appi
           (fn (typename, (_, datbind)) =>
              addLinks (followTable, typename, datbind)) typenameToDatbind
-      val () = traceFollowTable followTable
       val roots = List.map #1 (AtomTable.listItemsi followTable)
       val components = AtomSCC.topOrder'
         {roots = roots, follow = AtomSet.toList o AtomTable.lookup followTable}
