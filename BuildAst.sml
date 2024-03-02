@@ -333,4 +333,15 @@ struct
       , right_datatypee = datatypeTok
       , right_id = MaybeLongToken.make right
       }
+
+  fun replicateDatatypeToTypbind (left: Token.t) (right: MaybeLongToken.t) :
+    Ast.Exp.typbind =
+    { elems = Seq.singleton
+        { tyvars = Ast.SyntaxSeq.Empty
+        , tycon = left
+        , eq = equalTok
+        , ty = Ast.Ty.Con {args = Ast.SyntaxSeq.Empty, id = right}
+        }
+    , delims = Seq.empty ()
+    }
 end

@@ -37,6 +37,8 @@ struct
         ArraySlice.app (fn e => printToken (#tycon e)) elems
     | printDecTypes (Ast.Exp.DecDatatype {datbind = {elems, ...}, ...}) =
         ArraySlice.app (fn e => printToken (#tycon e)) elems
+    | printDecTypes (Ast.Exp.DecReplicateDatatype {left_id, ...}) =
+        printToken left_id
     | printDecTypes _ = raise Fail "Unknown declaration type"
 
   fun datbindActions args : Ast.Exp.datbind -> Utils.gen option =
@@ -104,16 +106,21 @@ struct
                   else confirm dec next
                 end
           )
+      fun goDecType (args, dec, typbind) =
+        case typbindActions args typbind of
+          SOME action =>
+            ( print "Types: "
+            ; printDecTypes dec
+            ; confirm dec (fn () => #genTypebind action typbind)
+            )
+        | NONE => dec
       fun visitor args =
         { state = args
-        , goDecType = fn (args, dec, typbind) =>
-            (case typbindActions args typbind of
-               SOME action =>
-                 ( print "Types: "
-                 ; printDecTypes dec
-                 ; confirm dec (fn () => #genTypebind action typbind)
-                 )
-             | NONE => dec)
+        , goDecType = goDecType
+        , goDecReplicateDatatype = fn (args, dec, left, right) =>
+            let val typbind = BuildAst.replicateDatatypeToTypbind left right
+            in goDecType (args, dec, typbind)
+            end
         , goDecDatatype =
             fn (args, dec, datbind, withtypee: AstVisitor.withtypee) =>
               let

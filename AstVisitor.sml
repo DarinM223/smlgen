@@ -4,6 +4,8 @@ struct
   type 'a visitor =
     { state: 'a
     , goDecType: 'a * Ast.Exp.dec * Ast.Exp.typbind -> Ast.Exp.dec
+    , goDecReplicateDatatype: 'a * Ast.Exp.dec * Token.t * MaybeLongToken.t
+      -> Ast.Exp.dec
     , goDecDatatype: 'a * Ast.Exp.dec * Ast.Exp.datbind * withtypee
       -> Ast.Exp.dec
     , onStructure: Token.t -> 'a -> 'a
@@ -11,17 +13,27 @@ struct
     }
   fun updateVisitor r =
     let
-      fun from state goDecType goDecDatatype onStructure onFunctor =
+      fun from state goDecType goDecReplicateDatatype goDecDatatype onStructure
+        onFunctor =
         { state = state
         , goDecType = goDecType
+        , goDecReplicateDatatype = goDecReplicateDatatype
         , goDecDatatype = goDecDatatype
         , onStructure = onStructure
         , onFunctor = onFunctor
         }
-      fun to ? {state, goDecType, goDecDatatype, onStructure, onFunctor} =
-        ?state goDecType goDecDatatype onStructure onFunctor
+      fun to ?
+        { state
+        , goDecType
+        , goDecReplicateDatatype
+        , goDecDatatype
+        , onStructure
+        , onFunctor
+        } =
+        ?state goDecType goDecReplicateDatatype goDecDatatype onStructure
+          onFunctor
     in
-      FunctionalRecordUpdate.makeUpdate5 (from, from, to) r
+      FunctionalRecordUpdate.makeUpdate6 (from, from, to) r
     end
 
   fun goExp (_: 'a visitor) (exp: Ast.Exp.exp) = exp
@@ -34,7 +46,8 @@ struct
         #goDecType visitor (#state visitor, dec, typbind)
     | Ast.Exp.DecDatatype {datbind, withtypee, ...} =>
         #goDecDatatype visitor (#state visitor, dec, datbind, withtypee)
-    | Ast.Exp.DecReplicateDatatype _ => dec
+    | Ast.Exp.DecReplicateDatatype {left_id, right_id, ...} =>
+        #goDecReplicateDatatype visitor (#state visitor, dec, left_id, right_id)
     | Ast.Exp.DecAbstype {abstypee, datbind, withtypee, withh, dec, endd} =>
         Ast.Exp.DecAbstype
           { abstypee = abstypee

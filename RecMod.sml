@@ -5,8 +5,8 @@ struct
     o Token.toString
 
   fun visitor {c, typenameToDatbind, typenameToTypbind} =
-    { state = []
-    , goDecType = fn (path, dec, typbind as {elems, ...}: Ast.Exp.typbind) =>
+    let
+      fun goDecType (path, dec, typbind as {elems, ...}: Ast.Exp.typbind) =
         let
           val types = Seq.map (mkQualified path o #tycon) elems
         in
@@ -16,25 +16,31 @@ struct
             types;
           dec
         end
-    , goDecDatatype =
-        fn ( path
-           , dec
-           , datbind as {elems, ...}: Ast.Exp.datbind
-           , _: AstVisitor.withtypee
-           ) =>
-          let
-            val types = Seq.map (mkQualified path o #tycon) elems
-            val datbindId = !c before c := !c + 1
-          in (* TODO: rewrite datbind with withtypees *)
-            ArraySlice.app
-              (fn typ =>
-                 AtomTable.insert typenameToDatbind
-                   (Atom.atom typ, (datbindId, datbind))) types;
-            dec
-          end
-    , onStructure = fn strid => fn path => Token.toString strid :: path
-    , onFunctor = fn funid => fn path => Token.toString funid :: path
-    }
+    in
+      { state = []
+      , goDecType = goDecType
+      , goDecReplicateDatatype = fn (path, dec, left, right) =>
+          goDecType (path, dec, BuildAst.replicateDatatypeToTypbind left right)
+      , goDecDatatype =
+          fn ( path
+             , dec
+             , datbind as {elems, ...}: Ast.Exp.datbind
+             , _: AstVisitor.withtypee
+             ) =>
+            let
+              val types = Seq.map (mkQualified path o #tycon) elems
+              val datbindId = !c before c := !c + 1
+            in (* TODO: rewrite datbind with withtypees *)
+              ArraySlice.app
+                (fn typ =>
+                   AtomTable.insert typenameToDatbind
+                     (Atom.atom typ, (datbindId, datbind))) types;
+              dec
+            end
+      , onStructure = fn strid => fn path => Token.toString strid :: path
+      , onFunctor = fn funid => fn path => Token.toString funid :: path
+      }
+    end
 
   fun run (Ast.Ast topdecs : Ast.t) =
     let
@@ -494,6 +500,7 @@ struct
       val visitor =
         { state = ()
         , goDecType = fn (_, dec, _) => dec
+        , goDecReplicateDatatype = fn (_, dec, _, _) => dec
         , goDecDatatype = fn ((), dec, _, _) =>
             let val datbindId = !c before c := !c + 1
             in IntHashTable.lookup idToRenamedDec datbindId handle _ => dec

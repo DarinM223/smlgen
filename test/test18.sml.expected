@@ -36,6 +36,7 @@ struct
 
 end
 datatype no = datatype Component3.no
+val showNo = Component3.showNo
 
 structure A =
 struct
