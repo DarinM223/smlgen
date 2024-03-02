@@ -52,6 +52,16 @@ struct
         SyntaxSeq.Many
           {left = left, elems = Seq.map f elems, delims = delims, right = right}
 
+  fun syntaxSeqMapTy _ SyntaxSeq.Empty = SyntaxSeq.Empty
+    | syntaxSeqMapTy f (SyntaxSeq.One ty) =
+        (case f ty of
+           ty as Ty.Tuple _ => SyntaxSeq.One (parensTy ty)
+         | ty as Ty.Arrow _ => SyntaxSeq.One (parensTy ty)
+         | ty => SyntaxSeq.One ty)
+    | syntaxSeqMapTy f (SyntaxSeq.Many {left, elems, delims, right}) =
+        SyntaxSeq.Many
+          {left = left, elems = Seq.map f elems, delims = delims, right = right}
+
   fun showTy ty =
     case ty of
       Ty.Var tok => Token.toString (stripToken tok)

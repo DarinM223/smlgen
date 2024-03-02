@@ -34,7 +34,7 @@ struct
     | Ty.Tuple {elems, delims} =>
         Ty.Tuple {elems = Seq.map (subst map) elems, delims = delims}
     | Ty.Con {args, id} =>
-        let val args = syntaxSeqMap (subst map) args
+        let val args = syntaxSeqMapTy (subst map) args
         in Ty.Con {args = args, id = id}
         end
     | Ty.Arrow {from, arrow, to} =>
@@ -121,7 +121,7 @@ struct
       val (_, vars, _) = IntHashTable.lookup tyData i
     in
       Ty.Con
-        { args = syntaxSeqMap Ty.Var vars
+        { args = syntaxSeqMapTy Ty.Var vars
         , id = MaybeLongToken.make (mkToken tycon)
         }
     end

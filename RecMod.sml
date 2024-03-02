@@ -133,11 +133,13 @@ struct
               tryRewrite qualifiedIdAtom
               handle _ =>
                 tryRewrite idAtom
-                handle _ => Ty.Con {id = id, args = Utils.syntaxSeqMap go args}
+                handle _ =>
+                  Ty.Con {id = id, args = Utils.syntaxSeqMapTy go args}
             end
         | go (Ty.Arrow {from, arrow, to}) =
             Ty.Arrow {from = go from, arrow = arrow, to = go to}
-        | go (Ty.Parens {ty, ...}) = go ty
+        | go (Ty.Parens {left, ty, right}) =
+            Ty.Parens {left = left, ty = go ty, right = right}
       val visitor: AstVisitor.datbind_visitor =
         {mapTy = go, mapTycon = fn t => t, mapConbind = fn t => t}
     in
@@ -294,7 +296,7 @@ struct
                                handle _ => trackTypename tycon handle _ => tycon
             in
               Ty.Con
-                { args = syntaxSeqMap goTy args
+                { args = syntaxSeqMapTy goTy args
                 , id = make substTycon handle _ => id
                 }
             end

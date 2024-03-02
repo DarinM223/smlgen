@@ -10,7 +10,11 @@ struct
   | Function
   | Pointer of t
   | Aggregate of
-      {id: int, name: string, loc: string * int, elements: string * t list ref}
+      { id: int
+      , name: string
+      , loc: string * int
+      , elements: (string * t) list ref
+      }
   | Array of t * int
 end
 structure Component2 =
@@ -88,7 +92,7 @@ struct
   and Function_t =
     Function_t_T of
       { name: string
-      , loc: string * int ref
+      , loc: (string * int) ref
       , params: Value_t list ref
       , return_type: Component1.t option ref
       , start_block: Block_t ref
@@ -142,7 +146,7 @@ struct
           { id: int
           , name: string
           , loc: string * int
-          , elements: string * Component1.t list ref
+          , elements: (string * Component1.t) list ref
           } list ref
       , main_func: Component6.Function_t ref
       }
