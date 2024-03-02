@@ -23,14 +23,27 @@ structure Component7 =
 struct datatype a = B of int * Component5.a and c = C of string and d = real end
 structure Component8 = struct datatype northis = A | B end
 structure Foo =
-struct type foo = Component6.foo type notthis = Component4.notthis end
+struct
+  datatype foo = datatype Component6.foo
+  datatype notthis = datatype Component4.notthis
+
+end
 
 structure Bar =
-struct type bar = Component6.bar type northis = Component8.northis end
-type no = Component3.no
-val showNo = Component3.showNo
+struct
+  datatype bar = datatype Component6.bar
+  datatype northis = datatype Component8.northis
+
+end
+datatype no = datatype Component3.no
 
 structure A =
-struct type a = Component7.a type c = Component7.c type d = Component7.d end
+struct
+  datatype a = datatype Component7.a
+  datatype c = datatype Component7.c
+  datatype d = datatype Component7.d
 
-structure B = struct type a = Component5.a type c = Component5.c end
+end
+
+structure B =
+struct datatype a = datatype Component5.a datatype c = datatype Component5.c end

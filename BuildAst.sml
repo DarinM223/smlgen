@@ -324,4 +324,13 @@ struct
   fun simpleDatatypeDec (datbind: Ast.Exp.datbind) =
     Ast.Exp.DecDatatype
       {datatypee = datatypeTok, datbind = datbind, withtypee = NONE}
+
+  fun replicateDatatypeDec (left: Token.t) (right: Token.t) =
+    Ast.Exp.DecReplicateDatatype
+      { left_datatypee = datatypeTok
+      , left_id = left
+      , eq = equalTok
+      , right_datatypee = datatypeTok
+      , right_id = MaybeLongToken.make right
+      }
 end

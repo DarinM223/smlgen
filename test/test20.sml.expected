@@ -11,15 +11,15 @@ struct
 end
 structure A =
 struct
-  type 'a foo = 'a Component1.foo
+  datatype foo = datatype Component1.foo
   type 'b B_t = 'b foo
-  type 'a t = 'a Component1.A_t
+  datatype t = datatype Component1.A_t
 
 end
 structure B =
 struct
-  type 'a bar = 'a Component1.bar
+  datatype bar = datatype Component1.bar
   type 'b A_t = 'b bar
-  type 'a t = 'a Component1.B_t
+  datatype t = datatype Component1.B_t
 
 end

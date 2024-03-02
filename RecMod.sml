@@ -390,7 +390,7 @@ struct
                  val qualifiedPart = qualifiedTypePart typename
                  val decs =
                    ArraySlice.foldl
-                     (fn ({tyvars, tycon, ...}, acc) =>
+                     (fn ({tycon, ...}, acc) =>
                         let
                           val tycon' = mkToken
                             (qualifiedPart ^ Token.toString tycon)
@@ -406,22 +406,7 @@ struct
                             ( Atom.atom (qualifiedPart ^ Token.toString tycon)
                             , Token.toString tycon'
                             )
-                          val tyvars = syntaxSeqToList tyvars
-                          val dec =
-                            MutRecTy.genSingleTypebind
-                              (fn tybind =>
-                                 Ast.Exp.DecType
-                                   { typee = mkReservedToken Token.Type
-                                   , typbind = tybind
-                                   })
-                              ( tycon
-                              , tyvars
-                              , Ast.Ty.Con
-                                  { args = listToSyntaxSeq
-                                      (List.map Ast.Ty.Var tyvars)
-                                  , id = MaybeLongToken.make tycon'
-                                  }
-                              )
+                          val dec = BuildAst.replicateDatatypeDec tycon tycon'
                         in
                           dec :: acc
                         end) [] elems
@@ -490,7 +475,7 @@ struct
         in (Atom.toString tyName, id, datbind)
         end
       val components: (string * int * Ast.Exp.datbind) list list =
-        List.map (List.map tyToData) components
+        List.map (removeDuplicateDatbinds o List.map tyToData) components
       val idToRenamedDec: Ast.Exp.dec IntHashTable.hash_table =
         IntHashTable.mkTable (20, LibBase.NotFound)
       val globalTypenameTable: subst_table = emptySubstTable ()

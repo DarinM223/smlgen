@@ -6,10 +6,15 @@ struct
   and Value_t =
     Value of {id: int, value: Component1.value ref, uses: Use_t option ref}
 end
-structure Use = struct type t = Component2.Use_t end
+structure Use = struct datatype t = datatype Component2.Use_t end
 
 structure Value =
-struct type id = int type value = Component1.value type t = Component2.Value_t end
+struct
+  type id = int
+  datatype value = datatype Component1.value
+  datatype t = datatype Component2.Value_t
+
+end
 
 structure Literal = struct end
 
