@@ -56,6 +56,10 @@ struct
   val trueTok = mkToken "true"
   val openParenTok = mkReservedToken OpenParen
   val closeParenTok = mkReservedToken CloseParen
+  val structureTok = mkReservedToken Structure
+  val structTok = mkReservedToken Struct
+  val endTok = mkReservedToken End
+  val datatypeTok = mkReservedToken Token.Datatype
 
   val unitExp = Unit {left = openParenTok, right = closeParenTok}
 
@@ -302,4 +306,42 @@ struct
 
   fun parensTy ty =
     Ty.Parens {left = openParenTok, ty = ty, right = closeParenTok}
+
+  fun simpleStructStrDec (strid: Token.t) (strdec: Ast.Str.strdec) =
+    Ast.Str.DecStructure
+      { structuree = structureTok
+      , elems = Seq.singleton
+          { strid = strid
+          , constraint = NONE
+          , eq = equalTok
+          , strexp =
+              Ast.Str.Struct
+                {structt = structTok, strdec = strdec, endd = endTok}
+          }
+      , delims = Seq.empty ()
+      }
+
+  fun simpleDatatypeDec (datbind: Ast.Exp.datbind) =
+    Ast.Exp.DecDatatype
+      {datatypee = datatypeTok, datbind = datbind, withtypee = NONE}
+
+  fun replicateDatatypeDec (left: Token.t) (right: Token.t) =
+    Ast.Exp.DecReplicateDatatype
+      { left_datatypee = datatypeTok
+      , left_id = left
+      , eq = equalTok
+      , right_datatypee = datatypeTok
+      , right_id = MaybeLongToken.make right
+      }
+
+  fun replicateDatatypeToTypbind (left: Token.t) (right: MaybeLongToken.t) :
+    Ast.Exp.typbind =
+    { elems = Seq.singleton
+        { tyvars = Ast.SyntaxSeq.Empty
+        , tycon = left
+        , eq = equalTok
+        , ty = Ast.Ty.Con {args = Ast.SyntaxSeq.Empty, id = right}
+        }
+    , delims = Seq.empty ()
+    }
 end

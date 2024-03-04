@@ -110,6 +110,10 @@ an initial project named `hello`, run:
 
 And it will create a `hello` directory with initial project files.
 
+smlgen also has experimental support for generating recursive modules. If there is a `file.sml` with structures that contain datatypes which refer to other structure's datatypes in a cyclic way, then the command
+line option `--recurmod` will generate a file `file.rec.sml` which breaks the cyclic parts into component modules
+and then replicates the datatypes in the original structures. For an example, look at this [sample cyclic IR example](/test/test21.sml) and its [generated output](/test/test21.sml.expected) which is valid SML97.
+
 Testing
 -------
 

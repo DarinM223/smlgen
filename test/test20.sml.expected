@@ -1,0 +1,25 @@
+structure Component1 =
+struct
+  datatype 'a B_t =
+    B_t_T of 'a bar
+  and 'a bar =
+    Bar of 'a A_t
+  and 'a A_t =
+    A_t_T of 'a foo
+  and 'a foo =
+    Foo of 'a B_t
+end
+structure A =
+struct
+  datatype foo = datatype Component1.foo
+  type 'b B_t = 'b foo
+  datatype t = datatype Component1.A_t
+
+end
+structure B =
+struct
+  datatype bar = datatype Component1.bar
+  type 'b A_t = 'b bar
+  datatype t = datatype Component1.B_t
+
+end

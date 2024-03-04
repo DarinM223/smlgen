@@ -33,6 +33,8 @@ struct
     | syntaxSeqToList (SyntaxSeq.One e) = [e]
     | syntaxSeqToList (SyntaxSeq.Many {elems, ...}) = Seq.toList elems
 
+  val syntaxSeqLen = fn seq => List.length (syntaxSeqToList seq)
+
   fun listToSyntaxSeq [] = SyntaxSeq.Empty
     | listToSyntaxSeq [e] = SyntaxSeq.One e
     | listToSyntaxSeq (elems as (_ :: es)) =
@@ -47,6 +49,16 @@ struct
     | syntaxSeqMap f (SyntaxSeq.One e) =
         SyntaxSeq.One (f e)
     | syntaxSeqMap f (SyntaxSeq.Many {left, elems, delims, right}) =
+        SyntaxSeq.Many
+          {left = left, elems = Seq.map f elems, delims = delims, right = right}
+
+  fun syntaxSeqMapTy _ SyntaxSeq.Empty = SyntaxSeq.Empty
+    | syntaxSeqMapTy f (SyntaxSeq.One ty) =
+        (case f ty of
+           ty as Ty.Tuple _ => SyntaxSeq.One (parensTy ty)
+         | ty as Ty.Arrow _ => SyntaxSeq.One (parensTy ty)
+         | ty => SyntaxSeq.One ty)
+    | syntaxSeqMapTy f (SyntaxSeq.Many {left, elems, delims, right}) =
         SyntaxSeq.Many
           {left = left, elems = Seq.map f elems, delims = delims, right = right}
 
@@ -113,4 +125,101 @@ struct
         end
     | destructTyPat _ (Ty.Arrow _) = wildPat
     | destructTyPat fresh (Ty.Parens {ty, ...}) = destructTyPat fresh ty
+
+  fun combineDecs (Ast.Exp.DecMultiple {elems = elems1, delims = delims1})
+        (Ast.Exp.DecMultiple {elems = elems2, delims = delims2}) =
+        Ast.Exp.DecMultiple
+          { elems = Seq.append (elems1, elems2)
+          , delims = Seq.append (delims1, delims2)
+          }
+    | combineDecs (Ast.Exp.DecMultiple {elems, delims}) dec =
+        Ast.Exp.DecMultiple
+          { elems = Seq.append (elems, Seq.singleton dec)
+          , delims = Seq.append (delims, Seq.singleton NONE)
+          }
+    | combineDecs dec (Ast.Exp.DecMultiple {elems, delims}) =
+        Ast.Exp.DecMultiple
+          { elems = Seq.fromList (dec :: Seq.toList elems)
+          , delims = Seq.fromList (NONE :: Seq.toList delims)
+          }
+    | combineDecs dec1 dec2 =
+        Ast.Exp.DecMultiple
+          { elems = Seq.fromList [dec1, dec2]
+          , delims = Seq.fromList [NONE, NONE]
+          }
+
+  val pretty = PrettierPrintAst.pretty
+    {ribbonFrac = 1.0, maxWidth = 80, tabWidth = 4, indent = 2, debug = false}
+  val prettyDec =
+    pretty
+    o (fn topdec => Ast.Ast (Seq.singleton {topdec = topdec, semicolon = NONE}))
+    o Ast.StrDec o Ast.Str.DecCore
+  fun prettyDatbind datbind =
+    prettyDec
+      (DecDatatype
+         { datatypee = BuildAst.mkReservedToken Token.Datatype
+         , datbind = datbind
+         , withtypee = NONE
+         })
+
+  fun concatDatbinds (datbinds: Ast.Exp.datbind list) : Ast.Exp.datbind =
+    let
+      val datbinds = List.concat
+        (List.map (fn datbind => Seq.toList (#elems datbind)) datbinds)
+    in
+      { delims = Seq.tabulate (fn _ => BuildAst.andKeyTok) (Int.max
+          (0, List.length datbinds - 1))
+      , elems = Seq.fromList datbinds
+      }
+    end
+
+  val datbindTys = fn datbind =>
+    let
+      val result: Ast.Ty.ty list ref = ref []
+      val visitor: AstVisitor.datbind_visitor =
+        { mapTy = fn ty => (result := ty :: !result; ty)
+        , mapTycon = fn t => t
+        , mapConbind = fn t => t
+        }
+    in
+      ignore (AstVisitor.goDatbind visitor datbind);
+      List.rev (!result)
+    end
+
+  fun mapBase (f: string -> string) (file: string) =
+    let val {base, ext} = OS.Path.splitBaseExt file
+    in OS.Path.joinBaseExt {base = f base, ext = ext}
+    end
+  fun mapBasename (f: string -> string) (fp: FilePath.t) =
+    let
+      val basename = FilePath.toUnixPath (FilePath.basename fp)
+      val dirname = FilePath.dirname fp
+      val basename = FilePath.fromUnixPath (f basename)
+    in
+      FilePath.join (dirname, basename)
+    end
+  val qualifiedTypePart =
+    Substring.string o #1 o (Substring.splitr (fn #"." => false | _ => true))
+    o Substring.full
+  val typenameTypePart =
+    Substring.string o #2 o (Substring.splitr (fn #"." => false | _ => true))
+    o Substring.full
+
+  type gen =
+    { genTypebind: Ast.Exp.typbind -> Ast.Exp.dec
+    , genDatabind: Ast.Exp.datbind -> Ast.Exp.typbind option -> Ast.Exp.dec
+    }
+
+  val emptyGen: gen =
+    { genTypebind = fn _ => Ast.Exp.DecEmpty
+    , genDatabind = fn _ => fn _ => Ast.Exp.DecEmpty
+    }
+  fun addGen (gen1: gen) (gen2: gen) : gen =
+    { genTypebind = fn bind =>
+        combineDecs (#genTypebind gen1 bind) (#genTypebind gen2 bind)
+    , genDatabind = fn databind =>
+        fn typebind =>
+          combineDecs (#genDatabind gen1 databind typebind)
+            (#genDatabind gen2 databind typebind)
+    }
 end

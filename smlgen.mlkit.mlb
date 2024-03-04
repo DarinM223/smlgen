@@ -63,9 +63,12 @@ smlfmt/src/prettier-print/PrettierPrintAst.sml
 Fold.sml
 FunctionalRecordUpdate.sml
 BuildAst.sml
+AstVisitor.sml
 Utils.sml
 MutRecTy.sig
 MutRecTy.sml
+RecMod.sig
+RecMod.sml
 FruGen.sml
 GenericGen.sml
 Env.sml

@@ -65,6 +65,7 @@ fun useProject root' file =
     use file;
     OS.FileSys.chDir root
   end;
+(* Uncomment this and put library files in here to prevent reloading them each time. *)
 PolyML.SaveState.loadState "save" handle _ => (
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-format-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array-sig.sml";
@@ -242,9 +243,12 @@ PolyML.SaveState.saveState "save" );
 use "Fold.sml";
 use "FunctionalRecordUpdate.sml";
 use "BuildAst.sml";
+use "AstVisitor.sml";
 use "Utils.sml";
 use "MutRecTy.sig";
 use "MutRecTy.sml";
+use "RecMod.sig";
+use "RecMod.sml";
 use "FruGen.sml";
 use "GenericGen.sml";
 use "Env.sml";
