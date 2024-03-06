@@ -1,6 +1,6 @@
 structure ShowGen =
 struct
-  open Ast.Exp Tokens Utils MutRecTy Env
+  open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
   fun envVars (env as Env {vars, ...}) =
     (vars := List.rev (!vars); env)

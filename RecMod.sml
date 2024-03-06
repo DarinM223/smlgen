@@ -226,7 +226,7 @@ struct
   val serialize = String.map (fn #"." => #"_" | ch => ch)
 
   fun atomTableToTrack table =
-    Utils.mkToken o AtomTable.lookup table o Atom.atom o Token.toString
+    TokenUtils.mkToken o AtomTable.lookup table o Atom.atom o Token.toString
 
   fun componentSubstMap ({trackTypename, trackConstructor}: int track)
     (component: (string * int * Ast.Exp.datbind) list) =
@@ -273,7 +273,7 @@ struct
 
   fun substDatbind (opts: subst_opts) ({elems, delims}: Ast.Exp.datbind) =
     let
-      open Ast Utils MaybeLongToken
+      open Ast TokenUtils Utils MaybeLongToken
       val {trackTypename, trackConstructor} = #track opts
       fun goTy (Ty.Var var) = Ty.Var var
         | goTy (Ty.Record {left, elems, delims, right}) =
@@ -372,7 +372,7 @@ struct
         , components = component :: rest
         } =
         let
-          open Utils BuildAst
+          open TokenUtils Utils BuildAst
           val trackCount = countTypesAndConstructors (List.map #3 component)
           val trackSubst = componentSubstMap trackCount component
           val globalTrack: Token.t track =

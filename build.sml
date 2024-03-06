@@ -245,6 +245,7 @@ use "FunctionalRecordUpdate.sml";
 use "BuildAst.sig";
 use "BuildAst.sml";
 use "AstVisitor.sml";
+use "Utils.sig";
 use "Utils.sml";
 use "MutRecTy.sig";
 use "MutRecTy.sml";

@@ -29,7 +29,7 @@ end
 
 structure GenericGen =
 struct
-  open Ast.Exp Utils MutRecTy
+  open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy
   structure ExpValue: CONVERT_VALUE =
   struct
     type t = exp
@@ -40,7 +40,7 @@ struct
   end
   structure PatValue: CONVERT_VALUE =
   struct
-    open Pat
+    open Ast.Pat
     type t = pat
     val unit = unitPat
     val const = Const

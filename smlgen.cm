@@ -11,6 +11,7 @@ Group is
   BuildAst.sig
   BuildAst.sml
   AstVisitor.sml
+  Utils.sig
   Utils.sml
   MutRecTy.sig
   MutRecTy.sml

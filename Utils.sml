@@ -1,4 +1,4 @@
-structure Utils =
+structure Utils :> UTILS =
 struct
   open Ast BuildAst TokenUtils Tokens
 
@@ -159,7 +159,7 @@ struct
       (Ast.Exp.DecDatatype
          {datatypee = datatypeTok, datbind = datbind, withtypee = NONE})
 
-  fun concatDatbinds (datbinds: Ast.Exp.datbind list) : Ast.Exp.datbind =
+  fun concatDatbinds (datbinds: Ast.Exp.datbind list) =
     let
       val datbinds = List.concat
         (List.map (fn datbind => Seq.toList (#elems datbind)) datbinds)
@@ -183,11 +183,11 @@ struct
       List.rev (!result)
     end
 
-  fun mapBase (f: string -> string) (file: string) =
+  fun mapBase f file =
     let val {base, ext} = OS.Path.splitBaseExt file
     in OS.Path.joinBaseExt {base = f base, ext = ext}
     end
-  fun mapBasename (f: string -> string) (fp: FilePath.t) =
+  fun mapBasename f fp =
     let
       val basename = FilePath.toUnixPath (FilePath.basename fp)
       val dirname = FilePath.dirname fp
@@ -207,11 +207,11 @@ struct
     , genDatabind: Ast.Exp.datbind -> Ast.Exp.typbind option -> Ast.Exp.dec
     }
 
-  val emptyGen: gen =
+  val emptyGen =
     { genTypebind = fn _ => Ast.Exp.DecEmpty
     , genDatabind = fn _ => fn _ => Ast.Exp.DecEmpty
     }
-  fun addGen (gen1: gen) (gen2: gen) : gen =
+  fun addGen (gen1: gen) (gen2: gen) =
     { genTypebind = fn bind =>
         combineDecs (#genTypebind gen1 bind) (#genTypebind gen2 bind)
     , genDatabind = fn databind =>

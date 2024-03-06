@@ -1,6 +1,6 @@
 structure MutRecTy: MUT_REC_TY =
 struct
-  open Ast Ast.Exp TokenUtils BuildAst Utils
+  open Ast Ast.Exp TokenUtils Tokens BuildAst Utils
 
   structure SCC =
     GraphSCCFn (struct type ord_key = int val compare = Int.compare end)

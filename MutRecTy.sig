@@ -9,7 +9,7 @@ sig
 
   val buildSubstMap: env -> string -> Ast.Ty.ty list -> Ast.Ty.ty AtomMap.map
   val subst: Ast.Ty.ty AtomMap.map -> Ast.Ty.ty -> Ast.Ty.ty
-  val substConstr: Ast.Ty.ty AtomMap.map -> Utils.constr -> Utils.constr
+  val substConstr: Ast.Ty.ty AtomMap.map -> BuildAst.constr -> BuildAst.constr
 
   val findDuplicates: Token.token list -> IntRedBlackSet.set
   val applyDuplicates: IntRedBlackSet.set * ('a -> 'b) * 'a list -> 'b list

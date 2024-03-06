@@ -1,6 +1,6 @@
 structure CompareGen =
 struct
-  open Ast.Exp Tokens Utils MutRecTy Env
+  open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
   val mkCompare = prependToken "compare"
 
