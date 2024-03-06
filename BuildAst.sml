@@ -55,7 +55,7 @@ struct
   val letTok = mkReservedToken Let
   val inTok = mkReservedToken In
   val endTok = mkReservedToken End
-  val datatypeTok = mkReservedToken Token.Datatype
+  val datatypeTok = mkReservedToken Datatype
   val openCurlyTok = mkReservedToken OpenCurlyBracket
   val closeCurlyTok = mkReservedToken CloseCurlyBracket
   val openSquareTok = mkReservedToken OpenSquareBracket

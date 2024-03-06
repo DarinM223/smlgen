@@ -157,10 +157,7 @@ struct
   fun prettyDatbind datbind =
     prettyDec
       (Ast.Exp.DecDatatype
-         { datatypee = mkReservedToken Token.Datatype
-         , datbind = datbind
-         , withtypee = NONE
-         })
+         {datatypee = datatypeTok, datbind = datbind, withtypee = NONE})
 
   fun concatDatbinds (datbinds: Ast.Exp.datbind list) : Ast.Exp.datbind =
     let
