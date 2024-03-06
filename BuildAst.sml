@@ -1,15 +1,5 @@
-structure BuildAst =
+structure TokenUtils :> TOKEN_UTILS =
 struct
-  open Token
-  open Ast
-  open Ast.Exp
-
-  type constr =
-    { arg: {off: Token.token, ty: Ty.ty} option
-    , id: Token.token
-    , opp: Token.token option
-    }
-
   fun stripToken tok =
     case Token.prevToken tok of
       SOME tok => Option.valOf (Token.nextTokenNotCommentOrWhitespace tok)
@@ -36,7 +26,11 @@ struct
 
   fun stringTokSpace t =
     mkToken ("\"" ^ Token.toString (stripToken t) ^ " \"")
+end
 
+structure Tokens :> TOKENS =
+struct
+  open Token TokenUtils
   val equalTok = mkReservedToken Equal
   val commaTok = mkReservedToken Comma
   val andReservedTok = mkReservedToken And
@@ -58,19 +52,42 @@ struct
   val closeParenTok = mkReservedToken CloseParen
   val structureTok = mkReservedToken Structure
   val structTok = mkReservedToken Struct
+  val letTok = mkReservedToken Let
+  val inTok = mkReservedToken In
   val endTok = mkReservedToken End
   val datatypeTok = mkReservedToken Token.Datatype
+  val openCurlyTok = mkReservedToken OpenCurlyBracket
+  val closeCurlyTok = mkReservedToken CloseCurlyBracket
+  val openSquareTok = mkReservedToken OpenSquareBracket
+  val closeSquareTok = mkReservedToken CloseSquareBracket
+  val fnTok = mkReservedToken Fn
+  val valTok = mkReservedToken Val
+  val funTok = mkReservedToken Fun
+  val localTok = mkReservedToken Local
+  val caseTok = mkReservedToken Case
+  val ofTok = mkReservedToken Of
+end
+
+structure BuildAst :> BUILD_AST =
+struct
+  open Ast Ast.Exp Tokens
+
+  type constr =
+    { arg: {off: Token.token, ty: Ty.ty} option
+    , id: Token.token
+    , opp: Token.token option
+    }
 
   val unitExp = Unit {left = openParenTok, right = closeParenTok}
 
   fun singleLetExp dec exp =
     LetInEnd
-      { lett = mkReservedToken Let
+      { lett = letTok
       , dec = dec
-      , inn = mkReservedToken In
+      , inn = inTok
       , exps = Seq.singleton exp
       , delims = Seq.empty ()
-      , endd = mkReservedToken End
+      , endd = endTok
       }
 
   fun tupleExp [] = unitExp
@@ -85,22 +102,22 @@ struct
 
   fun recordExp params =
     Record
-      { left = mkReservedToken OpenCurlyBracket
+      { left = openCurlyTok
       , elems = Seq.fromList
           (List.map (fn (a, b) => RecordRow {lab = a, eq = equalTok, exp = b})
              params)
       , delims = Seq.tabulate (fn _ => commaTok) (Int.max
           (0, List.length params - 1))
-      , right = mkReservedToken CloseCurlyBracket
+      , right = closeCurlyTok
       }
 
   fun listExp exps =
     List
-      { left = mkReservedToken OpenSquareBracket
+      { left = openSquareTok
       , elems = Seq.fromList exps
       , delims = Seq.tabulate (fn _ => commaTok) (Int.max
           (0, List.length exps - 1))
-      , right = mkReservedToken CloseSquareBracket
+      , right = closeSquareTok
       }
 
   fun appExp [] = raise Fail "Empty application"
@@ -110,7 +127,7 @@ struct
 
   fun singleFnExp pat exp =
     Fn
-      { fnn = mkReservedToken Token.Fn
+      { fnn = fnTok
       , elems = Seq.singleton {pat = pat, arrow = fatArrowTok, exp = exp}
       , delims = Seq.empty ()
       , optbar = NONE
@@ -118,7 +135,7 @@ struct
 
   fun multFnExp tups =
     Fn
-      { fnn = mkReservedToken Token.Fn
+      { fnn = fnTok
       , elems = Seq.fromList
           (List.map
              (fn (pat, exp) => {pat = pat, arrow = fatArrowTok, exp = exp}) tups)
@@ -153,7 +170,7 @@ struct
 
   fun valDec pat exp =
     DecVal
-      { vall = mkReservedToken Val
+      { vall = valTok
       , tyvars = SyntaxSeq.Empty
       , elems = Seq.singleton {recc = NONE, pat = pat, eq = equalTok, exp = exp}
       , delims = Seq.empty ()
@@ -166,7 +183,7 @@ struct
             {recc = recc, pat = pat, eq = equalTok, exp = exp}
         in
           DecVal
-            { vall = mkReservedToken Val
+            { vall = valTok
             , tyvars = SyntaxSeq.Empty
             , elems = Seq.fromList
                 (mkRec (if recc then SOME recTok else NONE) pat exp
@@ -183,7 +200,7 @@ struct
 
   fun singleFunDec tok args exp =
     DecFun
-      { funn = mkReservedToken Fun
+      { funn = funTok
       , tyvars = SyntaxSeq.Empty
       , fvalbind =
           { elems = Seq.singleton
@@ -204,7 +221,7 @@ struct
 
   fun multFunDec funs =
     DecFun
-      { funn = mkReservedToken Fun
+      { funn = funTok
       , tyvars = SyntaxSeq.Empty
       , fvalbind =
           { elems = Seq.fromList
@@ -234,11 +251,11 @@ struct
 
   fun localDec dec body =
     DecLocal
-      { locall = mkReservedToken Local
+      { locall = localTok
       , left_dec = dec
-      , inn = mkReservedToken In
+      , inn = inTok
       , right_dec = body
-      , endd = mkReservedToken End
+      , endd = endTok
       }
   fun localDecs decs body =
     case decs of
@@ -250,25 +267,25 @@ struct
 
   fun destructRecordPat patTokens =
     Pat.Record
-      { left = mkReservedToken OpenCurlyBracket
+      { left = openCurlyTok
       , elems = Seq.fromList
           (List.map (fn tok => Pat.LabAsPat {id = tok, ty = NONE, aspat = NONE})
              patTokens)
       , delims = Seq.tabulate (fn _ => commaTok) (Int.max
           (0, List.length patTokens - 1))
-      , right = mkReservedToken CloseCurlyBracket
+      , right = closeCurlyTok
       }
 
   fun destructRecordPat' rows =
     Pat.Record
-      { left = mkReservedToken OpenCurlyBracket
+      { left = openCurlyTok
       , elems = Seq.fromList
           (List.map
              (fn (lab, pat) =>
                 Pat.LabEqPat {lab = lab, eq = equalTok, pat = pat}) rows)
       , delims = Seq.tabulate (fn _ => commaTok) (Int.max
           (0, List.length rows - 1))
-      , right = mkReservedToken CloseCurlyBracket
+      , right = closeCurlyTok
       }
 
   fun destructTuplePat [Pat.Const tok] = Pat.Const tok
@@ -290,13 +307,13 @@ struct
 
   fun destructListPat pats =
     Pat.List
-      { left = mkReservedToken OpenSquareBracket
+      { left = openSquareTok
       , elems = Seq.fromList pats
       , delims = Seq.fromList
           (case pats of
              [] => []
            | _ :: pats => List.map (fn _ => commaTok) pats)
-      , right = mkReservedToken CloseSquareBracket
+      , right = closeSquareTok
       }
 
   fun destructConPat tok pat =
@@ -307,7 +324,7 @@ struct
   fun parensTy ty =
     Ty.Parens {left = openParenTok, ty = ty, right = closeParenTok}
 
-  fun simpleStructStrDec (strid: Token.t) (strdec: Ast.Str.strdec) =
+  fun simpleStructStrDec strid strdec =
     Ast.Str.DecStructure
       { structuree = structureTok
       , elems = Seq.singleton
@@ -321,11 +338,11 @@ struct
       , delims = Seq.empty ()
       }
 
-  fun simpleDatatypeDec (datbind: Ast.Exp.datbind) =
+  fun simpleDatatypeDec datbind =
     Ast.Exp.DecDatatype
       {datatypee = datatypeTok, datbind = datbind, withtypee = NONE}
 
-  fun replicateDatatypeDec (left: Token.t) (right: Token.t) =
+  fun replicateDatatypeDec left right =
     Ast.Exp.DecReplicateDatatype
       { left_datatypee = datatypeTok
       , left_id = left
@@ -334,8 +351,7 @@ struct
       , right_id = MaybeLongToken.make right
       }
 
-  fun replicateDatatypeToTypbind (left: Token.t) (right: MaybeLongToken.t) :
-    Ast.Exp.typbind =
+  fun replicateDatatypeToTypbind left right =
     { elems = Seq.singleton
         { tyvars = Ast.SyntaxSeq.Empty
         , tycon = left

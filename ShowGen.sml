@@ -1,18 +1,18 @@
 structure ShowGen =
 struct
-  open BuildAst Utils MutRecTy Env
+  open Ast.Exp Tokens Utils MutRecTy Env
 
   fun envVars (env as Env {vars, ...}) =
     (vars := List.rev (!vars); env)
   val mkShow = prependToken "show"
 
   val concatTok = mkToken "^"
-  val openSquare = stringTok (mkReservedToken OpenSquareBracket)
-  val closeSquare = stringTok (mkReservedToken CloseSquareBracket)
-  val openParen = stringTok (mkReservedToken OpenParen)
-  val closeParen = stringTok (mkReservedToken CloseParen)
-  val openCurly = stringTok (mkReservedToken OpenCurlyBracket)
-  val closeCurly = stringTok (mkReservedToken CloseCurlyBracket)
+  val openSquare = stringTok openSquareTok
+  val closeSquare = stringTok closeSquareTok
+  val openParen = stringTok openParenTok
+  val closeParen = stringTok closeParenTok
+  val openCurly = stringTok openCurlyTok
+  val closeCurly = stringTok closeCurlyTok
   val quotTok = stringTok (mkToken "\\\"")
   val equalsTok = mkToken " = "
   val commaTok = mkToken ", "

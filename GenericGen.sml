@@ -8,7 +8,7 @@ sig
 end
 functor ConvertFn(Value: CONVERT_VALUE) =
 struct
-  open BuildAst
+  open BuildAst Tokens
 
   fun ins ([], {arg = SOME _, ...}) = Value.const quesTok
     | ins ([], _) = Value.unit
@@ -29,7 +29,7 @@ end
 
 structure GenericGen =
 struct
-  open BuildAst Utils MutRecTy
+  open Ast.Exp Utils MutRecTy
   structure ExpValue: CONVERT_VALUE =
   struct
     type t = exp

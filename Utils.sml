@@ -1,6 +1,6 @@
 structure Utils =
 struct
-  open BuildAst
+  open Ast BuildAst TokenUtils Tokens
 
   fun capitalize s =
     case String.explode s of
@@ -156,8 +156,8 @@ struct
     o Ast.StrDec o Ast.Str.DecCore
   fun prettyDatbind datbind =
     prettyDec
-      (DecDatatype
-         { datatypee = BuildAst.mkReservedToken Token.Datatype
+      (Ast.Exp.DecDatatype
+         { datatypee = mkReservedToken Token.Datatype
          , datbind = datbind
          , withtypee = NONE
          })
@@ -167,7 +167,7 @@ struct
       val datbinds = List.concat
         (List.map (fn datbind => Seq.toList (#elems datbind)) datbinds)
     in
-      { delims = Seq.tabulate (fn _ => BuildAst.andKeyTok) (Int.max
+      { delims = Seq.tabulate (fn _ => andKeyTok) (Int.max
           (0, List.length datbinds - 1))
       , elems = Seq.fromList datbinds
       }

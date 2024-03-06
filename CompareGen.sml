@@ -1,6 +1,6 @@
 structure CompareGen =
 struct
-  open BuildAst Utils MutRecTy Env
+  open Ast.Exp Tokens Utils MutRecTy Env
 
   val mkCompare = prependToken "compare"
 
@@ -19,8 +19,6 @@ struct
       (vars := interleave ([], vars1, vars2); (pat1, pat2))
     end
 
-  val caseTok = mkReservedToken Token.Case
-  val ofTok = mkReservedToken Of
   val equalCmpTok = mkToken "EQUAL"
   val greaterCmpTok = mkToken "GREATER"
   val lessCmpTok = mkToken "LESS"

@@ -8,6 +8,7 @@ Group is
   ./smlfmt/src/lex/sources.cm
   ./smlfmt/src/parse/sources.cm
   ./smlfmt/src/prettier-print/sources.cm
+  BuildAst.sig
   BuildAst.sml
   AstVisitor.sml
   Utils.sml

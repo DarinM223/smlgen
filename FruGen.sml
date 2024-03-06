@@ -1,5 +1,7 @@
 structure FruGen =
 struct
+  open Ast Ast.Exp TokenUtils
+
   fun genDecsForTy ty : (Token.token -> Ast.Exp.dec) list =
     case ty of
       Ast.Ty.Var _ => []
@@ -48,7 +50,6 @@ struct
 
   fun genTypebind ({elems, ...}: Ast.Exp.typbind) =
     let
-      open BuildAst
       val decs = List.concat
         (List.map
            (fn {tycon, ty, ...} =>
@@ -67,7 +68,7 @@ struct
                 List.map (fn (t, dec) => (appendTokens tycon t, dec)) decs
               end) (Seq.toList elems))
     in
-      multDec
+      BuildAst.multDec
         (List.map
            (fn (t, f) =>
               f (mkToken ("update" ^ (Utils.capitalize (Token.toString t)))))
@@ -76,7 +77,7 @@ struct
 
   fun genDatabind ({elems, ...}: Ast.Exp.datbind) _ =
     let
-      open BuildAst
+      open Token
       val decs = List.concat
         (List.map
            (fn {elems, tycon, ...} =>
@@ -114,7 +115,7 @@ struct
                         List.map #2 constrDecs))
               end) (Seq.toList elems))
     in
-      multDec
+      BuildAst.multDec
         (List.map
            (fn (t, f) =>
               f (mkToken ("update" ^ (Utils.capitalize (Token.toString t)))))

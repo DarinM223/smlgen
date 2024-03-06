@@ -242,6 +242,7 @@ use "smlfmt/src/prettier-print/PrettierPrintAst.sml";
 PolyML.SaveState.saveState "save" );
 use "Fold.sml";
 use "FunctionalRecordUpdate.sml";
+use "BuildAst.sig";
 use "BuildAst.sml";
 use "AstVisitor.sml";
 use "Utils.sml";

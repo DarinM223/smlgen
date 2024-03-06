@@ -34,7 +34,7 @@ struct
   fun fresh (Env {c, vars, ...}) t =
     let
       val i = !c before c := !c + 1
-      val tok = Utils.appendTokens t (BuildAst.mkToken (Int.toString i))
+      val tok = Utils.appendTokens t (TokenUtils.mkToken (Int.toString i))
     in
       (vars := tok :: !vars; tok)
     end
