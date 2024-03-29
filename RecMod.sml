@@ -25,12 +25,15 @@ struct
           fn ( path
              , dec
              , datbind as {elems, ...}: Ast.Exp.datbind
-             , _: AstVisitor.withtypee
+             , withtypee: AstVisitor.withtypee
              ) =>
             let
               val types = Seq.map (mkQualified path o #tycon) elems
               val datbindId = !c before c := !c + 1
-            in (* TODO: rewrite datbind with withtypees *)
+            in
+              Option.app
+                (fn {typbind, ...} => ignore (goDecType (path, dec, typbind)))
+                withtypee;
               ArraySlice.app
                 (fn typ =>
                    AtomTable.insert typenameToDatbind
