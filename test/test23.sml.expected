@@ -1,0 +1,6 @@
+structure Component1 = struct datatype bar = Bar of y end
+structure Component2 = struct datatype foo = Foo of b end
+type a = b
+type b = a
+datatype foo = datatype Component2.foo
+datatype bar = datatype Component1.bar

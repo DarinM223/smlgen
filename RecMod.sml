@@ -111,40 +111,53 @@ struct
     Ast.Exp.datbind =
     let
       open Ast
-      fun go (ty as Ty.Var _) = ty
-        | go (Ty.Record {left, elems, delims, right}) =
+      fun go _ (ty as Ty.Var _) = ty
+        | go i (Ty.Record {left, elems, delims, right}) =
             Ty.Record
               { left = left
               , elems =
                   Seq.map
                     (fn {lab, colon, ty} =>
-                       {lab = lab, colon = colon, ty = go ty}) elems
+                       {lab = lab, colon = colon, ty = go i ty}) elems
               , delims = delims
               , right = right
               }
-        | go (Ty.Tuple {elems, delims}) =
-            Ty.Tuple {elems = Seq.map go elems, delims = delims}
-        | go (ty as Ty.Con {id, args}) =
+        | go i (Ty.Tuple {elems, delims}) =
+            Ty.Tuple {elems = Seq.map (go i) elems, delims = delims}
+        | go i (ty as Ty.Con {id, args}) =
             let
               val id' = Token.toString (MaybeLongToken.getToken id)
               val idAtom = Atom.atom id'
               val qualifiedIdAtom = Atom.atom
                 (Utils.qualifiedTypePart typename ^ id')
               fun tryRewrite atom =
-                go (rewriteTy (AtomTable.lookup typenameToTypbind atom) ty)
+                let
+                  val ty =
+                    rewriteTy (AtomTable.lookup typenameToTypbind atom) ty
+                in
+                  if
+                    Utils.tySize ty > ! MutRecTy.maxTySize
+                    orelse i > ! MutRecTy.maxTySize
+                  then
+                    ( print MutRecTy.maxTySizeErrorMsg
+                    ; raise MutRecTy.RecursionLimit
+                    )
+                  else
+                    go (i + 1) ty
+                end
             in
               tryRewrite qualifiedIdAtom
               handle _ =>
                 tryRewrite idAtom
                 handle _ =>
-                  Ty.Con {id = id, args = Utils.syntaxSeqMapTy go args}
+                  Ty.Con {id = id, args = Utils.syntaxSeqMapTy (go i) args}
             end
-        | go (Ty.Arrow {from, arrow, to}) =
-            Ty.Arrow {from = go from, arrow = arrow, to = go to}
-        | go (Ty.Parens {left, ty, right}) =
-            Ty.Parens {left = left, ty = go ty, right = right}
+        | go i (Ty.Arrow {from, arrow, to}) =
+            Ty.Arrow {from = go i from, arrow = arrow, to = go i to}
+        | go i (Ty.Parens {left, ty, right}) =
+            Ty.Parens {left = left, ty = go i ty, right = right}
       val visitor: AstVisitor.datbind_visitor =
-        {mapTy = go, mapTycon = fn t => t, mapConbind = fn t => t}
+        {mapTy = go 0, mapTycon = fn t => t, mapConbind = fn t => t}
     in
       AstVisitor.goDatbind visitor datbind
     end
