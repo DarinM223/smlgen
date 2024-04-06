@@ -74,119 +74,164 @@ struct
     | collectSMLFiles build [] =
         List.map List.rev (List.rev build)
 
+  type opts =
+    { test: bool
+    , printOnly: bool
+    , recursiveModules: bool
+    , fileGen: string
+    , projGen: string
+    , maxSize: int
+    }
+  val defaultOpts: opts =
+    { test = false
+    , printOnly = true
+    , recursiveModules = false
+    , fileGen = ""
+    , projGen = ""
+    , maxSize = ! MutRecTy.maxTySize
+    }
+  fun updateOpts r =
+    let
+      fun from test printOnly recursiveModules fileGen projGen maxSize =
+        { test = test
+        , printOnly = printOnly
+        , recursiveModules = recursiveModules
+        , fileGen = fileGen
+        , projGen = projGen
+        , maxSize = maxSize
+        }
+      fun to ? {test, printOnly, recursiveModules, fileGen, projGen, maxSize} =
+        ?test printOnly recursiveModules fileGen projGen maxSize
+    in
+      FunctionalRecordUpdate.makeUpdate6 (from, from, to) r
+    end
+
+  val opts = let open Fold FunctionalRecordUpdate
+             in updateOpts defaultOpts set #recursiveModules true $
+             end
+
+  fun confirm (opts: opts) dec next =
+    if #test opts orelse #recursiveModules opts then
+      Utils.combineDecs dec (next ())
+    else if #printOnly opts then
+      ( print "\n"
+      ; print (TerminalColorString.toString {colors = true}
+          (Utils.prettyDec (next ())))
+      ; print "\n"
+      ; dec
+      )
+    else
+      ( print "\nConfirm [y/n]? "
+      ; case TextIO.inputLine TextIO.stdIn of
+          NONE => dec
+        | SOME line =>
+            let
+              val line = String.map Char.toUpper line
+            in
+              if line = "Y\n" then Utils.combineDecs dec (next ())
+              else if line = "N\n" then dec
+              else confirm opts dec next
+            end
+      )
+
+  fun goDecType (opts: opts) (args, dec, typbind) =
+    case typbindActions args typbind of
+      SOME action =>
+        ( print "Types: "
+        ; printDecTypes dec
+        ; confirm opts dec (fn () => #genTypebind action typbind)
+        )
+    | NONE => dec
+
+  type args = (string list * Utils.gen) list
+
+  fun visitor (opts: opts) (args: args) : args AstVisitor.visitor =
+    { state = args
+    , goDecType = goDecType opts
+    , goDecReplicateDatatype = fn (args, dec, left, right) =>
+        let val typbind = BuildAst.replicateDatatypeToTypbind left right
+        in goDecType opts (args, dec, typbind)
+        end
+    , goDecDatatype =
+        fn (args, dec, datbind, withtypee: AstVisitor.withtypee) =>
+          let
+            val actions1 = datbindActions args datbind
+            val actions2 = Option.join
+              (Option.map (typbindActions args o #typbind) withtypee)
+            val actions =
+              case actions1 of
+                SOME action => SOME action
+              | NONE => actions2
+          in
+            case actions of
+              SOME action =>
+                ( print "Types: "
+                ; printDecTypes dec
+                ; confirm opts dec (fn () =>
+                    #genDatabind action datbind (Option.map #typbind withtypee))
+                )
+            | NONE => dec
+          end
+    , onStructure = fn strid => filterToken (Token.toString strid)
+    , onFunctor = fn funid => filterToken (Token.toString funid)
+    }
+
+  fun gen (opts: opts) (args: args) (Ast.Ast topdecs : Ast.t) =
+    Ast.Ast
+      (Seq.map
+         (fn {topdec, semicolon} =>
+            { topdec = AstVisitor.goTopDec (visitor opts args) topdec
+            , semicolon = semicolon
+            }) topdecs)
+
+  fun doSML (opts: opts) (filepath: string, args: string list) =
+    let
+      val args: args = List.map parseArg args
+      val fp = FilePath.fromUnixPath filepath
+      val hfp = FilePath.toHostPath
+        (if #test opts then
+           FilePath.fromUnixPath (filepath ^ ".test")
+         else if #recursiveModules opts then
+           Utils.mapBasename (Utils.mapBase (fn base => base ^ ".rec")) fp
+         else
+           fp)
+      val source = Source.loadFromFile fp
+      val allTokens = Lexer.tokens allows source
+      val result = Parser.parse allows allTokens
+    in
+      case result of
+        Parser.Ast ast =>
+          let
+            val (ast, substTable) =
+              if #recursiveModules opts then RecMod.gen ast
+              else (ast, RecMod.emptySubstTable ())
+            val args = RecMod.substArgs substTable args
+            val ast = gen opts args ast
+            val prettyAst = fn colors =>
+              TerminalColorString.toString {colors = colors} (Utils.pretty ast)
+          in
+            if #printOnly opts then
+              if #recursiveModules opts then
+                (print (prettyAst true); print "\n")
+              else
+                ()
+            else
+              TextIO.output (TextIO.openOut hfp, prettyAst false)
+          end
+      | _ => raise Fail "Just comments"
+    end
+
+
   fun main _ =
     let
-      val test = CommandLineArgs.parseFlag "test"
-      val printOnly = CommandLineArgs.parseFlag "print"
-      val recursiveModules = CommandLineArgs.parseFlag "recurmod"
-      val fileGen = CommandLineArgs.parseString "gen" ""
-      val projGen = CommandLineArgs.parseString "proj" ""
-      val maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
-
-      fun confirm dec next =
-        if test orelse recursiveModules then
-          Utils.combineDecs dec (next ())
-        else if printOnly then
-          ( print "\n"
-          ; print (TerminalColorString.toString {colors = true}
-              (Utils.prettyDec (next ())))
-          ; print "\n"
-          ; dec
-          )
-        else
-          ( print "\nConfirm [y/n]? "
-          ; case TextIO.inputLine TextIO.stdIn of
-              NONE => dec
-            | SOME line =>
-                let
-                  val line = String.map Char.toUpper line
-                in
-                  if line = "Y\n" then Utils.combineDecs dec (next ())
-                  else if line = "N\n" then dec
-                  else confirm dec next
-                end
-          )
-      fun goDecType (args, dec, typbind) =
-        case typbindActions args typbind of
-          SOME action =>
-            ( print "Types: "
-            ; printDecTypes dec
-            ; confirm dec (fn () => #genTypebind action typbind)
-            )
-        | NONE => dec
-      fun visitor args =
-        { state = args
-        , goDecType = goDecType
-        , goDecReplicateDatatype = fn (args, dec, left, right) =>
-            let val typbind = BuildAst.replicateDatatypeToTypbind left right
-            in goDecType (args, dec, typbind)
-            end
-        , goDecDatatype =
-            fn (args, dec, datbind, withtypee: AstVisitor.withtypee) =>
-              let
-                val actions1 = datbindActions args datbind
-                val actions2 = Option.join
-                  (Option.map (typbindActions args o #typbind) withtypee)
-                val actions =
-                  case actions1 of
-                    SOME action => SOME action
-                  | NONE => actions2
-              in
-                case actions of
-                  SOME action =>
-                    ( print "Types: "
-                    ; printDecTypes dec
-                    ; confirm dec (fn () =>
-                        #genDatabind action datbind
-                          (Option.map #typbind withtypee))
-                    )
-                | NONE => dec
-              end
-        , onStructure = fn strid => filterToken (Token.toString strid)
-        , onFunctor = fn funid => filterToken (Token.toString funid)
+      val opts as {maxSize, fileGen, projGen, ...} =
+        { test = CommandLineArgs.parseFlag "test"
+        , printOnly = CommandLineArgs.parseFlag "print"
+        , recursiveModules = CommandLineArgs.parseFlag "recurmod"
+        , fileGen = CommandLineArgs.parseString "gen" ""
+        , projGen = CommandLineArgs.parseString "proj" ""
+        , maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
         }
-      fun gen args (Ast.Ast topdecs : Ast.t) =
-        Ast.Ast
-          (Seq.map
-             (fn {topdec, semicolon} =>
-                { topdec = AstVisitor.goTopDec (visitor args) topdec
-                , semicolon = semicolon
-                }) topdecs)
-
-      fun doSML (filepath, args) =
-        let
-          val fp = FilePath.fromUnixPath filepath
-          val hfp = FilePath.toHostPath
-            (if test then
-               FilePath.fromUnixPath (filepath ^ ".test")
-             else if recursiveModules then
-               Utils.mapBasename (Utils.mapBase (fn base => base ^ ".rec")) fp
-             else
-               fp)
-          val source = Source.loadFromFile fp
-          val allTokens = Lexer.tokens allows source
-          val result = Parser.parse allows allTokens
-        in
-          case result of
-            Parser.Ast ast =>
-              let
-                val (ast, substTable) =
-                  if recursiveModules then RecMod.gen ast
-                  else (ast, RecMod.emptySubstTable ())
-                val args = RecMod.substArgs substTable args
-                val ast = gen args ast
-                val prettyAst = fn colors =>
-                  TerminalColorString.toString {colors = colors}
-                    (Utils.pretty ast)
-              in
-                if printOnly then
-                  if recursiveModules then (print (prettyAst true); print "\n")
-                  else ()
-                else
-                  TextIO.output (TextIO.openOut hfp, prettyAst false)
-              end
-          | _ => raise Fail "Just comments"
-        end
 
       val () =
         if maxSize <> ! MutRecTy.maxTySize then
@@ -223,8 +268,7 @@ struct
       case CommandLineArgs.positional () of
         [] => ()
       | args =>
-          List.app
-            (fn file :: args => doSML (file, List.map parseArg args) | _ => ())
+          List.app (fn file :: args => doSML opts (file, args) | _ => ())
             (collectSMLFiles [] args);
       OS.Process.success
     end
