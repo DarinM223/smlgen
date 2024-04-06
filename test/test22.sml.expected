@@ -1,0 +1,10 @@
+structure Component1 =
+struct
+  datatype foo =
+    Foo of {value: {opt1: foo option, opt2: (bar * foo) option} option}
+  and bar =
+    Bar of bar * foo
+end
+structure Foo = struct datatype foo = datatype Component1.foo end
+
+structure Bar = struct datatype bar = datatype Component1.bar end

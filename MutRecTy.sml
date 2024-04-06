@@ -128,6 +128,7 @@ struct
 
   exception RecursionLimit
   val maxTySize = ref 100
+  val maxTySizeErrorMsg = "Max type size limit exceeded\n"
 
   fun traverseTy
     (env as Env {c, tyTokToId, tyData, tyToFix, fixToTy, ...}, tycon, substMap) =
@@ -396,8 +397,7 @@ struct
             in
               genRecursive (env, tycons, tys, vars)
             end
-            handle RecursionLimit =>
-              (print "Max type size limit exceeded\n"; DecEmpty)
+            handle RecursionLimit => (print maxTySizeErrorMsg; DecEmpty)
     in
       multDec (List.map handleComponent (List.rev scc))
     end

@@ -3,6 +3,7 @@ sig
   type env
 
   datatype type_data = Databind of BuildAst.constr list | Typebind of Ast.Ty.ty
+  exception RecursionLimit
 
   val mkEnv: unit -> env
   val envWithVars: Token.token list -> env -> env
@@ -32,6 +33,7 @@ sig
     -> Ast.Exp.dec list
 
   val maxTySize: int ref
+  val maxTySizeErrorMsg: string
   val genDatabindHelper:
     (env * Token.token * Token.token list * type_data -> Ast.Exp.dec)
     * (env * Token.token list * Ast.Ty.ty list * Token.token list -> Ast.Exp.dec)
