@@ -10,6 +10,7 @@ local
   end
   Fold.sml
   FunctionalRecordUpdate.sml
+  Options.sml
   BuildAst.sig
   BuildAst.sml
   AstVisitor.sml

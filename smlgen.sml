@@ -74,43 +74,8 @@ struct
     | collectSMLFiles build [] =
         List.map List.rev (List.rev build)
 
-  type opts =
-    { test: bool
-    , printOnly: bool
-    , recursiveModules: bool
-    , fileGen: string
-    , projGen: string
-    , maxSize: int
-    }
-  val defaultOpts: opts =
-    { test = false
-    , printOnly = true
-    , recursiveModules = false
-    , fileGen = ""
-    , projGen = ""
-    , maxSize = ! MutRecTy.maxTySize
-    }
-  fun updateOpts r =
-    let
-      fun from test printOnly recursiveModules fileGen projGen maxSize =
-        { test = test
-        , printOnly = printOnly
-        , recursiveModules = recursiveModules
-        , fileGen = fileGen
-        , projGen = projGen
-        , maxSize = maxSize
-        }
-      fun to ? {test, printOnly, recursiveModules, fileGen, projGen, maxSize} =
-        ?test printOnly recursiveModules fileGen projGen maxSize
-    in
-      FunctionalRecordUpdate.makeUpdate6 (from, from, to) r
-    end
 
-  val opts = let open Fold FunctionalRecordUpdate
-             in updateOpts defaultOpts set #recursiveModules true $
-             end
-
-  fun confirm (opts: opts) dec next =
+  fun confirm (opts: Options.opts) dec next =
     if #test opts orelse #recursiveModules opts then
       Utils.combineDecs dec (next ())
     else if #printOnly opts then
@@ -134,7 +99,7 @@ struct
             end
       )
 
-  fun goDecType (opts: opts) (args, dec, typbind) =
+  fun goDecType (opts: Options.opts) (args, dec, typbind) =
     case typbindActions args typbind of
       SOME action =>
         ( print "Types: "
@@ -145,7 +110,7 @@ struct
 
   type args = (string list * Utils.gen) list
 
-  fun visitor (opts: opts) (args: args) : args AstVisitor.visitor =
+  fun visitor (opts: Options.opts) (args: args) : args AstVisitor.visitor =
     { state = args
     , goDecType = goDecType opts
     , goDecReplicateDatatype = fn (args, dec, left, right) =>
@@ -176,7 +141,7 @@ struct
     , onFunctor = fn funid => filterToken (Token.toString funid)
     }
 
-  fun gen (opts: opts) (args: args) (Ast.Ast topdecs : Ast.t) =
+  fun gen (opts: Options.opts) (args: args) (Ast.Ast topdecs : Ast.t) =
     Ast.Ast
       (Seq.map
          (fn {topdec, semicolon} =>
@@ -184,7 +149,7 @@ struct
             , semicolon = semicolon
             }) topdecs)
 
-  fun doSML (opts: opts) (filepath: string, args: string list) =
+  fun doSML (opts: Options.opts) (filepath: string, args: string list) =
     let
       val args: args = List.map parseArg args
       val fp = FilePath.fromUnixPath filepath
@@ -230,13 +195,13 @@ struct
         , recursiveModules = CommandLineArgs.parseFlag "recurmod"
         , fileGen = CommandLineArgs.parseString "gen" ""
         , projGen = CommandLineArgs.parseString "proj" ""
-        , maxSize = CommandLineArgs.parseInt "maxsize" (! MutRecTy.maxTySize)
+        , maxSize = CommandLineArgs.parseInt "maxsize" (! Options.maxTySize)
         }
 
       val () =
-        if maxSize <> ! MutRecTy.maxTySize then
+        if maxSize <> ! Options.maxTySize then
           ( print ("Setting max type size to: " ^ Int.toString maxSize ^ "\n")
-          ; MutRecTy.maxTySize := maxSize
+          ; Options.maxTySize := maxSize
           )
         else
           ()

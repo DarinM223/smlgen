@@ -66,7 +66,10 @@ fun useProject root' file =
     OS.FileSys.chDir root
   end;
 (* Uncomment this and put library files in here to prevent reloading them each time. *)
+(*
 PolyML.SaveState.loadState "save" handle _ => (
+PolyML.SaveState.saveState "save" );
+*)
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-format-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array.sml";
@@ -239,9 +242,9 @@ use "smlfmt/src/prettier-print/PrettierStrUtil.sml";
 use "smlfmt/src/prettier-print/PrettierStr.sml";
 use "smlfmt/src/prettier-print/PrettierFun.sml";
 use "smlfmt/src/prettier-print/PrettierPrintAst.sml";
-PolyML.SaveState.saveState "save" );
 use "Fold.sml";
 use "FunctionalRecordUpdate.sml";
+use "Options.sml";
 use "BuildAst.sig";
 use "BuildAst.sml";
 use "AstVisitor.sml";

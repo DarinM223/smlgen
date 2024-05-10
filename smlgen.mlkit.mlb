@@ -62,6 +62,7 @@ smlfmt/src/prettier-print/PrettierFun.sml
 smlfmt/src/prettier-print/PrettierPrintAst.sml
 Fold.sml
 FunctionalRecordUpdate.sml
+Options.sml
 BuildAst.sig
 BuildAst.sml
 AstVisitor.sml

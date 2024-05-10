@@ -136,8 +136,8 @@ struct
                     rewriteTy (AtomTable.lookup typenameToTypbind atom) ty
                 in
                   if
-                    Utils.tySize ty > ! MutRecTy.maxTySize
-                    orelse i > ! MutRecTy.maxTySize
+                    Utils.tySize ty > ! Options.maxTySize
+                    orelse i > ! Options.maxTySize
                   then
                     ( print MutRecTy.maxTySizeErrorMsg
                     ; raise MutRecTy.RecursionLimit
