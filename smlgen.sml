@@ -189,19 +189,31 @@ struct
 
   fun main _ =
     let
-      val opts as {maxSize, fileGen, projGen, ...} =
+      val opts as {maxSize, defaultTableSize, fileGen, projGen, ...} =
         { test = CommandLineArgs.parseFlag "test"
         , printOnly = CommandLineArgs.parseFlag "print"
         , recursiveModules = CommandLineArgs.parseFlag "recurmod"
         , fileGen = CommandLineArgs.parseString "gen" ""
         , projGen = CommandLineArgs.parseString "proj" ""
         , maxSize = CommandLineArgs.parseInt "maxsize" (! Options.maxTySize)
+        , defaultTableSize =
+            CommandLineArgs.parseInt "tablesize" (! Options.defaultTableSize)
         }
 
       val () =
         if maxSize <> ! Options.maxTySize then
           ( print ("Setting max type size to: " ^ Int.toString maxSize ^ "\n")
           ; Options.maxTySize := maxSize
+          )
+        else
+          ()
+
+      val () =
+        if defaultTableSize <> ! Options.defaultTableSize then
+          ( print
+              ("Setting default table size to: " ^ Int.toString defaultTableSize
+               ^ "\n")
+          ; Options.defaultTableSize := defaultTableSize
           )
         else
           ()

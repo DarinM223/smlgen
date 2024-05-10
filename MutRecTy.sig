@@ -5,7 +5,7 @@ sig
   datatype type_data = Databind of BuildAst.constr list | Typebind of Ast.Ty.ty
   exception RecursionLimit
 
-  val mkEnv: unit -> env
+  val mkEnv: int -> env
   val envWithVars: Token.token list -> env -> env
 
   val buildSubstMap: env -> string -> Ast.Ty.ty list -> Ast.Ty.ty AtomMap.map

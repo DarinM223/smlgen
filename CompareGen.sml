@@ -272,7 +272,7 @@ struct
 
   fun genTypebind ({elems, ...}: typbind) =
     let
-      val env = Env.empty (mkEnv ())
+      val env = Env.empty (mkEnv (! Options.defaultTableSize))
       val decs =
         List.map
           (fn {ty, tycon, tyvars, ...} =>
@@ -312,7 +312,7 @@ struct
       val env as Env {env = env', ...} = Env.empty env
       val varExps = List.map Ty.Var vars
       val dups: IntRedBlackSet.set AtomTable.hash_table =
-        AtomTable.mkTable (100, LibBase.NotFound)
+        AtomTable.mkTable (List.length tycons, LibBase.NotFound)
       val generatorDecs =
         List.map
           (fn (tycon, ty) =>

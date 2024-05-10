@@ -72,14 +72,14 @@ struct
       go (0, l)
     end
 
-  fun mkEnv () =
+  fun mkEnv tableSize =
     Env
-      { tyToFix = AtomTable.mkTable (100, LibBase.NotFound)
-      , tyToArgs = AtomTable.mkTable (100, LibBase.NotFound)
-      , fixToTy = AtomTable.mkTable (100, LibBase.NotFound)
+      { tyToFix = AtomTable.mkTable (tableSize, LibBase.NotFound)
+      , tyToArgs = AtomTable.mkTable (tableSize, LibBase.NotFound)
+      , fixToTy = AtomTable.mkTable (tableSize, LibBase.NotFound)
       , vars = []
-      , tyTokToId = AtomTable.mkTable (100, LibBase.NotFound)
-      , tyData = IntHashTable.mkTable (100, LibBase.NotFound)
+      , tyTokToId = AtomTable.mkTable (tableSize, LibBase.NotFound)
+      , tyData = IntHashTable.mkTable (tableSize, LibBase.NotFound)
       , c = ref 0
       }
 
@@ -293,9 +293,10 @@ struct
           (fn {tycon, tyvars, elems, ...} =>
              (stripToken tycon, tyvars, Seq.toList elems)) (Seq.toList elems)
       val c = ref 0
-      val env as Env {tyData, tyTokToId, ...} = mkEnv ()
-      val tyLinks: IntListSet.set IntHashTable.hash_table =
-        IntHashTable.mkTable (100, LibBase.NotFound)
+      val env as Env {tyData, tyTokToId, ...} =
+        mkEnv (! Options.defaultTableSize)
+      val tyLinks: IntListSet.set IntHashTable.hash_table = IntHashTable.mkTable
+        (List.length tys + Seq.length elems, LibBase.NotFound)
       fun addLink i j =
         let val data = IntHashTable.lookup tyLinks i
         in IntHashTable.insert tyLinks (i, IntListSet.add (data, j))

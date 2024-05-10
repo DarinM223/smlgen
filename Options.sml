@@ -1,6 +1,7 @@
 structure Options =
 struct
   val maxTySize = ref 100
+  val defaultTableSize = ref 100
 
   type opts =
     { test: bool
@@ -9,7 +10,34 @@ struct
     , fileGen: string
     , projGen: string
     , maxSize: int
+    , defaultTableSize: int
     }
+  fun updateOpts r =
+    let
+      fun from test printOnly recursiveModules fileGen projGen maxSize
+        defaultTableSize =
+        { test = test
+        , printOnly = printOnly
+        , recursiveModules = recursiveModules
+        , fileGen = fileGen
+        , projGen = projGen
+        , maxSize = maxSize
+        , defaultTableSize = defaultTableSize
+        }
+      fun to ?
+        { test
+        , printOnly
+        , recursiveModules
+        , fileGen
+        , projGen
+        , maxSize
+        , defaultTableSize
+        } =
+        ?test printOnly recursiveModules fileGen projGen maxSize
+          defaultTableSize
+    in
+      FunctionalRecordUpdate.makeUpdate7 (from, from, to) r
+    end
   val defaultOpts: opts =
     { test = false
     , printOnly = true
@@ -17,22 +45,8 @@ struct
     , fileGen = ""
     , projGen = ""
     , maxSize = !maxTySize
+    , defaultTableSize = !defaultTableSize
     }
-  fun updateOpts r =
-    let
-      fun from test printOnly recursiveModules fileGen projGen maxSize =
-        { test = test
-        , printOnly = printOnly
-        , recursiveModules = recursiveModules
-        , fileGen = fileGen
-        , projGen = projGen
-        , maxSize = maxSize
-        }
-      fun to ? {test, printOnly, recursiveModules, fileGen, projGen, maxSize} =
-        ?test printOnly recursiveModules fileGen projGen maxSize
-    in
-      FunctionalRecordUpdate.makeUpdate6 (from, from, to) r
-    end
 
   val opts = let open Fold FunctionalRecordUpdate
              in updateOpts defaultOpts set #recursiveModules true $

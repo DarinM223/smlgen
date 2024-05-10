@@ -7,11 +7,12 @@ struct
       , options: bool AtomTable.hash_table
       , env: MutRecTy.env
       }
+  val optionsSize = 20
   fun empty env =
     Env
       { c = ref 0
       , vars = ref []
-      , options = AtomTable.mkTable (20, LibBase.NotFound)
+      , options = AtomTable.mkTable (optionsSize, LibBase.NotFound)
       , env = env
       }
   fun updateT r =

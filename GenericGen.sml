@@ -198,7 +198,7 @@ struct
           (fn {tycon, ty, tyvars, ...} =>
              let
                val tyvars = syntaxSeqToList tyvars
-               val env = envWithVars tyvars (mkEnv ())
+               val env = envWithVars tyvars (mkEnv (! Options.defaultTableSize))
              in
                valDec (Pat.Const tycon)
                  (tyVarFnExp tyvars (singleLetExp genericDec (genTy env ty)))
@@ -248,7 +248,7 @@ struct
         | _ =>
             let
               val dups: IntRedBlackSet.set AtomTable.hash_table =
-                AtomTable.mkTable (100, LibBase.NotFound)
+                AtomTable.mkTable (List.length tycons, LibBase.NotFound)
               val decs =
                 List.map
                   (fn (tycon, ty) =>

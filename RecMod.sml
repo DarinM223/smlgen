@@ -48,9 +48,9 @@ struct
   fun run (Ast.Ast topdecs : Ast.t) =
     let
       val typenameToDatbind: (int * Ast.Exp.datbind) AtomTable.hash_table =
-        AtomTable.mkTable (20, LibBase.NotFound)
+        AtomTable.mkTable (! Options.defaultTableSize, LibBase.NotFound)
       val typenameToTypbind: Ast.Exp.typbind AtomTable.hash_table =
-        AtomTable.mkTable (20, LibBase.NotFound)
+        AtomTable.mkTable (! Options.defaultTableSize, LibBase.NotFound)
     in
       Seq.map
         (fn {topdec, semicolon} =>
@@ -71,7 +71,8 @@ structure RecMod :> RECURSIVE_MODULES =
 struct
   type subst_table = string AtomTable.hash_table
 
-  val emptySubstTable = fn () => AtomTable.mkTable (20, LibBase.NotFound)
+  val emptySubstTable = fn () =>
+    AtomTable.mkTable (! Options.defaultTableSize, LibBase.NotFound)
 
   structure AtomSCC =
     GraphSCCFn (struct type ord_key = Atom.atom val compare = Atom.compare end)
@@ -216,9 +217,9 @@ struct
   fun countTypesAndConstructors (component: Ast.Exp.datbind list) =
     let
       val typenameCount: int AtomTable.hash_table =
-        AtomTable.mkTable (20, LibBase.NotFound)
+        AtomTable.mkTable (! Options.defaultTableSize, LibBase.NotFound)
       val constrCount: int AtomTable.hash_table =
-        AtomTable.mkTable (20, LibBase.NotFound)
+        AtomTable.mkTable (! Options.defaultTableSize, LibBase.NotFound)
       fun incr (table, atom) =
         AtomTable.insert table
           (atom, AtomTable.lookup table atom + 1 handle LibBase.NotFound => 1)
@@ -248,9 +249,9 @@ struct
     (component: (string * int * Ast.Exp.datbind) list) =
     let
       val typenameRename: string AtomTable.hash_table =
-        AtomTable.mkTable (20, LibBase.NotFound)
+        AtomTable.mkTable (! Options.defaultTableSize, LibBase.NotFound)
       val constrRename: string AtomTable.hash_table =
-        AtomTable.mkTable (20, LibBase.NotFound)
+        AtomTable.mkTable (! Options.defaultTableSize, LibBase.NotFound)
     in
       List.app
         (fn (typename, _, {elems, ...}) =>
@@ -497,8 +498,9 @@ struct
         end
       val components: (string * int * Ast.Exp.datbind) list list =
         List.map (removeDuplicateDatbinds o List.map tyToData) components
+      val componentIdsSize = foldl op+ 0 (map length components)
       val idToRenamedDec: Ast.Exp.dec IntHashTable.hash_table =
-        IntHashTable.mkTable (20, LibBase.NotFound)
+        IntHashTable.mkTable (componentIdsSize, LibBase.NotFound)
       val globalTypenameTable: subst_table = emptySubstTable ()
       val prependDecs: Ast.topdec list = List.rev (handleComponents
         { idToRenamedDec = idToRenamedDec
