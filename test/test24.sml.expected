@@ -1,0 +1,341 @@
+type foo =
+  { a: string
+  , b: int
+  , c: real
+  , d: char
+  , e: word
+  , f: String.string
+  , g: String.char
+  , h: Int.int
+  , i: Int32.int
+  , j: Int64.int
+  , k: LargeInt.int
+  , l: FixedInt.int
+  , m: Position.int
+  , n: IntInf.int
+  , o: Real.real
+  , p: LargeReal.real
+  , q: Char.char
+  , r: Word.word
+  , s: Word8.word
+  , t: Word32.word
+  , u: Word64.word
+  , v: LargeWord.word
+  , w: Date.date
+  , x: CharVectorSlice.slice
+  , y: Substring.substring
+  , z: Time.time
+  }
+val showFoo =
+  fn { a = t0
+     , b = t1
+     , c = t2
+     , d = t3
+     , e = t4
+     , f = t5
+     , g = t6
+     , h = t7
+     , i = t8
+     , j = t9
+     , k = t10
+     , l = t11
+     , m = t12
+     , n = t13
+     , o = t14
+     , p = t15
+     , q = t16
+     , r = t17
+     , s = t18
+     , t = t19
+     , u = t20
+     , v = t21
+     , w = t22
+     , x = t23
+     , y = t24
+     , z = t25
+     } =>
+    "{"
+    ^
+    String.concatWith ", "
+      [ "a = " ^ "\"" ^ t0 ^ "\""
+      , "b = " ^ Int.toString t1
+      , "c = " ^ Real.toString t2
+      , "d = " ^ "#\"" ^ Char.toString t3 ^ "\""
+      , "e = " ^ Word.toString t4
+      , "f = " ^ "\"" ^ t5 ^ "\""
+      , "g = " ^ "#\"" ^ Char.toString t6 ^ "\""
+      , "h = " ^ Int.toString t7
+      , "i = " ^ Int32.toString t8
+      , "j = " ^ Int64.toString t9
+      , "k = " ^ LargeInt.toString t10
+      , "l = " ^ FixedInt.toString t11
+      , "m = " ^ Position.toString t12
+      , "n = " ^ IntInf.toString t13
+      , "o = " ^ Real.toString t14
+      , "p = " ^ LargeReal.toString t15
+      , "q = " ^ "#\"" ^ Char.toString t16 ^ "\""
+      , "r = " ^ Word.toString t17
+      , "s = " ^ Word8.toString t18
+      , "t = " ^ Word32.toString t19
+      , "u = " ^ Word64.toString t20
+      , "v = " ^ LargeWord.toString t21
+      , "w = " ^ Date.toString t22
+      , "x = " ^ Substring.string t23
+      , "y = " ^ Substring.string t24
+      , "z = " ^ Time.toString t25
+      ] ^ "}"
+val compareFoo =
+  fn ( { a = t0
+       , b = t1
+       , c = t2
+       , d = t3
+       , e = t4
+       , f = t5
+       , g = t6
+       , h = t7
+       , i = t8
+       , j = t9
+       , k = t10
+       , l = t11
+       , m = t12
+       , n = t13
+       , o = t14
+       , p = t15
+       , q = t16
+       , r = t17
+       , s = t18
+       , t = t19
+       , u = t20
+       , v = t21
+       , w = t22
+       , x = t23
+       , y = t24
+       , z = t25
+       }
+     , { a = t26
+       , b = t27
+       , c = t28
+       , d = t29
+       , e = t30
+       , f = t31
+       , g = t32
+       , h = t33
+       , i = t34
+       , j = t35
+       , k = t36
+       , l = t37
+       , m = t38
+       , n = t39
+       , o = t40
+       , p = t41
+       , q = t42
+       , r = t43
+       , s = t44
+       , t = t45
+       , u = t46
+       , v = t47
+       , w = t48
+       , x = t49
+       , y = t50
+       , z = t51
+       }
+     ) =>
+    (case String.compare (t0, t26) of
+       EQUAL =>
+         (case Int.compare (t1, t27) of
+            EQUAL =>
+              (case Real.compare (t2, t28) of
+                 EQUAL =>
+                   (case Char.compare (t3, t29) of
+                      EQUAL =>
+                        (case Word.compare (t4, t30) of
+                           EQUAL =>
+                             (case String.compare (t5, t31) of
+                                EQUAL =>
+                                  (case Char.compare (t6, t32) of
+                                     EQUAL =>
+                                       (case Int.compare (t7, t33) of
+                                          EQUAL =>
+                                            (case Int32.compare (t8, t34) of
+                                               EQUAL =>
+                                                 (case Int64.compare (t9, t35) of
+                                                    EQUAL =>
+                                                      (case
+                                                         LargeInt.compare
+                                                           (t10, t36)
+                                                       of
+                                                         EQUAL =>
+                                                           (case
+                                                              FixedInt.compare
+                                                                (t11, t37)
+                                                            of
+                                                              EQUAL =>
+                                                                (case
+                                                                   Position.compare
+                                                                     (t12, t38)
+                                                                 of
+                                                                   EQUAL =>
+                                                                     (case
+                                                                        IntInf.compare
+                                                                          ( t13
+                                                                          , t39
+                                                                          )
+                                                                      of
+                                                                        EQUAL =>
+                                                                          (case
+                                                                             Real.compare
+                                                                               ( t14
+                                                                               , t40
+                                                                               )
+                                                                           of
+                                                                             EQUAL =>
+                                                                               (case
+                                                                                  LargeReal.compare
+                                                                                    ( t15
+                                                                                    , t41
+                                                                                    )
+                                                                                of
+                                                                                  EQUAL =>
+                                                                                    (case
+                                                                                       Char.compare
+                                                                                         ( t16
+                                                                                         , t42
+                                                                                         )
+                                                                                     of
+                                                                                       EQUAL =>
+                                                                                         (case
+                                                                                            Word.compare
+                                                                                              ( t17
+                                                                                              , t43
+                                                                                              )
+                                                                                          of
+                                                                                            EQUAL =>
+                                                                                              (case
+                                                                                                 Word8.compare
+                                                                                                   ( t18
+                                                                                                   , t44
+                                                                                                   )
+                                                                                               of
+                                                                                                 EQUAL =>
+                                                                                                   (case
+                                                                                                      Word32.compare
+                                                                                                        ( t19
+                                                                                                        , t45
+                                                                                                        )
+                                                                                                    of
+                                                                                                      EQUAL =>
+                                                                                                        (case
+                                                                                                           Word64.compare
+                                                                                                             ( t20
+                                                                                                             , t46
+                                                                                                             )
+                                                                                                         of
+                                                                                                           EQUAL =>
+                                                                                                             (case
+                                                                                                                LargeWord.compare
+                                                                                                                  ( t21
+                                                                                                                  , t47
+                                                                                                                  )
+                                                                                                              of
+                                                                                                                EQUAL =>
+                                                                                                                  (case
+                                                                                                                     Date.compare
+                                                                                                                       ( t22
+                                                                                                                       , t48
+                                                                                                                       )
+                                                                                                                   of
+                                                                                                                     EQUAL =>
+                                                                                                                       (case
+                                                                                                                          Substring.compare
+                                                                                                                            ( t23
+                                                                                                                            , t49
+                                                                                                                            )
+                                                                                                                        of
+                                                                                                                          EQUAL =>
+                                                                                                                            (case
+                                                                                                                               Substring.compare
+                                                                                                                                 ( t24
+                                                                                                                                 , t50
+                                                                                                                                 )
+                                                                                                                             of
+                                                                                                                               EQUAL =>
+                                                                                                                                 Time.compare
+                                                                                                                                   ( t25
+                                                                                                                                   , t51
+                                                                                                                                   )
+                                                                                                                             | ? =>
+                                                                                                                                 ?)
+                                                                                                                        | ? =>
+                                                                                                                            ?)
+                                                                                                                   | ? =>
+                                                                                                                       ?)
+                                                                                                              | ? =>
+                                                                                                                  ?)
+                                                                                                         | ? =>
+                                                                                                             ?)
+                                                                                                    | ? =>
+                                                                                                        ?)
+                                                                                               | ? =>
+                                                                                                   ?)
+                                                                                          | ? =>
+                                                                                              ?)
+                                                                                     | ? =>
+                                                                                         ?)
+                                                                                | ? =>
+                                                                                    ?)
+                                                                           | ? =>
+                                                                               ?)
+                                                                      | ? => ?)
+                                                                 | ? => ?)
+                                                            | ? => ?)
+                                                       | ? => ?)
+                                                  | ? => ?)
+                                             | ? => ?)
+                                        | ? => ?)
+                                   | ? => ?)
+                              | ? => ?)
+                         | ? => ?)
+                    | ? => ?)
+               | ? => ?)
+          | ? => ?)
+     | ? => ?)
+
+type bar = {a: Bool.bool Option.option, b: Char.char List.list}
+local
+  fun showOption f (SOME s) = "SOME " ^ f s
+    | showOption _ NONE = "NONE"
+in
+  val showBar = fn {a = t0, b = t1} =>
+    "{"
+    ^
+    String.concatWith ", "
+      [ "a = " ^ showOption Bool.toString t0
+      , "b = "
+        ^
+        "["
+        ^
+        String.concatWith ", "
+          (List.map (fn t0 => "#\"" ^ Char.toString t0 ^ "\"") t1) ^ "]"
+      ] ^ "}"
+end
+local
+  fun compareBool (false, true) = LESS
+    | compareBool (true, false) = GREATER
+    | compareBool (_, _) = EQUAL
+  fun compareList cmp (x :: xs, y :: ys) =
+        (case cmp (x, y) of
+           EQUAL => compareList cmp (xs, ys)
+         | ? => ?)
+    | compareList _ (_ :: _, []) = GREATER
+    | compareList _ ([], _ :: _) = LESS
+    | compareList _ _ = EQUAL
+  fun compareOption cmp (SOME x, SOME y) = cmp (x, y)
+    | compareOption _ (SOME _, NONE) = GREATER
+    | compareOption _ (NONE, SOME _) = LESS
+    | compareOption _ (NONE, NONE) = EQUAL
+in
+  val compareBar = fn ({a = t0, b = t1}, {a = t2, b = t3}) =>
+    (case compareOption compareBool (t0, t2) of
+       EQUAL => compareList Char.compare (t1, t3)
+     | ? => ?)
+end

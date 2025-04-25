@@ -154,31 +154,70 @@ struct
       (addCompareBool o addCompareList o addCompareOption) []
     end
 
-  fun tyCon _ e "string" [] =
-        appExp [Const (mkToken "String.compare"), e]
-    | tyCon _ e "int" [] =
-        appExp [Const (mkToken "Int.compare"), e]
-    | tyCon _ e "real" [] =
-        appExp [Const (mkToken "Real.compare"), e]
-    | tyCon _ e "char" [] =
-        appExp [Const (mkToken "Char.compare"), e]
-    | tyCon env e "bool" [] =
+  val rewrites =
+    [ ("string", "String.compare")
+    , ("int", "Int.compare")
+    , ("real", "Real.compare")
+    , ("char", "Char.compare")
+    , ("word", "Word.compare")
+    , ("String.string", "String.compare")
+    , ("String.char", "Char.compare")
+    , ("Int.int", "Int.compare")
+    , ("Int32.int", "Int32.compare")
+    , ("Int63.int", "Int63.compare")
+    , ("Int64.int", "Int64.compare")
+    , ("LargeInt.int", "LargeInt.compare")
+    , ("FixedInt.int", "FixedInt.compare")
+    , ("Position.int", "Position.compare")
+    , ("IntInf.int", "IntInf.compare")
+    , ("Real.real", "Real.compare")
+    , ("LargeReal.real", "LargeReal.compare")
+    , ("Char.char", "Char.compare")
+    , ("Word.word", "Word.compare")
+    , ("Word8.word", "Word8.compare")
+    , ("Word32.word", "Word32.compare")
+    , ("Word64.word", "Word64.compare")
+    , ("LargeWord.word", "LargeWord.compare")
+    , ("Date.date", "Date.compare")
+    , ("CharVectorSlice.slice", "Substring.compare")
+    , ("Substring.substring", "Substring.compare")
+    , ("WideCharVectorSlice.slice", "WideSubstring.compare")
+    , ("WideSubstring.substring", "WideSubstring.compare")
+    , ("Time.time", "Time.compare")
+    ]
+  val rewriteMap =
+    List.foldl
+      (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
+      AtomRedBlackMap.empty rewrites
+
+  fun tyCon env e "bool" [] =
         ( Env.setOption env ("bool", true)
         ; appExp [Const (mkToken "compareBool"), e]
         )
+    | tyCon env e "Bool.bool" [] =
+        tyCon env e "bool" []
     | tyCon env e "list" [a] =
         ( Env.setOption env ("list", true)
         ; appExp [Const (mkToken "compareList"), parensExp (tyExp' env a), e]
         )
+    | tyCon env e "List.list" [a] =
+        tyCon env e "list" [a]
     | tyCon env e "option" [a] =
         ( Env.setOption env ("option", true)
         ; appExp [Const (mkToken "compareOption"), parensExp (tyExp' env a), e]
         )
+    | tyCon env e "Option.option" [a] =
+        tyCon env e "option" [a]
     | tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
         let
+          val atom = Atom.atom s
           val con = Const
-            (if tyconIsGeneratedFix env' s then mkToken s
-             else mkCompare (mkToken s))
+            (if tyconIsGeneratedFix env' s then
+               mkToken s
+             else if AtomRedBlackMap.inDomain (rewriteMap, atom) then
+               mkToken (AtomRedBlackMap.lookup (rewriteMap, atom))
+             else
+               mkCompare (mkToken s))
           val constrExp =
             case args of
               [] => con

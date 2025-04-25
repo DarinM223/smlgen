@@ -40,20 +40,54 @@ struct
   fun additionalDecs env =
     if Env.getOption env "option" then [showOptionDec] else []
 
+  val rewrites =
+    [ ("int", "Int.toString")
+    , ("real", "Real.toString")
+    , ("word", "Word.toString")
+    , ("bool", "Bool.toString")
+    , ("Int.int", "Int.toString")
+    , ("Int32.int", "Int32.toString")
+    , ("Int63.int", "Int63.toString")
+    , ("Int64.int", "Int64.toString")
+    , ("LargeInt.int", "LargeInt.toString")
+    , ("FixedInt.int", "FixedInt.toString")
+    , ("Position.int", "Position.toString")
+    , ("IntInf.int", "IntInf.toString")
+    , ("Real.real", "Real.toString")
+    , ("LargeReal.real", "LargeReal.toString")
+    , ("Word.word", "Word.toString")
+    , ("Word8.word", "Word8.toString")
+    , ("Word32.word", "Word32.toString")
+    , ("Word64.word", "Word64.toString")
+    , ("LargeWord.word", "LargeWord.toString")
+    , ("Bool.bool", "Bool.toString")
+    , ("Date.date", "Date.toString")
+    , ("CharVectorSlice.slice", "Substring.string")
+    , ("Substring.substring", "Substring.string")
+    , ("WideCharVectorSlice.slice", "WideSubstring.string")
+    , ("WideSubstring.substring", "WideSubstring.string")
+    , ("Time.time", "Time.toString")
+    , ("IEEEReal.decimal_approx", "IEEEReal.toString")
+    ]
+  val rewriteMap =
+    List.foldl
+      (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
+      AtomRedBlackMap.empty rewrites
+
   fun tyCon _ v "string" [] =
         infixLExp concatTok [Const quotTok, Const v, Const quotTok]
-    | tyCon _ v "int" [] =
-        appExp [Const (mkToken "Int.toString"), Const v]
-    | tyCon _ v "real" [] =
-        appExp [Const (mkToken "Real.toString"), Const v]
+    | tyCon e v "String.string" [] =
+        tyCon e v "string" []
     | tyCon _ v "char" [] =
         infixLExp concatTok
           [ Const (mkToken "\"#\\\"\"")
           , appExp [Const (mkToken "Char.toString"), Const v]
           , Const (mkToken "\"\\\"\"")
           ]
-    | tyCon _ v "bool" [] =
-        appExp [Const (mkToken "Bool.toString"), Const v]
+    | tyCon e v "Char.char" [] =
+        tyCon e v "char" []
+    | tyCon e v "String.char" [] =
+        tyCon e v "char" []
     | tyCon env v "list" [a] =
         infixLExp concatTok
           [ Const openSquare
@@ -68,16 +102,25 @@ struct
               ]
           , Const closeSquare
           ]
+    | tyCon env v "List.list" [a] =
+        tyCon env v "list" [a]
     | tyCon env v "option" [a] =
         ( Env.setOption env ("option", true)
         ; appExp
             [Const (mkToken "showOption"), parensExp (tyExp' env a), Const v]
         )
+    | tyCon env v "Option.option" [a] =
+        tyCon env v "option" [a]
     | tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
         let
+          val atom = Atom.atom s
           val con = Const
-            (if tyconIsGeneratedFix env' s then mkToken s
-             else mkShow (mkToken s))
+            (if tyconIsGeneratedFix env' s then
+               mkToken s
+             else if AtomRedBlackMap.inDomain (rewriteMap, atom) then
+               mkToken (AtomRedBlackMap.lookup (rewriteMap, atom))
+             else
+               mkShow (mkToken s))
           val constrExp =
             case args of
               [] => con
