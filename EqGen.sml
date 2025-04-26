@@ -7,7 +7,7 @@ struct
 
   val mkEq = prependTokenOrDefault "==" "eq"
 
-  fun additionalDecs env = raise Fail "fuck"
+  fun additionalDecs env = []
 
   fun tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
     let
@@ -68,7 +68,24 @@ struct
     | tyExp _ (Ty.Arrow _) = raise Fail "Functions cannot be equal"
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
-  fun genConstrs (env, constrs: constr list) : Exp.exp = raise Fail "fuck"
+  fun genConstrs (env, constrs: constr list) : Exp.exp =
+    let
+      val env = Env.freshEnv env
+      val tups =
+        List.map
+          (fn {arg = SOME {ty, ...}, id, ...} =>
+             let
+               val (pat1, pat2) = destructTyPatTwice env ty
+             in
+               (destructTuplePat [conPat id pat1, conPat id pat2], tyExp env ty)
+             end
+            | {arg = NONE, id, ...} =>
+             (destructTuplePat [Pat.Const id, Pat.Const id], Const trueTok))
+          constrs
+      val tups = tups @ [(wildPat, Const falseTok)]
+    in
+      multFnExp tups
+    end
 
   fun genTypebind ({elems, ...}: typbind) =
     let
