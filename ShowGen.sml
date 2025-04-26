@@ -213,14 +213,8 @@ struct
              let
                val vars = syntaxSeqToList tyvars
                val env = Env.setSubEnv (Env.freshEnv env) (envWithVars vars)
-               val header =
-                 case vars of
-                   [] => (fn e => e)
-                 | _ =>
-                     singleFnExp (destructTuplePat
-                       (List.map (Pat.Const o mkTyVar) vars))
              in
-               valDec (Pat.Const (mkShow tycon)) (header (tyExp' env ty))
+               valDec (Pat.Const (mkShow tycon)) (header vars (tyExp' env ty))
              end) (Seq.toList elems)
     in
       localDecs (additionalDecs env) (multDec decs)
@@ -229,11 +223,7 @@ struct
   fun genSimpleDatabind (env, ty, vars, Databind constrs) =
         let
           val env = Env.empty env
-          fun header exp =
-            case List.map (Pat.Const o mkTyVar) vars of
-              [] => exp
-            | vars => singleFnExp (destructTuplePat vars) exp
-          val dec = valDec (Pat.Const (mkShow ty)) (header
+          val dec = valDec (Pat.Const (mkShow ty)) (header vars
             (genConstrs (env, constrs)))
         in
           localDecs (additionalDecs env) dec

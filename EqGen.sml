@@ -3,9 +3,29 @@ struct
   open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
   val andalsoChainExp = infixLExp andalsoTok
+  val rewriteMap = AtomRedBlackMap.empty
+
+  val mkEq = prependTokenOrDefault "==" "eq"
+
+  fun additionalDecs env = raise Fail "fuck"
 
   fun tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
-    raise Fail "fuck"
+    let
+      val atom = Atom.atom s
+      val con = Const
+        (if tyconIsGeneratedFix env' s then
+           mkToken s
+         else if AtomRedBlackMap.inDomain (rewriteMap, atom) then
+           mkToken (AtomRedBlackMap.lookup (rewriteMap, atom))
+         else
+           mkEq (mkToken s))
+      val constrExp =
+        case args of
+          [] => con
+        | _ => appExp [con, tupleExp (List.map (tyExp' env) args)]
+    in
+      appExp [constrExp, e]
+    end
   and tyExp' env ty =
     let
       val env = Env.freshEnv env
@@ -48,10 +68,34 @@ struct
     | tyExp _ (Ty.Arrow _) = raise Fail "Functions cannot be equal"
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
-  fun genTypebind ({elems, ...}: typbind) = raise Fail "fuck"
+  fun genConstrs (env, constrs: constr list) : Exp.exp = raise Fail "fuck"
 
-  fun genSimpleDatabind (env, tyTok, vars, Databind constrs) = raise Fail "fuck"
-    | genSimpleDatabind (_, tyTok, vars, Typebind ty) = raise Fail "fuck"
+  fun genTypebind ({elems, ...}: typbind) =
+    let
+      val env = Env.empty (mkEnv (! Options.defaultTableSize))
+      val decs =
+        List.map
+          (fn {ty, tycon, tyvars, ...} =>
+             let
+               val vars = syntaxSeqToList tyvars
+               val env = Env.setSubEnv (Env.freshEnv env) (envWithVars vars)
+             in
+               valDec (Pat.Const (mkEq tycon)) (header vars (tyExp' env ty))
+             end) (Seq.toList elems)
+    in
+      localDecs (additionalDecs env) (multDec decs)
+    end
+
+  fun genSimpleDatabind (env, tyTok, vars, Databind constrs) =
+        let
+          val env = Env.empty env
+          val dec = valDec (Pat.Const (mkEq tyTok)) (header vars
+            (genConstrs (env, constrs)))
+        in
+          localDecs (additionalDecs env) dec
+        end
+    | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
+        genSingleTypebind genTypebind (tyTok, vars, ty)
 
   fun genRecursiveDatabind (env, tycons, tys, vars) = raise Fail "fuck"
 

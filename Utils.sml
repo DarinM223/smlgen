@@ -12,18 +12,25 @@ struct
     in mkToken (String.substring (var, 1, String.size var - 1) ^ "_")
     end
 
-  fun prependToken str t =
+  fun header vars =
+    case List.map (Pat.Const o mkTyVar) vars of
+      [] => (fn e => e)
+    | vars => singleFnExp (destructTuplePat vars)
+
+  fun prependTokenOrDefault def str t =
     let
       val (prefix, t) =
         (Substring.splitr (fn ch => ch <> #".") o Substring.full
          o Token.toString) t
       val prepended =
         case Substring.string t of
-          "t" => str
+          "t" => def
         | t => str ^ capitalize t
     in
       mkToken (Substring.string prefix ^ prepended)
     end
+  fun prependToken str t =
+    prependTokenOrDefault str str t
 
   fun sameTokens (t1, t2) =
     List.length t1 = List.length t2

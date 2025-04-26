@@ -2,6 +2,10 @@ signature UTILS =
 sig
   val capitalize: string -> string
   val mkTyVar: Token.t -> Token.t
+  (* Given a list of type variables, creates a function with the converted
+     type variables as a tuple argument enclosing the given body expression *)
+  val header: Token.token list -> Ast.Exp.exp -> Ast.Exp.exp
+  val prependTokenOrDefault: string -> string -> Token.token -> Token.token
   val prependToken: string -> Token.token -> Token.token
   val sameTokens: Token.token list * Token.token list -> bool
   val syntaxSeqToList: 'a Ast.SyntaxSeq.t -> 'a list
