@@ -25,6 +25,7 @@ struct
     | lookupGen #"u" = FruGen.gen
     | lookupGen #"s" = ShowGen.gen
     | lookupGen #"c" = CompareGen.gen
+    | lookupGen #"e" = EqGen.gen
     | lookupGen ch =
         raise Fail ("unknown lookup character: " ^ Char.toString ch)
 

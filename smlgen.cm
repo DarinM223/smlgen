@@ -23,6 +23,7 @@ Group is
   Env.sml
   ShowGen.sml
   CompareGen.sml
+  EqGen.sml
   FilesData.sml
   FilesGen.sml
   smlgen.sml

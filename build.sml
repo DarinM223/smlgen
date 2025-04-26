@@ -259,6 +259,7 @@ use "GenericGen.sml";
 use "Env.sml";
 use "ShowGen.sml";
 use "CompareGen.sml";
+use "EqGen.sml";
 use "FilesData.sml";
 use "FilesGen.sml";
 use "smlgen.sml";

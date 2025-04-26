@@ -4,21 +4,6 @@ struct
 
   val mkCompare = prependToken "compare"
 
-  fun tyPat (env as Env {vars, ...}) ty =
-    let
-      val pat1 = destructTyPat (Env.fresh env) ty
-      val vars1 = !vars before vars := []
-      val pat2 = destructTyPat (Env.fresh env) ty
-      val vars2 = !vars
-      fun interleave (build, x :: xs, y :: ys) =
-            interleave (x :: y :: build, xs, ys)
-        | interleave (_, _ :: _, _) = raise Fail "Lists are different sizes"
-        | interleave (_, _, _ :: _) = raise Fail "Lists are different sizes"
-        | interleave (build, [], []) = build
-    in
-      (vars := interleave ([], vars1, vars2); (pat1, pat2))
-    end
-
   val equalCmpTok = mkToken "EQUAL"
   val greaterCmpTok = mkToken "GREATER"
   val lessCmpTok = mkToken "LESS"
@@ -229,7 +214,7 @@ struct
     let
       val env = Env.freshEnv env
     in
-      case (tyPat env ty, tyExp env ty) of
+      case (destructTyPatTwice env ty, tyExp env ty) of
         ( (pat1 as Pat.Const a, pat2 as Pat.Const b)
         , exp as App {left, right = Tuple {elems, ...}, ...}
         ) =>
@@ -295,7 +280,7 @@ struct
                   case arg1 of
                     SOME {ty, ...} =>
                       let
-                        val (pat1, pat2) = tyPat env ty
+                        val (pat1, pat2) = destructTyPatTwice env ty
                       in
                         ( destructTuplePat [conPat id1 pat1, conPat id2 pat2]
                         , tyExp env ty
