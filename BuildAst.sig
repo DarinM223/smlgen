@@ -46,6 +46,7 @@ sig
   val localTok: Token.t
   val caseTok: Token.t
   val ofTok: Token.t
+  val andalsoTok: Token.t
 end
 
 signature BUILD_AST =
