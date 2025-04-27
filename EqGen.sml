@@ -94,10 +94,11 @@ struct
       @ arrayTypes "VectorSlice" ["elem", "vector"] []
     end
   val compareTypes =
-    ["Date.date", "Substring.substring", "WideSubstring.substring"]
-  val typeAlias =
-    [ ("CharVectorSlice.slice", "Substring.substring")
-    , ("WideCharVectorSlice.slice", "WideSubstring.substring")
+    [ ("Date.date", "Date.compare")
+    , ("Substring.substring", "Substring.compare")
+    , ("WideSubstring.substring", "WideSubstring.compare")
+    , ("CharVectorSlice.slice", "Substring.compare")
+    , ("WideCharVectorSlice.slice", "WideSubstring.compare")
     ]
   val rewrites =
     [ ("real", "Real.==")
@@ -107,12 +108,10 @@ struct
     ]
 
   val eqTypesSet = (AtomRedBlackSet.fromList o List.map Atom.atom) eqTypes
-  val compareTypesSet =
-    (AtomRedBlackSet.fromList o List.map Atom.atom) compareTypes
-  val typeAliasMap =
+  val compareTypesMap =
     List.foldl
       (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
-      AtomRedBlackMap.empty typeAlias
+      AtomRedBlackMap.empty compareTypes
   val rewriteMap =
     List.foldl
       (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
@@ -122,11 +121,6 @@ struct
 
   fun additionalDecs env = []
 
-  fun mkCompare t =
-    let val (prefix, _) = Utils.splitPrefixFromType t
-    in mkToken (prefix ^ "compare")
-    end
-
   fun tyCon env e1 e2 "list" [a] =
         ( Env.setOption env ("list", true)
         ; appExp
@@ -135,6 +129,8 @@ struct
             , tupleExp [e1, e2]
             ]
         )
+    | tyCon env e1 e2 "List.list" [a] =
+        tyCon env e1 e2 "list" [a]
     | tyCon env e1 e2 "option" [a] =
         ( Env.setOption env ("option", true)
         ; appExp
@@ -143,14 +139,11 @@ struct
             , tupleExp [e1, e2]
             ]
         )
+    | tyCon env e1 e2 "Option.option" [a] =
+        tyCon env e1 e2 "option" [a]
     | tyCon (env as Env {env = env', ...}) e1 e2 (s: string) (args: Ty.ty list) =
         let
           val atom = Atom.atom s
-          val (atom, s) =
-            let val s = AtomRedBlackMap.lookup (typeAliasMap, atom)
-            in (Atom.atom s, s)
-            end
-            handle LibBase.NotFound => (atom, s)
           val con = Const
             (if tyconIsGeneratedFix env' s then
                mkToken s
@@ -165,9 +158,13 @@ struct
         in
           if AtomRedBlackSet.member (eqTypesSet, atom) then
             infixLExp equalTok [e1, e2]
-          else if AtomRedBlackSet.member (compareTypesSet, atom) then
+          else if AtomRedBlackMap.inDomain (compareTypesMap, atom) then
             infixLExp equalTok
-              [ appExp [Const (mkCompare (mkToken s)), tupleExp [e1, e2]]
+              [ appExp
+                  [ Const (mkToken
+                      (AtomRedBlackMap.lookup (compareTypesMap, atom)))
+                  , tupleExp [e1, e2]
+                  ]
               , Const CompareGen.equalCmpTok
               ]
           else
