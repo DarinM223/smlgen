@@ -80,7 +80,9 @@ EOL
 mlton -stop f smlgen.mlb \
     | grep -v ".mlb" \
     | grep -v "/usr/local/lib/mlton/sml/basis/" \
+    | grep -v "/usr/lib/mlton/sml/basis/" \
     | grep -v "/usr/local/lib/mlton/targets/" \
+    | grep -v "/usr/lib/mlton/targets/" \
     | grep -v "^main.sml" \
     | while read line ; do \
       if [ -f "${line/%.mlton.sml/.polyml.sml}" ]; then \

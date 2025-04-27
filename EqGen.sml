@@ -3,12 +3,116 @@ struct
   open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
   val andalsoChainExp = infixLExp andalsoTok
-  val rewriteMap = AtomRedBlackMap.empty
+  val eqTypes =
+    let
+      val arrayLikeTypes =
+        ["Word8", "Char", "WideChar", "Bool", "Int", "Word", "Real"]
+      fun combineType prefix suffix =
+        List.map (fn typ => prefix ^ suffix ^ "." ^ typ)
+      fun arrayTypes suffix typesIfEq types =
+        List.concat
+          (List.map
+             (fn "Real" => combineType "Real" suffix types
+               | prefix => combineType prefix suffix (typesIfEq @ types))
+             arrayLikeTypes)
+    in
+      [ "string"
+      , "int"
+      , "char"
+      , "word"
+      , "bool"
+      , "order"
+      , "Array.array"
+      , "Array.vector"
+      , "Vector.vector"
+      , "Bool.bool"
+      , "Char.char"
+      , "Char.string"
+      , "Date.weekday"
+      , "Date.month"
+      , "General.unit"
+      , "General.order"
+      , "IEEEReal.real_order"
+      , "IEEEReal.float_class"
+      , "IEEEReal.rounding_mode"
+      , "IEEEReal.decimal_approx"
+      , "Int.int"
+      , "Int32.int"
+      , "Int63.int"
+      , "Int64.int"
+      , "LargeInt.int"
+      , "FixedInt.int"
+      , "Position.int"
+      , "IntInf.int"
+      , "IO.buffer_mode"
+      , "OS.syserror"
+      , "OS.FileSys.access_mode"
+      , "OS.FileSys.file_id"
+      , "OS.IO.iodesc"
+      , "OS.IO.iodesc_kind"
+      , "OS.IO.poll_desc"
+      , "BinPrimIO.array"
+      , "BinPrimIO.vector"
+      , "BinPrimIO.elem"
+      , "BinPrimIO.pos"
+      , "TextPrimIO.array"
+      , "TextPrimIO.vector"
+      , "TextPrimIO.elem"
+      , "TextPrimIO.pos"
+      , "WideTextPrimIO.array"
+      , "WideTextPrimIO.vector"
+      , "WideTextPrimIO.elem"
+      , "WideTextPrimIO.pos"
+      , "String.string"
+      , "String.char"
+      , "WideString.string"
+      , "WideString.char"
+      , "StringCvt.radix"
+      , "StringCvt.realfmt"
+      , "Substring.string"
+      , "Substring.char"
+      , "WideSubstring.string"
+      , "WideSubstring.char"
+      , "Text.Char.char"
+      , "Text.String.string"
+      , "Text.CharVector.vector"
+      , "Text.CharArray.array"
+      , "WideText.Char.char"
+      , "WideText.String.string"
+      , "WideText.CharVector.vector"
+      , "WideText.CharArray.array"
+      , "Time.time"
+      , "Word.word"
+      , "Word8.word"
+      , "Word32.word"
+      , "Word63.word"
+      , "Word64.word"
+      , "LargeWord.word"
+      ] @ arrayTypes "Array" ["elem"] ["array", "vector"]
+      @ arrayTypes "ArraySlice" ["elem"] ["array", "vector"]
+      @ arrayTypes "Vector" ["elem", "vector"] []
+      @ arrayTypes "VectorSlice" ["elem", "vector"] []
+    end
+  val compareTypes = ["Date.date"]
+  val rewrites =
+    [ ("Real.real", "Real.==")
+    , ("Math.real", "Real.==")
+    , ("LargeReal.real", "LargeReal.==")
+    ]
+
+  val eqTypesSet = (AtomRedBlackSet.fromList o List.map Atom.atom) eqTypes
+  val compareTypesSet =
+    (AtomRedBlackSet.fromList o List.map Atom.atom) compareTypes
+  val rewriteMap =
+    List.foldl
+      (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
+      AtomRedBlackMap.empty rewrites
 
   val mkEq = prependTokenOrDefault "==" "eq"
 
   fun additionalDecs env = []
 
+  (* TODO: handle option and list *)
   fun tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
     let
       val atom = Atom.atom s
@@ -114,7 +218,68 @@ struct
     | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
         genSingleTypebind genTypebind (tyTok, vars, ty)
 
-  fun genRecursiveDatabind (env, tycons, tys, vars) = raise Fail "fuck"
+  fun genRecursiveDatabind (env, tycons, tys, vars) =
+    let
+      val env as Env {env = env', ...} = Env.empty env
+      val varExps = List.map Ty.Var vars
+      val dups: IntRedBlackSet.set AtomTable.hash_table =
+        AtomTable.mkTable (List.length tycons, LibBase.NotFound)
+      val generatorDecs =
+        List.map
+          (fn (tycon, ty) =>
+             let
+               val tyconA = Atom.atom (Token.toString tycon)
+               val args =
+                 List.map
+                   (fn Ty.Con {id, ...} => MaybeLongToken.getToken id
+                     | Ty.Var v => mkTyVar v
+                     | _ => raise Fail "Invalid arg")
+                   (generatedArgsForTy env' ty)
+               val argDups = findDuplicates args
+               val () = AtomTable.insert dups (tyconA, argDups)
+               val substMap = buildSubstMap env' (Token.toString tycon) varExps
+             in
+               ( Pat.Const tycon
+               , singleFnExp
+                   (destructTuplePat
+                      (applyDuplicates (argDups, Pat.Const, args)))
+                   (case tyconData env' tyconA of
+                      Databind constrs =>
+                        genConstrs
+                          (env, List.map (substConstr substMap) constrs)
+                    | Typebind ty => tyExp' env (subst substMap ty))
+               )
+             end) (ListPair.zip (tycons, tys))
+      val concatTys = mkToken (String.concatWith "_"
+        (List.map Token.toString tycons))
+      val mutRecDec = valDecs true
+        (List.map
+           (fn (tycon, args) =>
+              let
+                val tycon' = baseTyName (Token.toString tycon)
+                val argDups = AtomTable.lookup dups (Atom.atom tycon')
+                val env = Env.freshEnv env
+                val args = applyDuplicates (argDups, tyExp' env, args)
+              in
+                ( Pat.Const tycon
+                , singleFnExp (Pat.Const quesTok) (appExp
+                    [Const (mkToken tycon'), tupleExp args, Const quesTok])
+                )
+              end) (generatedFixesAndArgs env'))
+      val tyToks = List.map (Option.valOf o generatedFixNameForTy env') tys
+      val dec = multDec
+        (additionalDecs env
+         @
+         [ valDecs true generatorDecs
+         , valDec (Pat.Const concatTys)
+             (singleFnExp
+                (destructTuplePat (List.map (Pat.Const o mkTyVar) vars))
+                (singleLetExp mutRecDec (tupleExp (List.map Const tyToks))))
+         ])
+      val unpacked = unpackingDecs (env', vars, concatTys, tycons, mkEq, "op=")
+    in
+      localDec dec (multDec unpacked)
+    end
 
   val genDatabind = genDatabindHelper (genSimpleDatabind, genRecursiveDatabind)
 
