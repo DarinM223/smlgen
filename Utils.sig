@@ -20,6 +20,9 @@ sig
   val tySize: Ast.Ty.ty -> int
   val stripParens: Ast.Pat.pat -> Ast.Pat.pat
   val destructTyPat: (Token.token -> Token.token) -> Ast.Ty.ty -> Ast.Pat.pat
+  val destructTyPatNoRefs: (Token.token -> Token.token)
+                           -> Ast.Ty.ty
+                           -> Ast.Pat.pat
   val combineDecs: Ast.Exp.dec -> Ast.Exp.dec -> Ast.Exp.dec
   val pretty: Ast.ast -> TerminalColorString.t
   val prettyDec: Ast.Exp.dec -> TerminalColorString.t

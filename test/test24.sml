@@ -27,6 +27,8 @@ type foo =
   , z: Time.time
   }
 
+type ref_test = { r : int ref }
+
 type bar =
   { a: Bool.bool Option.option
   , b: Char.char List.list

@@ -51,11 +51,11 @@ struct
      then destructTyPatTwice gives two patterns p1 and p2 and collects
      variables p1_var1, p2_var1, p1_var2, p2_var2, p1_var3, p2_var3.
   *)
-  fun destructTyPatTwice (env as Env {vars, ...}) ty =
+  fun destructTyPatTwice' destructPat (env as Env {vars, ...}) ty =
     let
-      val pat1 = Utils.destructTyPat (fresh env) ty
+      val pat1 = destructPat (fresh env) ty
       val vars1 = !vars before vars := []
-      val pat2 = Utils.destructTyPat (fresh env) ty
+      val pat2 = destructPat (fresh env) ty
       val vars2 = !vars
       fun interleave (build, x :: xs, y :: ys) =
             interleave (x :: y :: build, xs, ys)
@@ -65,4 +65,6 @@ struct
     in
       (vars := interleave ([], vars1, vars2); (pat1, pat2))
     end
+  val destructTyPatTwice = destructTyPatTwice' Utils.destructTyPat
+  val destructTyPatTwiceNoRefs = destructTyPatTwice' Utils.destructTyPatNoRefs
 end

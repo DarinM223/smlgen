@@ -365,6 +365,10 @@ val eqFoo =
     andalso Substring.compare (t23, t49) = EQUAL
     andalso Substring.compare (t24, t50) = EQUAL andalso t25 = t51
 
+type ref_test = {r: int ref}
+val compareRef_test = fn ({r = ref t0}, {r = ref t1}) => Int.compare (t0, t1)
+val eqRef_test = fn ({r = t0}, {r = t1}) => t0 = t1
+
 type bar = {a: Bool.bool Option.option, b: Char.char List.list}
 local
   fun showOption f (SOME s) = "SOME " ^ f s

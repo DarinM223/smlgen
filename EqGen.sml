@@ -141,6 +141,7 @@ struct
         )
     | tyCon env e1 e2 "Option.option" [a] =
         tyCon env e1 e2 "option" [a]
+    | tyCon env e1 e2 "ref" [_] = infixLExp equalTok [e1, e2]
     | tyCon (env as Env {env = env', ...}) e1 e2 (s: string) (args: Ty.ty list) =
         let
           val atom = Atom.atom s
@@ -174,7 +175,7 @@ struct
     let
       val env = Env.freshEnv env
     in
-      case (Env.destructTyPatTwice env ty, tyExp env ty) of
+      case (Env.destructTyPatTwiceNoRefs env ty, tyExp env ty) of
         ( (pat1 as Pat.Const a, pat2 as Pat.Const b)
         , exp as App {left, right = Tuple {elems, ...}, ...}
         ) =>
@@ -202,8 +203,7 @@ struct
             | NONE => tyCon env e1 e2 id args
         in
           case (id, args) of
-            ("ref", [ty]) => tyExp env ty
-          | ("unit", []) => Const trueTok
+            ("unit", []) => Const trueTok
           | _ =>
               (case !vars of
                  a :: b :: t => (vars := t; con (Const a) (Const b))
@@ -219,7 +219,7 @@ struct
         List.map
           (fn {arg = SOME {ty, ...}, id, ...} =>
              let
-               val (pat1, pat2) = destructTyPatTwice env ty
+               val (pat1, pat2) = destructTyPatTwiceNoRefs env ty
              in
                (destructTuplePat [conPat id pat1, conPat id pat2], tyExp env ty)
              end

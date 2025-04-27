@@ -109,27 +109,36 @@ struct
         if ArraySlice.length elems = 1 then ArraySlice.sub (elems, 0) else ty
     | stripParens pat = pat
 
-  fun destructTyPat fresh (Ty.Var _) =
+  fun destructTyPat' _ fresh (Ty.Var _) =
         Pat.Const (fresh tTok)
-    | destructTyPat fresh (Ty.Record {elems, ...}) =
+    | destructTyPat' intoRefs fresh (Ty.Record {elems, ...}) =
         destructRecordPat'
           (List.map
-             (fn {lab, ty, ...} => (lab, stripParens (destructTyPat fresh ty)))
+             (fn {lab, ty, ...} =>
+                (lab, stripParens (destructTyPat' intoRefs fresh ty)))
              (Seq.toList elems))
-    | destructTyPat fresh (Ty.Tuple {elems, ...}) =
+    | destructTyPat' intoRefs fresh (Ty.Tuple {elems, ...}) =
         destructTuplePat
-          (List.map (stripParens o destructTyPat fresh) (Seq.toList elems))
-    | destructTyPat fresh (Ty.Con {id, args, ...}) =
+          (List.map (stripParens o destructTyPat' intoRefs fresh)
+             (Seq.toList elems))
+    | destructTyPat' intoRefs fresh (Ty.Con {id, args, ...}) =
         let
           val id = MaybeLongToken.getToken id
         in
           case (Token.toString id, syntaxSeqToList args) of
-            ("ref", [ty]) => parensPat (conPat id (destructTyPat fresh ty))
+            ("ref", [ty]) =>
+              if intoRefs then
+                parensPat (conPat id (destructTyPat' intoRefs fresh ty))
+              else
+                Pat.Const (fresh tTok)
           | ("unit", []) => wildPat
           | _ => Pat.Const (fresh tTok)
         end
-    | destructTyPat _ (Ty.Arrow _) = wildPat
-    | destructTyPat fresh (Ty.Parens {ty, ...}) = destructTyPat fresh ty
+    | destructTyPat' _ _ (Ty.Arrow _) = wildPat
+    | destructTyPat' intoRefs fresh (Ty.Parens {ty, ...}) =
+        destructTyPat' intoRefs fresh ty
+  val destructTyPat = destructTyPat' true
+  val destructTyPatNoRefs = destructTyPat' false
 
   fun combineDecs (Ast.Exp.DecMultiple {elems = elems1, delims = delims1})
         (Ast.Exp.DecMultiple {elems = elems2, delims = delims2}) =
