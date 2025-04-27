@@ -17,17 +17,15 @@ struct
       [] => (fn e => e)
     | vars => singleFnExp (destructTuplePat vars)
 
+  val splitPrefixFromType =
+    (fn (p, t) => (Substring.string p, Substring.string t))
+    o Substring.splitr (fn ch => ch <> #".") o Substring.full o Token.toString
   fun prependTokenOrDefault def str t =
     let
-      val (prefix, t) =
-        (Substring.splitr (fn ch => ch <> #".") o Substring.full
-         o Token.toString) t
-      val prepended =
-        case Substring.string t of
-          "t" => def
-        | t => str ^ capitalize t
+      val (prefix, t) = splitPrefixFromType t
+      val prepended = if t = "t" then def else str ^ capitalize t
     in
-      mkToken (Substring.string prefix ^ prepended)
+      mkToken (prefix ^ prepended)
     end
   fun prependToken str t =
     prependTokenOrDefault str str t

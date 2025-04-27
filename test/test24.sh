@@ -1,4 +1,4 @@
-../smlgen --test test24.sml foo:sc bar:sc
+../smlgen --test test24.sml foo:sce bar:sc
 if cmp --silent test24.sml.test test24.sml.expected; then
   echo "test24 succeeded"
 else

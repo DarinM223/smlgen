@@ -93,9 +93,15 @@ struct
       @ arrayTypes "Vector" ["elem", "vector"] []
       @ arrayTypes "VectorSlice" ["elem", "vector"] []
     end
-  val compareTypes = ["Date.date"]
+  val compareTypes =
+    ["Date.date", "Substring.substring", "WideSubstring.substring"]
+  val typeAlias =
+    [ ("CharVectorSlice.slice", "Substring.substring")
+    , ("WideCharVectorSlice.slice", "WideSubstring.substring")
+    ]
   val rewrites =
-    [ ("Real.real", "Real.==")
+    [ ("real", "Real.==")
+    , ("Real.real", "Real.==")
     , ("Math.real", "Real.==")
     , ("LargeReal.real", "LargeReal.==")
     ]
@@ -103,6 +109,10 @@ struct
   val eqTypesSet = (AtomRedBlackSet.fromList o List.map Atom.atom) eqTypes
   val compareTypesSet =
     (AtomRedBlackSet.fromList o List.map Atom.atom) compareTypes
+  val typeAliasMap =
+    List.foldl
+      (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
+      AtomRedBlackMap.empty typeAlias
   val rewriteMap =
     List.foldl
       (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
@@ -112,24 +122,57 @@ struct
 
   fun additionalDecs env = []
 
-  (* TODO: handle option and list *)
-  fun tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
-    let
-      val atom = Atom.atom s
-      val con = Const
-        (if tyconIsGeneratedFix env' s then
-           mkToken s
-         else if AtomRedBlackMap.inDomain (rewriteMap, atom) then
-           mkToken (AtomRedBlackMap.lookup (rewriteMap, atom))
-         else
-           mkEq (mkToken s))
-      val constrExp =
-        case args of
-          [] => con
-        | _ => appExp [con, tupleExp (List.map (tyExp' env) args)]
-    in
-      appExp [constrExp, e]
+  fun mkCompare t =
+    let val (prefix, _) = Utils.splitPrefixFromType t
+    in mkToken (prefix ^ "compare")
     end
+
+  fun tyCon env e1 e2 "list" [a] =
+        ( Env.setOption env ("list", true)
+        ; appExp
+            [ Const (mkToken "eqList")
+            , parensExp (tyExp' env a)
+            , tupleExp [e1, e2]
+            ]
+        )
+    | tyCon env e1 e2 "option" [a] =
+        ( Env.setOption env ("option", true)
+        ; appExp
+            [ Const (mkToken "eqOption")
+            , parensExp (tyExp' env a)
+            , tupleExp [e1, e2]
+            ]
+        )
+    | tyCon (env as Env {env = env', ...}) e1 e2 (s: string) (args: Ty.ty list) =
+        let
+          val atom = Atom.atom s
+          val (atom, s) =
+            let val s = AtomRedBlackMap.lookup (typeAliasMap, atom)
+            in (Atom.atom s, s)
+            end
+            handle LibBase.NotFound => (atom, s)
+          val con = Const
+            (if tyconIsGeneratedFix env' s then
+               mkToken s
+             else if AtomRedBlackMap.inDomain (rewriteMap, atom) then
+               mkToken (AtomRedBlackMap.lookup (rewriteMap, atom))
+             else
+               mkEq (mkToken s))
+          val constrExp =
+            case args of
+              [] => con
+            | _ => appExp [con, tupleExp (List.map (tyExp' env) args)]
+        in
+          if AtomRedBlackSet.member (eqTypesSet, atom) then
+            infixLExp equalTok [e1, e2]
+          else if AtomRedBlackSet.member (compareTypesSet, atom) then
+            infixLExp equalTok
+              [ appExp [Const (mkCompare (mkToken s)), tupleExp [e1, e2]]
+              , Const CompareGen.equalCmpTok
+              ]
+          else
+            appExp [constrExp, tupleExp [e1, e2]]
+        end
   and tyExp' env ty =
     let
       val env = Env.freshEnv env
@@ -156,17 +199,17 @@ struct
         let
           val id = Token.toString (MaybeLongToken.getToken id)
           val args = syntaxSeqToList args
-          fun con e =
+          fun con e1 e2 =
             case generatedFixNameForTy env' ty of
-              SOME ty => appExp [Const ty, e]
-            | NONE => tyCon env e id args
+              SOME ty => appExp [Const ty, tupleExp [e1, e2]]
+            | NONE => tyCon env e1 e2 id args
         in
           case (id, args) of
             ("ref", [ty]) => tyExp env ty
           | ("unit", []) => Const trueTok
           | _ =>
               (case !vars of
-                 a :: b :: t => (vars := t; con (tupleExp [Const a, Const b]))
+                 a :: b :: t => (vars := t; con (Const a) (Const b))
                | _ => raise Fail "No vars in con")
         end
     | tyExp _ (Ty.Arrow _) = raise Fail "Functions cannot be equal"

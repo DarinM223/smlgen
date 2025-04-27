@@ -299,6 +299,71 @@ val compareFoo =
                | ? => ?)
           | ? => ?)
      | ? => ?)
+val eqFoo =
+  fn ( { a = t0
+       , b = t1
+       , c = t2
+       , d = t3
+       , e = t4
+       , f = t5
+       , g = t6
+       , h = t7
+       , i = t8
+       , j = t9
+       , k = t10
+       , l = t11
+       , m = t12
+       , n = t13
+       , o = t14
+       , p = t15
+       , q = t16
+       , r = t17
+       , s = t18
+       , t = t19
+       , u = t20
+       , v = t21
+       , w = t22
+       , x = t23
+       , y = t24
+       , z = t25
+       }
+     , { a = t26
+       , b = t27
+       , c = t28
+       , d = t29
+       , e = t30
+       , f = t31
+       , g = t32
+       , h = t33
+       , i = t34
+       , j = t35
+       , k = t36
+       , l = t37
+       , m = t38
+       , n = t39
+       , o = t40
+       , p = t41
+       , q = t42
+       , r = t43
+       , s = t44
+       , t = t45
+       , u = t46
+       , v = t47
+       , w = t48
+       , x = t49
+       , y = t50
+       , z = t51
+       }
+     ) =>
+    t0 = t26 andalso t1 = t27 andalso Real.== (t2, t28) andalso t3 = t29
+    andalso t4 = t30 andalso t5 = t31 andalso t6 = t32 andalso t7 = t33
+    andalso t8 = t34 andalso t9 = t35 andalso t10 = t36 andalso t11 = t37
+    andalso t12 = t38 andalso t13 = t39 andalso Real.== (t14, t40)
+    andalso LargeReal.== (t15, t41) andalso t16 = t42 andalso t17 = t43
+    andalso t18 = t44 andalso t19 = t45 andalso t20 = t46 andalso t21 = t47
+    andalso Date.compare (t22, t48) = EQUAL
+    andalso Substring.compare (t23, t49) = EQUAL
+    andalso Substring.compare (t24, t50) = EQUAL andalso t25 = t51
 
 type bar = {a: Bool.bool Option.option, b: Char.char List.list}
 local
