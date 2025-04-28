@@ -421,7 +421,8 @@ struct
     \[workspace]\n\
     \root = \"^.mlb\"\n\
     \[diagnostics]\n\
-    \5043.severity = \"ignore\"\n"
+    \5043.severity = \"ignore\"\n\
+    \3007.severity = \"ignore\"\n"
   val t = FilesData.Data {depends = [], data = data, fileName = "millet.toml"}
 end
 
