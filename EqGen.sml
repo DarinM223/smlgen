@@ -119,7 +119,72 @@ struct
 
   val mkEq = prependTokenOrDefault "==" "eq"
 
-  fun additionalDecs env = []
+  val eqOptionDec =
+    let
+      val conTok = mkToken "eqOption"
+      val eqTok = mkToken "eq"
+      val (xTok, yTok) = (mkToken "x", mkToken "y")
+    in
+      multFunDec
+        [[ ( conTok
+           , [ Pat.Const eqTok
+             , destructTuplePat
+                 [ destructConPat someTok (Pat.Const xTok)
+                 , destructConPat someTok (Pat.Const yTok)
+                 ]
+             ]
+           , appExp [Const eqTok, tupleExp [Const xTok, Const yTok]]
+           )
+         , ( conTok
+           , [wildPat, destructTuplePat [Pat.Const noneTok, Pat.Const noneTok]]
+           , Const trueTok
+           )
+         , (conTok, [wildPat, wildPat], Const falseTok)
+         ]]
+    end
+  val eqListDec =
+    let
+      val conTok = mkToken "eqList"
+      val eqTok = mkToken "eq"
+      val (xTok, xsTok) = (mkToken "x", mkToken "xs")
+      val (yTok, ysTok) = (mkToken "y", mkToken "ys")
+      val consTok = mkToken "::"
+      val nilTok = mkToken "[]"
+    in
+      multFunDec
+        [[ ( conTok
+           , [ Pat.Const eqTok
+             , destructTuplePat
+                 [ destructInfixLPat consTok [Pat.Const xTok, Pat.Const xsTok]
+                 , destructInfixLPat consTok [Pat.Const yTok, Pat.Const ysTok]
+                 ]
+             ]
+           , infixLExp andalsoTok
+               [ appExp [Const eqTok, tupleExp [Const xTok, Const yTok]]
+               , appExp
+                   [ Const conTok
+                   , Const eqTok
+                   , tupleExp [Const xsTok, Const ysTok]
+                   ]
+               ]
+           )
+         , ( conTok
+           , [wildPat, destructTuplePat [Pat.Const nilTok, Pat.Const nilTok]]
+           , Const trueTok
+           )
+         , (conTok, [wildPat, wildPat], Const falseTok)
+         ]]
+    end
+
+  fun additionalDecs env =
+    let
+      fun addEqOption a =
+        if Env.getOption env "option" then eqOptionDec :: a else a
+      fun addEqList a =
+        if Env.getOption env "list" then eqListDec :: a else a
+    in
+      (addEqList o addEqOption) []
+    end
 
   fun tyCon env e1 e2 "list" [a] =
         ( Env.setOption env ("list", true)
@@ -141,7 +206,7 @@ struct
         )
     | tyCon env e1 e2 "Option.option" [a] =
         tyCon env e1 e2 "option" [a]
-    | tyCon env e1 e2 "ref" [_] = infixLExp equalTok [e1, e2]
+    | tyCon _ e1 e2 "ref" [_] = infixLExp equalTok [e1, e2]
     | tyCon (env as Env {env = env', ...}) e1 e2 (s: string) (args: Ty.ty list) =
         let
           val atom = Atom.atom s

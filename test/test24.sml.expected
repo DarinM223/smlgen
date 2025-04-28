@@ -408,3 +408,16 @@ in
        EQUAL => compareList Char.compare (t1, t3)
      | ? => ?)
 end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+  fun eqOption eq (SOME x, SOME y) = eq (x, y)
+    | eqOption _ (NONE, NONE) = true
+    | eqOption _ _ = false
+in
+  val eqBar = fn ({a = t0, b = t1}, {a = t2, b = t3}) =>
+    eqOption (fn (t0, t1) => t0 = t1) (t0, t2)
+    andalso eqList (fn (t0, t1) => t0 = t1) (t1, t3)
+end

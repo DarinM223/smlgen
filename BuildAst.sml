@@ -67,6 +67,8 @@ struct
   val caseTok = mkReservedToken Case
   val ofTok = mkReservedToken Of
   val andalsoTok = mkReservedToken Andalso
+  val someTok = mkToken "SOME"
+  val noneTok = mkToken "NONE"
 end
 
 structure BuildAst :> BUILD_AST =

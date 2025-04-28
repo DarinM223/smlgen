@@ -49,7 +49,6 @@ struct
       val conTok = mkToken "compareOption"
       val cmpTok = mkToken "cmp"
       val (xTok, yTok) = (mkToken "x", mkToken "y")
-      val (someTok, noneTok) = (mkToken "SOME", mkToken "NONE")
     in
       multFunDec
         [[ ( conTok

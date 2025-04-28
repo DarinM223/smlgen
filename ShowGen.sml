@@ -23,7 +23,6 @@ struct
     let
       val conTok = mkToken "showOption"
       val (fTok, sTok) = (mkToken "f", mkToken "s")
-      val (someTok, noneTok) = (mkToken "SOME", mkToken "NONE")
     in
       multFunDec
         [[ ( conTok
