@@ -117,7 +117,15 @@ struct
       (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
       AtomRedBlackMap.empty rewrites
 
-  val mkEq = prependTokenOrDefault "op==" "eq"
+  fun mkEq t =
+    let
+      val (prefix, t) = splitPrefixFromType t
+      val prepended =
+        if t = "t" then (if String.size prefix = 0 then "op==" else "==")
+        else "eq" ^ capitalize t
+    in
+      mkToken (prefix ^ prepended)
+    end
 
   val eqOptionDec =
     let

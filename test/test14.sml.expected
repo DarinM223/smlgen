@@ -6,6 +6,7 @@ struct
   val varname = let open Generic in int end
   val showVarname = Int.toString
   val compareVarname = Int.compare
+  val eqVarname = op=
   datatype exp =
     Var of varname
   | App of exp * exp
@@ -82,6 +83,18 @@ struct
     val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
   in val compareExp = exp ()
   end
+  local
+    val rec exp = fn exp_0 =>
+      fn (Var t0, Var t1) => eqVarname (t0, t1)
+       | (App (t2, t3), App (t4, t5)) => exp_0 (t2, t4) andalso exp_0 (t3, t5)
+       | (Lam (t6, t7), Lam (t8, t9)) =>
+        eqVarname (t6, t8) andalso exp_0 (t7, t9)
+       | (Let (t10, t11, t12), Let (t13, t14, t15)) =>
+        eqVarname (t10, t13) andalso exp_0 (t11, t14) andalso exp_0 (t12, t15)
+       | _ => false
+    val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
+  in val eqExp = exp ()
+  end
 end
 
 structure Typ =
@@ -90,6 +103,7 @@ struct
   val qname = let open Generic in string end
   val showQname = fn t0 => "\"" ^ t0 ^ "\""
   val compareQname = String.compare
+  val eqQname = op=
 
   datatype typ =
     TVar of tv ref
@@ -169,5 +183,25 @@ struct
         (tv_0, typ_1)
       end
   in val compareTv = #1 (tv_typ ()) val compareTyp = #2 (tv_typ ())
+  end
+  local
+    val rec tv = fn typ_1 =>
+      fn (Link t0, Link t1) => typ_1 (t0, t1)
+       | (Unbound t2, Unbound t3) => t2 = t3
+       | _ => false
+    and typ = fn (typ_1, tv_0) =>
+      fn (TVar t0, TVar t1) => t0 = t1
+       | (QVar t2, QVar t3) => eqQname (t2, t3)
+       | (TArrow (t4, t5), TArrow (t6, t7)) =>
+        typ_1 (t4, t6) andalso typ_1 (t5, t7)
+       | _ => false
+    val tv_typ = fn () =>
+      let
+        val rec typ_1 = fn ? => typ (typ_1, tv_0) ?
+        and tv_0 = fn ? => tv typ_1 ?
+      in
+        (tv_0, typ_1)
+      end
+  in val eqTv = #1 (tv_typ ()) val eqTyp = #2 (tv_typ ())
   end
 end

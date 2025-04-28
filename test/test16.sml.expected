@@ -32,6 +32,11 @@ val compareT' = fn ((t0, t1), (t2, t3)) =>
   (case compare (t0, t2) of
      EQUAL => Int.compare (t1, t3)
    | ? => ?)
+val op== =
+  fn (T' (t0, t1), T' (t2, t3)) => t0 = t2 andalso t1 = t3
+   | (Nil, Nil) => true
+   | _ => false
+val eqT' = fn ((t0, t1), (t2, t3)) => op== (t0, t2) andalso t1 = t3
 
 val () = print (showT' (T' (1, "hello"), 2) ^ "\n")
 
@@ -102,6 +107,17 @@ val compareT' = fn ({t = t0, other = t1}, {t = t2, other = t3}) =>
   (case compare (t0, t2) of
      EQUAL => String.compare (t1, t3)
    | ? => ?)
+local
+  val rec t = fn t_0 =>
+    fn (T' (t0, t1), T' (t2, t3)) => t0 = t2 andalso t_0 (t1, t3)
+     | (T'' (t4, t5), T'' (t6, t7)) => t_0 (t4, t6) andalso t_0 (t5, t7)
+     | (Nil, Nil) => true
+     | _ => false
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val op== = t ()
+end
+val eqT' = fn ({t = t0, other = t1}, {t = t2, other = t3}) =>
+  op== (t0, t2) andalso t1 = t3
 
 val () = print
   (showT' {t = T' ("hello", T'' (Nil, Nil)), other = "world"} ^ "\n")
@@ -161,6 +177,22 @@ local
     in (t'_0, t_1)
     end
 in val compareT' = #1 (t'_t ()) val compare = #2 (t'_t ())
+end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+  val rec t' = fn t_1 => eqList t_1
+  and t = fn t'_0 =>
+    fn (T' (t0, t1), T' (t2, t3)) => t0 = t2 andalso t'_0 (t1, t3)
+     | (Nil, Nil) => true
+     | _ => false
+  val t'_t = fn () =>
+    let val rec t'_0 = fn ? => t' t_1 ? and t_1 = fn ? => t t'_0 ?
+    in (t'_0, t_1)
+    end
+in val eqT' = #1 (t'_t ()) val op== = #2 (t'_t ())
 end
 
 val () = print
@@ -230,6 +262,21 @@ local
     in (t'_0, t_1)
     end
 in val compareT' = fn ? => #1 (t'_t ?) val compare = fn ? => #2 (t'_t ?)
+end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+  val rec t' = fn (t_1, b_) =>
+    fn ((t0, t1), (t2, t3)) => b_ (t0, t2) andalso eqList t_1 (t1, t3)
+  and t = fn (t'_0, b_) =>
+    fn (T' t0, T' t1) => t'_0 (t0, t1) | (Nil, Nil) => true | _ => false
+  val t'_t = fn b_ =>
+    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    in (t'_0, t_1)
+    end
+in val eqT' = fn ? => #1 (t'_t ?) val op== = fn ? => #2 (t'_t ?)
 end
 
 val () = print (showT' Int.toString (1, [Nil, T' (2, [Nil])]) ^ "\n")
@@ -303,6 +350,25 @@ local
       (t'_0, t_2)
     end
 in val compareT' = fn b_ => #1 (t'_t (b_, b_)) val compare = fn ? => #2 (t'_t ?)
+end
+local
+  val rec t' = fn (t_1, a_) =>
+    fn ((t0, t1), (t2, t3)) => a_ (t0, t2) andalso t_1 (t1, t3)
+  and t = fn (t'_3, t'_0, b_, a_) =>
+    fn (T' (t0, t1), T' (t2, t3)) => t'_0 (t0, t2) andalso t'_3 (t1, t3)
+     | (Nil, Nil) => true
+     | _ => false
+  val t'_t = fn (a_, b_) =>
+    let
+      val rec t'_3 = fn ? => t' (t_4, b_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
+      and t'_0 = fn ? => t' (t_1, a_) ?
+      and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
+      and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+    in
+      (t'_0, t_2)
+    end
+in val eqT' = fn b_ => #1 (t'_t (b_, b_)) val op== = fn ? => #2 (t'_t ?)
 end
 
 val () = print
@@ -412,6 +478,35 @@ in
   val compareT'' = fn a_ => #1 (t''_t_t' (a_, a_))
   val compare = fn ? => #2 (t''_t_t' ?)
   val compareT' = fn a_ => #3 (t''_t_t' (a_, a_))
+end
+local
+  val rec t'' = fn (t_1, a_) =>
+    fn ((t0, t1), (t2, t3)) => t_1 (t0, t2) andalso a_ (t1, t3)
+  and t = fn (t''_8, t'_6, b_, a_) =>
+    fn (T' (t0, t1), T' (t2, t3)) => t'_6 (t0, t2) andalso t''_8 (t1, t3)
+     | (Nil, Nil) => true
+     | _ => false
+  and t' = fn (t_7, a_) =>
+    fn ((t0, t1), (t2, t3)) => a_ (t0, t2) andalso t_7 (t1, t3)
+  val t''_t_t' = fn (a_, b_) =>
+    let
+      val rec t_7 = fn ? => t (t''_4, t'_6, op=, a_) ?
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t''_8 = fn ? => t'' (t_9, b_) ?
+      and t''_4 = fn ? => t'' (t_3, op=) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t_9 = fn ? => t (t''_8, t'_2, b_, op=) ?
+      and t_3 = fn ? => t (t''_4, t'_2, op=, op=) ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_1 = fn ? => t (t''_0, t'_2, a_, op=) ?
+      and t'_2 = fn ? => t' (t_3, op=) ?
+    in
+      (t''_0, t_5, t'_6)
+    end
+in
+  val eqT'' = fn a_ => #1 (t''_t_t' (a_, a_))
+  val op== = fn ? => #2 (t''_t_t' ?)
+  val eqT' = fn a_ => #3 (t''_t_t' (a_, a_))
 end
 
 val () = print

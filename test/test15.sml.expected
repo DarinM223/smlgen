@@ -36,6 +36,15 @@ local
   val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
 in val compare = t ()
 end
+local
+  val rec t = fn t_0 =>
+    fn (TA (t0, t1, t2), TA (t3, t4, t5)) =>
+      t_0 (t0, t3) andalso t1 = t4 andalso t_0 (t2, t5)
+     | (TB t6, TB t7) => t6 = t7
+     | _ => false
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val op== = t ()
+end
 datatype result = ResultC of t | ResultD of string list
 val result =
   let
@@ -67,4 +76,15 @@ in
      | (ResultC _, ResultD _) => LESS
      | (ResultD _, ResultC _) => GREATER
      | (ResultD t2, ResultD t3) => compareList String.compare (t2, t3)
+end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+in
+  val eqResult =
+    fn (ResultC t0, ResultC t1) => op== (t0, t1)
+     | (ResultD t2, ResultD t3) => eqList op= (t2, t3)
+     | _ => false
 end
