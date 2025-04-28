@@ -117,7 +117,7 @@ struct
       (fn ((k, v), acc) => AtomRedBlackMap.insert' ((Atom.atom k, v), acc))
       AtomRedBlackMap.empty rewrites
 
-  val mkEq = prependTokenOrDefault "==" "eq"
+  val mkEq = prependTokenOrDefault "op==" "eq"
 
   val eqOptionDec =
     let

@@ -236,6 +236,68 @@ in
   val compareExpr = fn ? => #1 (expr_stmt ?)
   val compareStmt = fn (a_, b_) => #2 (expr_stmt (a_, b_, a_))
 end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+  val rec expr = fn (expr_35, expr_13, stmt_1, b_, c_, d_) =>
+    fn (Stmt t0, Stmt t1) => stmt_1 (t0, t1)
+     | (Int (t2, t3), Int (t4, t5)) => d_ (t2, t4) andalso b_ (t3, t5)
+     | (Bop (t6, t7), Bop (t8, t9)) => expr_13 (t6, t8) andalso expr_35 (t7, t9)
+     | _ => false
+  and stmt = fn (stmt_19, stmt_14, expr_23, expr_20, c_, d_) =>
+    fn (Assign (t0, t1), Assign (t2, t3)) =>
+      d_ (t0, t2) andalso expr_20 (t1, t3)
+     | (If (t4, t5, t6), If (t7, t8, t9)) =>
+      expr_23 (t4, t7) andalso eqList stmt_14 (t5, t8)
+      andalso eqList stmt_19 (t6, t9)
+     | _ => false
+  val expr_stmt = fn (d_, c_, b_) =>
+    let
+      val rec expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
+      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
+      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
+      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
+      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
+      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
+      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      and stmt_16 = fn ? => stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_) ?
+      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
+      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
+      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
+      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
+      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
+      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
+      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
+      and stmt_14 = fn ? => stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_) ?
+      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
+      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
+      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_23 = fn ? => expr (expr_18, expr_23, stmt_14, c_, c_, d_) ?
+      and expr_20 = fn ? => expr (expr_22, expr_21, stmt_8, d_, c_, d_) ?
+      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
+      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
+      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
+      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
+      and expr_2 = fn ? => expr (expr_12, expr_5, stmt_3, b_, d_, b_) ?
+      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
+      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
+      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
+      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
+      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
+      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
+      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
+      and expr_25 = fn ? => expr (expr_0, expr_24, stmt_26, c_, d_, b_) ?
+      and stmt_26 = fn ? => stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
+      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+    in
+      (expr_0, stmt_19)
+    end
+in
+  val eqExpr = fn ? => #1 (expr_stmt ?)
+  val eqStmt = fn (a_, b_) => #2 (expr_stmt (a_, b_, a_))
+end
 
 val () = print
   (showStmt (Int.toString, fn a => a) (Assign (1, Bop
@@ -395,6 +457,41 @@ in
   val compareExpr = fn ? => #1 (expr_stmt ?)
   val compareStmt = fn ? => #2 (expr_stmt ?)
 end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+  val rec expr = fn (expr_9, expr_4, stmt_1, b_, d_, c_) =>
+    fn (Stmt t0, Stmt t1) => stmt_1 (t0, t1)
+     | (Int (t2, t3), Int (t4, t5)) => d_ (t2, t4) andalso b_ (t3, t5)
+     | (Bop (t6, t7), Bop (t8, t9)) => expr_4 (t6, t8) andalso expr_9 (t7, t9)
+     | _ => false
+  and stmt = fn (stmt_3, expr_7, expr_9, b_, d_, c_) =>
+    fn (Assign (t0, t1), Assign (t2, t3)) => d_ (t0, t2) andalso expr_9 (t1, t3)
+     | (If (t4, t5, t6), If (t7, t8, t9)) =>
+      expr_7 (t4, t7) andalso eqList stmt_3 (t5, t8)
+      andalso eqList stmt_3 (t6, t9)
+     | _ => false
+  val expr_stmt = fn (c_, d_, b_) =>
+    let
+      val rec stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
+      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
+      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
+      and expr_4 = fn ? => expr (expr_11, expr_2, stmt_5, c_, b_, d_) ?
+      and expr_2 = fn ? => expr (expr_7, expr_0, stmt_3, d_, c_, b_) ?
+      and expr_9 = fn ? => expr (expr_0, expr_7, stmt_10, d_, b_, c_) ?
+      and stmt_1 = fn ? => stmt (stmt_10, expr_0, expr_2, c_, d_, b_) ?
+      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
+      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
+      and stmt_5 = fn ? => stmt (stmt_6, expr_4, expr_0, d_, b_, c_) ?
+      and expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
+      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
+    in
+      (expr_0, stmt_8)
+    end
+in val eqExpr = fn ? => #1 (expr_stmt ?) val eqStmt = fn ? => #2 (expr_stmt ?)
+end
 
 val () = print
   (showStmt (Int.toString, Real.toString, fn a => a) (Assign (2.0, Bop
@@ -542,4 +639,34 @@ local
 in
   val compareExpr = #1 (expr_stmt (Int.compare, Int.compare, Int.compare))
   val compareStmt = fn ? => #2 (expr_stmt ?)
+end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+  val rec expr = fn (expr_0, stmt_1) =>
+    fn (Stmt t0, Stmt t1) => stmt_1 (t0, t1)
+     | (Int t2, Int t3) => t2 = t3
+     | (Bop (t4, t5), Bop (t6, t7)) => expr_0 (t4, t6) andalso expr_0 (t5, t7)
+     | _ => false
+  and stmt = fn (stmt_4, expr_0, c_, b_, a_) =>
+    fn (Assign (t0, t1), Assign (t2, t3)) => b_ (t0, t2) andalso expr_0 (t1, t3)
+     | (If (t4, t5, t6), If (t7, t8, t9)) =>
+      expr_0 (t4, t7) andalso eqList stmt_4 (t5, t8)
+      andalso eqList stmt_4 (t6, t9)
+     | _ => false
+  val expr_stmt = fn (a_, b_, c_) =>
+    let
+      val rec stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
+      and stmt_1 = fn ? => stmt (stmt_2, expr_0, Real.==, op=, op=) ?
+      and stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
+      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
+      and stmt_2 = fn ? => stmt (stmt_1, expr_0, Real.==, op=, op=) ?
+    in
+      (expr_0, stmt_3)
+    end
+in
+  val eqExpr = #1 (expr_stmt (op=, op=, op=))
+  val eqStmt = fn ? => #2 (expr_stmt ?)
 end
