@@ -297,7 +297,9 @@ struct
             | {arg = NONE, id, ...} =>
              (destructTuplePat [Pat.Const id, Pat.Const id], Const trueTok))
           constrs
-      val tups = tups @ [(wildPat, Const falseTok)]
+      val tups =
+        if List.length constrs > 1 then tups @ [(wildPat, Const falseTok)]
+        else tups
     in
       multFnExp tups
     end
