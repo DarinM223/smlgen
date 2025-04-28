@@ -12,6 +12,7 @@ end
 signature TOKENS =
 sig
   val equalTok: Token.t
+  val opEqualTok: Token.t
   val commaTok: Token.t
   val andReservedTok: Token.t
   val recTok: Token.t

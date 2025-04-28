@@ -32,6 +32,7 @@ structure Tokens :> TOKENS =
 struct
   open Token TokenUtils
   val equalTok = mkReservedToken Equal
+  val opEqualTok = mkToken "op="
   val commaTok = mkReservedToken Comma
   val andReservedTok = mkReservedToken And
   val recTok = mkReservedToken Rec

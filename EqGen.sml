@@ -239,16 +239,22 @@ struct
   and tyExp' env ty =
     let
       val env = Env.freshEnv env
+      fun etaReduce a b elems exp newExp =
+        case Seq.toList elems of
+          [Const a', Const b'] =>
+            if Token.same (a, a') andalso Token.same (b, b') then newExp
+            else singleFnExp (destructTuplePat [Pat.Const a, Pat.Const b]) exp
+        | _ => singleFnExp (destructTuplePat [Pat.Const a, Pat.Const b]) exp
     in
       case (Env.destructTyPatTwiceNoRefs env ty, tyExp env ty) of
-        ( (pat1 as Pat.Const a, pat2 as Pat.Const b)
+        ( (Pat.Const a, Pat.Const b)
         , exp as App {left, right = Tuple {elems, ...}, ...}
-        ) =>
-          (case Seq.toList elems of
-             [Const a', Const b'] =>
-               if Token.same (a, a') andalso Token.same (b, b') then left
-               else singleFnExp (destructTuplePat [pat1, pat2]) exp
-           | _ => singleFnExp (destructTuplePat [pat1, pat2]) exp)
+        ) => etaReduce a b elems exp left
+      | ((Pat.Const a, Pat.Const b), exp as Infix {left, id, right}) =>
+          if Token.same (id, equalTok) then
+            etaReduce a b (Seq.fromList [left, right]) exp (Const opEqualTok)
+          else
+            singleFnExp (destructTuplePat [Pat.Const a, Pat.Const b]) exp
       | ((pat1, pat2), exp) => singleFnExp (destructTuplePat [pat1, pat2]) exp
     end
   and tyExp (Env {vars = vars as ref (a :: b :: t), ...}) (Ty.Var v) =
