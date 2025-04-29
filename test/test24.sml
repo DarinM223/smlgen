@@ -33,5 +33,12 @@ end
 structure Bar =
 struct
   type t =
-    {a: Bool.bool Option.option, b: Char.char List.list, c: int ref, d: Foo.t}
+    { a: Bool.bool Option.option
+    , b: Char.char List.list
+    , c: int ref
+    , d: Foo.t
+    , e: unit
+    }
+  type bar = unit
+  datatype bar = Bar of unit
 end

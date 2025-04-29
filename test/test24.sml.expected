@@ -373,12 +373,17 @@ end
 structure Bar =
 struct
   type t =
-    {a: Bool.bool Option.option, b: Char.char List.list, c: int ref, d: Foo.t}
+    { a: Bool.bool Option.option
+    , b: Char.char List.list
+    , c: int ref
+    , d: Foo.t
+    , e: unit
+    }
   local
     fun showOption f (SOME s) = "SOME " ^ f s
       | showOption _ NONE = "NONE"
   in
-    val show = fn {a = t0, b = t1, c = ref t2, d = t3} =>
+    val show = fn {a = t0, b = t1, c = ref t2, d = t3, e = _} =>
       "{"
       ^
       String.concatWith ", "
@@ -391,6 +396,7 @@ struct
             (List.map (fn t0 => "#\"" ^ Char.toString t0 ^ "\"") t1) ^ "]"
         , "c = " ^ "ref " ^ Int.toString t2
         , "d = " ^ Foo.show t3
+        , "e = " ^ "()"
         ] ^ "}"
   end
   local
@@ -410,8 +416,8 @@ struct
       | compareOption _ (NONE, NONE) = EQUAL
   in
     val compare =
-      fn ( {a = t0, b = t1, c = ref t2, d = t3}
-         , {a = t4, b = t5, c = ref t6, d = t7}
+      fn ( {a = t0, b = t1, c = ref t2, d = t3, e = _}
+         , {a = t4, b = t5, c = ref t6, d = t7, e = _}
          ) =>
         (case compareOption compareBool (t0, t4) of
            EQUAL =>
@@ -433,8 +439,18 @@ struct
       | eqOption _ _ = false
   in
     val op== =
-      fn ({a = t0, b = t1, c = t2, d = t3}, {a = t4, b = t5, c = t6, d = t7}) =>
+      fn ( {a = t0, b = t1, c = t2, d = t3, e = _}
+         , {a = t4, b = t5, c = t6, d = t7, e = _}
+         ) =>
         eqOption op= (t0, t4) andalso eqList op= (t1, t5) andalso t2 = t6
         andalso Foo.== (t3, t7)
   end
+  type bar = unit
+  val showBar = fn _ => "()"
+  val compareBar = fn (_, _) => EQUAL
+  val eqBar = fn (_, _) => true
+  datatype bar = Bar of unit
+  val showBar = fn Bar _ => "Bar " ^ "(" ^ "()" ^ ")"
+  val compareBar = fn (Bar _, Bar _) => EQUAL
+  val eqBar = fn (Bar _, Bar _) => true
 end

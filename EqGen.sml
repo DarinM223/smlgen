@@ -2,7 +2,11 @@ structure EqGen =
 struct
   open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
-  val andalsoChainExp = infixLExp andalsoTok
+  fun andalsoChainExp l =
+    case List.filter (fn Const t => not (Token.same (t, trueTok)) | _ => true) l of
+      [] => Const trueTok
+    | l => infixLExp andalsoTok l
+
   val eqTypes =
     let
       val arrayLikeTypes =
