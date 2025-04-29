@@ -73,6 +73,7 @@ The characters corresponding to each generator are listed below:
 |   g    | [Generic](https://github.com/DarinM223/generic) |
 |   s    | Show                                            |
 |   c    | Compare                                         |
+|   e    | Equality                                        |
 
 smlgen will prompt you for every type name that matches to generate code for that type. It will then overwrite the file with the formatted and generated code.
 
