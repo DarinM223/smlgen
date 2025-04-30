@@ -260,6 +260,7 @@ use "Env.sml";
 use "ShowGen.sml";
 use "CompareGen.sml";
 use "EqGen.sml";
+use "HashGen.sml";
 use "FilesData.sml";
 use "FilesGen.sml";
 use "smlgen.sml";

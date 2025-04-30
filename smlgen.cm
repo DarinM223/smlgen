@@ -24,6 +24,7 @@ Group is
   ShowGen.sml
   CompareGen.sml
   EqGen.sml
+  HashGen.sml
   FilesData.sml
   FilesGen.sml
   smlgen.sml
