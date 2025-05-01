@@ -42,7 +42,6 @@ struct
     , ("real", "Real.toString")
     , ("word", "Word.toString")
     , ("bool", "Bool.toString")
-    , ("Int.int", "Int.toString")
     , ("Int32.int", "Int32.toString")
     , ("Int63.int", "Int63.toString")
     , ("Int64.int", "Int64.toString")
@@ -53,17 +52,13 @@ struct
     , ("Real.real", "Real.toString")
     , ("Math.real", "Real.toString")
     , ("LargeReal.real", "LargeReal.toString")
-    , ("Word.word", "Word.toString")
     , ("Word8.word", "Word8.toString")
     , ("Word32.word", "Word32.toString")
     , ("Word63.word", "Word63.toString")
     , ("Word64.word", "Word64.toString")
     , ("LargeWord.word", "LargeWord.toString")
-    , ("Bool.bool", "Bool.toString")
     , ("Date.date", "Date.toString")
-    , ("CharVectorSlice.slice", "Substring.string")
     , ("Substring.substring", "Substring.string")
-    , ("WideCharVectorSlice.slice", "WideSubstring.string")
     , ("WideSubstring.substring", "WideSubstring.string")
     , ("Time.time", "Time.toString")
     , ("IEEEReal.decimal_approx", "IEEEReal.toString")
@@ -75,18 +70,12 @@ struct
 
   fun tyCon _ v "string" [] =
         infixLExp concatTok [Const quotTok, Const v, Const quotTok]
-    | tyCon e v "String.string" [] =
-        tyCon e v "string" []
     | tyCon _ v "char" [] =
         infixLExp concatTok
           [ Const (mkToken "\"#\\\"\"")
           , appExp [Const (mkToken "Char.toString"), Const v]
           , Const (mkToken "\"\\\"\"")
           ]
-    | tyCon e v "Char.char" [] =
-        tyCon e v "char" []
-    | tyCon e v "String.char" [] =
-        tyCon e v "char" []
     | tyCon env v "list" [a] =
         infixLExp concatTok
           [ Const openSquare
@@ -101,15 +90,11 @@ struct
               ]
           , Const closeSquare
           ]
-    | tyCon env v "List.list" [a] =
-        tyCon env v "list" [a]
     | tyCon env v "option" [a] =
         ( Env.setOption env ("option", true)
         ; appExp
             [Const (mkToken "showOption"), parensExp (tyExp' env a), Const v]
         )
-    | tyCon env v "Option.option" [a] =
-        tyCon env v "option" [a]
     | tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
         let
           val atom = Atom.atom s
@@ -165,6 +150,7 @@ struct
     | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
         let
           val id = Token.toString (MaybeLongToken.getToken id)
+          val id = Option.getOpt (rewriteAlias (Atom.atom id), id)
           val args = syntaxSeqToList args
           fun con v =
             case generatedFixNameForTy env' ty of

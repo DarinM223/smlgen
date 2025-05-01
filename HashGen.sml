@@ -70,6 +70,23 @@ struct
       (List.rev o addStringOption) [combineDec]
     end
 
+  val customIntegerTypes = (AtomRedBlackSet.fromList o List.map Atom.atom)
+    [ "Int32.int"
+    , "Int63.int"
+    , "Int64.int"
+    , "LargeInt.int"
+    , "FixedInt.int"
+    , "Position.int"
+    , "IntInf.int"
+    ]
+  val customWordTypes = (AtomRedBlackSet.fromList o List.map Atom.atom)
+    [ "Word8.word"
+    , "Word32.word"
+    , "Word63.word"
+    , "Word64.word"
+    , "LargeWord.word"
+    ]
+
   fun tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
     let
       val atom = Atom.atom s
@@ -101,6 +118,7 @@ struct
     | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
         let
           val id = Token.toString (MaybeLongToken.getToken id)
+          val id = Option.getOpt (rewriteAlias (Atom.atom id), id)
           val args = syntaxSeqToList args
           fun con v =
             case generatedFixNameForTy env' ty of

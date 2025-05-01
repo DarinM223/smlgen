@@ -26,21 +26,13 @@ struct
       , "word"
       , "bool"
       , "order"
-      , "Array.array"
-      , "Array.vector"
-      , "Vector.vector"
-      , "Bool.bool"
-      , "Char.char"
-      , "Char.string"
+      , "array"
       , "Date.weekday"
       , "Date.month"
-      , "General.unit"
-      , "General.order"
       , "IEEEReal.real_order"
       , "IEEEReal.float_class"
       , "IEEEReal.rounding_mode"
       , "IEEEReal.decimal_approx"
-      , "Int.int"
       , "Int32.int"
       , "Int63.int"
       , "Int64.int"
@@ -55,38 +47,13 @@ struct
       , "OS.IO.iodesc"
       , "OS.IO.iodesc_kind"
       , "OS.IO.poll_desc"
-      , "BinPrimIO.array"
-      , "BinPrimIO.vector"
-      , "BinPrimIO.elem"
-      , "BinPrimIO.pos"
-      , "TextPrimIO.array"
-      , "TextPrimIO.vector"
-      , "TextPrimIO.elem"
       , "TextPrimIO.pos"
-      , "WideTextPrimIO.array"
-      , "WideTextPrimIO.vector"
-      , "WideTextPrimIO.elem"
       , "WideTextPrimIO.pos"
-      , "String.string"
-      , "String.char"
       , "WideString.string"
-      , "WideString.char"
+      , "WideChar.char"
       , "StringCvt.radix"
       , "StringCvt.realfmt"
-      , "Substring.string"
-      , "Substring.char"
-      , "WideSubstring.string"
-      , "WideSubstring.char"
-      , "Text.Char.char"
-      , "Text.String.string"
-      , "Text.CharVector.vector"
-      , "Text.CharArray.array"
-      , "WideText.Char.char"
-      , "WideText.String.string"
-      , "WideText.CharVector.vector"
-      , "WideText.CharArray.array"
       , "Time.time"
-      , "Word.word"
       , "Word8.word"
       , "Word32.word"
       , "Word63.word"
@@ -104,12 +71,7 @@ struct
     , ("CharVectorSlice.slice", "Substring.compare")
     , ("WideCharVectorSlice.slice", "WideSubstring.compare")
     ]
-  val rewrites =
-    [ ("real", "Real.==")
-    , ("Real.real", "Real.==")
-    , ("Math.real", "Real.==")
-    , ("LargeReal.real", "LargeReal.==")
-    ]
+  val rewrites = [("real", "Real.=="), ("LargeReal.real", "LargeReal.==")]
 
   val eqTypesSet = (AtomRedBlackSet.fromList o List.map Atom.atom) eqTypes
   val compareTypesMap =
@@ -206,8 +168,6 @@ struct
             , tupleExp [e1, e2]
             ]
         )
-    | tyCon env e1 e2 "List.list" [a] =
-        tyCon env e1 e2 "list" [a]
     | tyCon env e1 e2 "option" [a] =
         ( Env.setOption env ("option", true)
         ; appExp
@@ -216,8 +176,6 @@ struct
             , tupleExp [e1, e2]
             ]
         )
-    | tyCon env e1 e2 "Option.option" [a] =
-        tyCon env e1 e2 "option" [a]
     | tyCon _ e1 e2 "ref" [_] = infixLExp equalTok [e1, e2]
     | tyCon (env as Env {env = env', ...}) e1 e2 (s: string) (args: Ty.ty list) =
         let
@@ -279,6 +237,7 @@ struct
     | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
         let
           val id = Token.toString (MaybeLongToken.getToken id)
+          val id = Option.getOpt (rewriteAlias (Atom.atom id), id)
           val args = syntaxSeqToList args
           fun con e1 e2 =
             case generatedFixNameForTy env' ty of

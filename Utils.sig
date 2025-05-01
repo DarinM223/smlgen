@@ -40,4 +40,5 @@ sig
     }
   val emptyGen: gen
   val addGen: gen -> gen -> gen
+  val rewriteAlias: Atom.atom -> string option
 end

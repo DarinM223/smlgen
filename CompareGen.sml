@@ -144,9 +144,6 @@ struct
     , ("real", "Real.compare")
     , ("char", "Char.compare")
     , ("word", "Word.compare")
-    , ("String.string", "String.compare")
-    , ("String.char", "Char.compare")
-    , ("Int.int", "Int.compare")
     , ("Int32.int", "Int32.compare")
     , ("Int63.int", "Int63.compare")
     , ("Int64.int", "Int64.compare")
@@ -154,20 +151,15 @@ struct
     , ("FixedInt.int", "FixedInt.compare")
     , ("Position.int", "Position.compare")
     , ("IntInf.int", "IntInf.compare")
-    , ("Real.real", "Real.compare")
-    , ("Math.real", "Real.compare")
     , ("LargeReal.real", "LargeReal.compare")
     , ("Char.char", "Char.compare")
-    , ("Word.word", "Word.compare")
     , ("Word8.word", "Word8.compare")
     , ("Word32.word", "Word32.compare")
     , ("Word63.word", "Word63.compare")
     , ("Word64.word", "Word64.compare")
     , ("LargeWord.word", "LargeWord.compare")
     , ("Date.date", "Date.compare")
-    , ("CharVectorSlice.slice", "Substring.compare")
     , ("Substring.substring", "Substring.compare")
-    , ("WideCharVectorSlice.slice", "WideSubstring.compare")
     , ("WideSubstring.substring", "WideSubstring.compare")
     , ("Time.time", "Time.compare")
     ]
@@ -180,20 +172,14 @@ struct
         ( Env.setOption env ("bool", true)
         ; appExp [Const (mkToken "compareBool"), e]
         )
-    | tyCon env e "Bool.bool" [] =
-        tyCon env e "bool" []
     | tyCon env e "list" [a] =
         ( Env.setOption env ("list", true)
         ; appExp [Const (mkToken "compareList"), parensExp (tyExp' env a), e]
         )
-    | tyCon env e "List.list" [a] =
-        tyCon env e "list" [a]
     | tyCon env e "option" [a] =
         ( Env.setOption env ("option", true)
         ; appExp [Const (mkToken "compareOption"), parensExp (tyExp' env a), e]
         )
-    | tyCon env e "Option.option" [a] =
-        tyCon env e "option" [a]
     | tyCon (env as Env {env = env', ...}) e (s: string) (args: Ty.ty list) =
         let
           val atom = Atom.atom s
@@ -236,6 +222,7 @@ struct
     | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
         let
           val id = Token.toString (MaybeLongToken.getToken id)
+          val id = Option.getOpt (rewriteAlias (Atom.atom id), id)
           val args = syntaxSeqToList args
           fun con e =
             case generatedFixNameForTy env' ty of
