@@ -50,6 +50,9 @@ sig
   val andalsoTok: Token.t
   val someTok: Token.t
   val noneTok: Token.t
+  val mulTok: Token.t
+  val addTok: Token.t
+  val oTok: Token.t
 end
 
 signature BUILD_AST =

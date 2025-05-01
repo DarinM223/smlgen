@@ -70,6 +70,9 @@ struct
   val andalsoTok = mkReservedToken Andalso
   val someTok = mkToken "SOME"
   val noneTok = mkToken "NONE"
+  val mulTok = mkToken "*"
+  val addTok = mkToken "+"
+  val oTok = mkToken "o"
 end
 
 structure BuildAst :> BUILD_AST =

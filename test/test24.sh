@@ -1,4 +1,4 @@
-../smlgen --test test24.sml Foo.t:sce Bar.t:sce Bar.bar:sce
+../smlgen --test test24.sml Foo.t:sceh Bar.t:sce Bar.bar:sce test_hash:h
 if cmp --silent test24.sml.test test24.sml.expected; then
   echo "test24 succeeded"
 else

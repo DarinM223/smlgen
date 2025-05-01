@@ -6,7 +6,47 @@ struct
   val resultTok = mkToken "result"
   val combineTok = mkToken "combine"
   val zeroWordTok = mkToken "0w0"
+  val primeTok = mkToken "0w31"
   val hashStringTok = mkToken "hashString"
+
+  fun hashString env e =
+    (Env.setOption env ("string", true); appExp [Const hashStringTok, e])
+
+  val combineDec =
+    let
+      val (aTok, bTok) = (mkToken "a", mkToken "b")
+    in
+      valDec (Pat.Const combineTok)
+        (singleFnExp (destructTuplePat [Pat.Const aTok, Pat.Const bTok])
+           (infixLExp addTok
+              [infixLExp mulTok [Const primeTok, Const aTok], Const bTok]))
+    end
+  val hashStringDec =
+    let
+      val (chTok, accTok) = (mkToken "ch", mkToken "acc")
+    in
+      valDec (Pat.Const hashStringTok) (infixLExp oTok
+        [ appExp
+            [ Const (mkToken "Substring.foldl")
+            , parensExp
+                (singleFnExp
+                   (destructTuplePat [Pat.Const chTok, Pat.Const accTok])
+                   (appExp
+                      [ Const combineTok
+                      , tupleExp
+                          [ Const accTok
+                          , appExp
+                              [ Const (mkToken "Word.fromInt")
+                              , parensExp (appExp
+                                  [Const (mkToken "Char.ord"), Const chTok])
+                              ]
+                          ]
+                      ]))
+            , Const zeroWordTok
+            ]
+        , Const (mkToken "Substring.full")
+        ])
+    end
 
   fun combineExpsInLet [] =
         raise Fail "combineExpsInLet: expected non empty list of expressions"
@@ -22,7 +62,13 @@ struct
           singleLetExp (multDec (headDec :: restDecs)) (Const resultTok)
         end
 
-  fun additionalDecs env = []
+  fun additionalDecs env =
+    let
+      fun addStringOption a =
+        if Env.getOption env "string" then hashStringDec :: a else a
+    in
+      (List.rev o addStringOption) [combineDec]
+    end
 
   fun tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
     let
@@ -77,17 +123,15 @@ struct
       val env = Env.freshEnv env
       fun hashConstr constr f def =
         if List.length constrs > 1 then
-          f (appExp
-            [ Const hashStringTok
-            , Const (mkToken ("\"" ^ Token.toString constr ^ "\""))
-            ])
+          f (hashString env (Const (mkToken
+            ("\"" ^ Token.toString constr ^ "\""))))
         else
           def
       val tups =
         List.map
           (fn {arg = SOME {ty, ...}, id, ...} =>
              ( conPat id (destructTyPat (Env.fresh env) ty)
-             , case tyExp env ty of
+             , case tyExp (envVars env) ty of
                  [exp] =>
                    hashConstr id
                      (fn constr =>

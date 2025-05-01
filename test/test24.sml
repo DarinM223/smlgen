@@ -30,6 +30,8 @@ struct
     }
 end
 
+datatype test_hash = Foo of int * string | Bar of {a: int, b: string}
+
 structure Bar =
 struct
   type t =

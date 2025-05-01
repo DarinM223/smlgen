@@ -368,6 +368,93 @@ struct
       andalso Date.compare (t22, t48) = EQUAL
       andalso Substring.compare (t23, t49) = EQUAL
       andalso Substring.compare (t24, t50) = EQUAL andalso t25 = t51
+  local val combine = fn (a, b) => 0w31 * a + b
+  in
+    val hash =
+      fn { a = t0
+         , b = t1
+         , c = t2
+         , d = t3
+         , e = t4
+         , f = t5
+         , g = t6
+         , h = t7
+         , i = t8
+         , j = t9
+         , k = t10
+         , l = t11
+         , m = t12
+         , n = t13
+         , o = t14
+         , p = t15
+         , q = t16
+         , r = t17
+         , s = t18
+         , t = t19
+         , u = t20
+         , v = t21
+         , w = t22
+         , x = t23
+         , y = t24
+         , z = t25
+         } =>
+        let
+          val result = hashString t0
+          val result = combine (result, hashInt t1)
+          val result = combine (result, hashReal t2)
+          val result = combine (result, hashChar t3)
+          val result = combine (result, hashWord t4)
+          val result = combine (result, String.hashString t5)
+          val result = combine (result, String.hashChar t6)
+          val result = combine (result, Int.hashInt t7)
+          val result = combine (result, Int32.hashInt t8)
+          val result = combine (result, Int64.hashInt t9)
+          val result = combine (result, LargeInt.hashInt t10)
+          val result = combine (result, FixedInt.hashInt t11)
+          val result = combine (result, Position.hashInt t12)
+          val result = combine (result, IntInf.hashInt t13)
+          val result = combine (result, Real.hashReal t14)
+          val result = combine (result, LargeReal.hashReal t15)
+          val result = combine (result, Char.hashChar t16)
+          val result = combine (result, Word.hashWord t17)
+          val result = combine (result, Word8.hashWord t18)
+          val result = combine (result, Word32.hashWord t19)
+          val result = combine (result, Word64.hashWord t20)
+          val result = combine (result, LargeWord.hashWord t21)
+          val result = combine (result, Date.hashDate t22)
+          val result = combine (result, CharVectorSlice.hashSlice t23)
+          val result = combine (result, Substring.hashSubstring t24)
+          val result = combine (result, Time.hashTime t25)
+        in
+          result
+        end
+  end
+end
+
+datatype test_hash = Foo of int * string | Bar of {a: int, b: string}
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    Substring.foldl (fn (ch, acc) => combine (acc, Word.fromInt (Char.ord ch)))
+      0w0 o Substring.full
+in
+  val hashTest_hash =
+    fn Foo (t0, t1) =>
+      let
+        val result = hashString "Foo"
+        val result = combine (result, hashInt t0)
+        val result = combine (result, hashString t1)
+      in
+        result
+      end
+     | Bar {a = t2, b = t3} =>
+      let
+        val result = hashString "Bar"
+        val result = combine (result, hashInt t2)
+        val result = combine (result, hashString t3)
+      in
+        result
+      end
 end
 
 structure Bar =
