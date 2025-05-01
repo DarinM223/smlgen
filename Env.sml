@@ -44,6 +44,13 @@ struct
   fun getOption (Env {options, ...}) opt =
     AtomTable.lookup options (Atom.atom opt)
     handle LibBase.NotFound => false
+  fun getOptions (Env {options, ...}) =
+    List.mapPartial
+      (fn (atom, flag) => if flag then SOME (Atom.toString atom) else NONE)
+      (AtomTable.listItemsi options)
+
+  fun envVars (env as Env {vars, ...}) =
+    (vars := List.rev (!vars); env)
 
   (* Given a type, return two pattern deconstructions for that type,
      with the collected variables interleaved between the two patterns.

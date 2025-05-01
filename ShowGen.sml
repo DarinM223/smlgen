@@ -2,8 +2,6 @@ structure ShowGen =
 struct
   open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
-  fun envVars (env as Env {vars, ...}) =
-    (vars := List.rev (!vars); env)
   val mkShow = prependToken "show"
 
   val concatTok = mkToken "^"
