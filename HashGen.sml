@@ -5,6 +5,8 @@ struct
   val mkHash = prependToken "hash"
   val resultTok = mkToken "result"
   val combineTok = mkToken "combine"
+  val zeroWordTok = mkToken "0w0"
+  val hashStringTok = mkToken "hashString"
 
   fun combineExpsInLet [] =
         raise Fail "combineExpsInLet: expected non empty list of expressions"
@@ -19,6 +21,8 @@ struct
         in
           singleLetExp (multDec (headDec :: restDecs)) (Const resultTok)
         end
+
+  fun additionalDecs env = []
 
   fun tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
     let
@@ -68,14 +72,126 @@ struct
     | tyExp _ (Ty.Arrow _) = raise Fail "Cannot hash function"
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
-  fun genConstrs (env, constrs: constr list) : Exp.exp = raise Fail "fuck"
+  fun genConstrs (env, constrs: constr list) : Exp.exp =
+    let
+      val env = Env.freshEnv env
+      fun hashConstr constr f def =
+        if List.length constrs > 1 then
+          f (appExp
+            [ Const hashStringTok
+            , Const (mkToken ("\"" ^ Token.toString constr ^ "\""))
+            ])
+        else
+          def
+      val tups =
+        List.map
+          (fn {arg = SOME {ty, ...}, id, ...} =>
+             ( conPat id (destructTyPat (Env.fresh env) ty)
+             , case tyExp env ty of
+                 [exp] =>
+                   hashConstr id
+                     (fn constr =>
+                        appExp [Const combineTok, tupleExp [constr, exp]]) exp
+               | exps =>
+                   combineExpsInLet
+                     (hashConstr id (fn constr => constr :: exps) exps)
+             )
+            | {arg = NONE, id, ...} =>
+             (Pat.Const id, hashConstr id (fn e => e) (Const zeroWordTok)))
+          constrs
+    in
+      multFnExp tups
+    end
 
-  fun genTypebind ({elems, ...}: typbind) = raise Fail "fuck"
+  fun genTypebind ({elems, ...}: typbind) =
+    let
+      val env = Env.empty (mkEnv (! Options.defaultTableSize))
+      val decs =
+        List.map
+          (fn {ty, tycon, tyvars, ...} =>
+             let
+               val vars = syntaxSeqToList tyvars
+               val env = Env.setSubEnv (Env.freshEnv env) (envWithVars vars)
+             in
+               valDec (Pat.Const (mkHash tycon)) (header vars (tyExp' env ty))
+             end) (Seq.toList elems)
+    in
+      localDecs (additionalDecs env) (multDec decs)
+    end
 
-  fun genSimpleDatabind (env, tyTok, vars, Databind constrs) = raise Fail "fuck"
-    | genSimpleDatabind (_, tyTok, vars, Typebind ty) = raise Fail "fuck"
+  fun genSimpleDatabind (env, tyTok, vars, Databind constrs) =
+        let
+          val env = Env.empty env
+          val dec = valDec (Pat.Const (mkHash tyTok)) (header vars
+            (genConstrs (env, constrs)))
+        in
+          localDecs (additionalDecs env) dec
+        end
+    | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
+        genSingleTypebind genTypebind (tyTok, vars, ty)
 
-  fun genRecursiveDatabind (env, tycons, tys, vars) = raise Fail "fuck"
+  fun genRecursiveDatabind (env, tycons, tys, vars) =
+    let
+      val env as Env {env = env', ...} = Env.empty env
+      val varExps = List.map Ty.Var vars
+      val dups: IntRedBlackSet.set AtomTable.hash_table =
+        AtomTable.mkTable (List.length tycons, LibBase.NotFound)
+      val generatorDecs =
+        List.map
+          (fn (tycon, ty) =>
+             let
+               val tyconA = Atom.atom (Token.toString tycon)
+               val args =
+                 List.map
+                   (fn Ty.Con {id, ...} => MaybeLongToken.getToken id
+                     | Ty.Var v => mkTyVar v
+                     | _ => raise Fail "Invalid arg")
+                   (generatedArgsForTy env' ty)
+               val argDups = findDuplicates args
+               val () = AtomTable.insert dups (tyconA, argDups)
+               val substMap = buildSubstMap env' (Token.toString tycon) varExps
+             in
+               ( Pat.Const tycon
+               , singleFnExp
+                   (destructTuplePat
+                      (applyDuplicates (argDups, Pat.Const, args)))
+                   (case tyconData env' tyconA of
+                      Databind constrs =>
+                        genConstrs
+                          (env, List.map (substConstr substMap) constrs)
+                    | Typebind ty => tyExp' env (subst substMap ty))
+               )
+             end) (ListPair.zip (tycons, tys))
+      val concatTys = mkToken (String.concatWith "_"
+        (List.map Token.toString tycons))
+      val mutRecDec = valDecs true
+        (List.map
+           (fn (tycon, args) =>
+              let
+                val tycon' = baseTyName (Token.toString tycon)
+                val argDups = AtomTable.lookup dups (Atom.atom tycon')
+                val args = applyDuplicates (argDups, tyExp' env, args)
+              in
+                ( Pat.Const tycon
+                , singleFnExp (Pat.Const quesTok) (appExp
+                    [Const (mkToken tycon'), tupleExp args, Const quesTok])
+                )
+              end) (generatedFixesAndArgs env'))
+      val tyToks = List.map (Option.valOf o generatedFixNameForTy env') tys
+      val dec = multDec
+        (additionalDecs env
+         @
+         [ valDecs true generatorDecs
+         , valDec (Pat.Const concatTys)
+             (singleFnExp
+                (destructTuplePat (List.map (Pat.Const o mkTyVar) vars))
+                (singleLetExp mutRecDec (tupleExp (List.map Const tyToks))))
+         ])
+      val unpacked = unpackingDecs
+        (env', vars, concatTys, tycons, mkHash, "Word.fromInt")
+    in
+      localDec dec (multDec unpacked)
+    end
 
   val genDatabind = genDatabindHelper (genSimpleDatabind, genRecursiveDatabind)
 
