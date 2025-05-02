@@ -5,6 +5,7 @@ sig
   (* Given a list of type variables, creates a function with the converted
      type variables as a tuple argument enclosing the given body expression *)
   val header: Token.token list -> Ast.Exp.exp -> Ast.Exp.exp
+  val splitPrefixFromTypeString: string -> string * string
   val splitPrefixFromType: Token.token -> string * string
   val prependTokenOrDefault: string -> string -> Token.token -> Token.token
   val prependToken: string -> Token.token -> Token.token

@@ -73,6 +73,9 @@ struct
   val mulTok = mkToken "*"
   val addTok = mkToken "+"
   val oTok = mkToken "o"
+  val ifTok = mkReservedToken If
+  val thenTok = mkReservedToken Then
+  val elseTok = mkReservedToken Else
 end
 
 structure BuildAst :> BUILD_AST =
@@ -95,6 +98,16 @@ struct
       , exps = Seq.singleton exp
       , delims = Seq.empty ()
       , endd = endTok
+      }
+
+  fun ifThenElseExp cond thn els =
+    IfThenElse
+      { iff = ifTok
+      , exp1 = cond
+      , thenn = thenTok
+      , exp2 = thn
+      , elsee = elseTok
+      , exp3 = els
       }
 
   fun tupleExp [] = unitExp

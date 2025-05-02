@@ -17,9 +17,10 @@ struct
       [] => (fn e => e)
     | vars => singleFnExp (destructTuplePat vars)
 
-  val splitPrefixFromType =
+  val splitPrefixFromTypeString =
     (fn (p, t) => (Substring.string p, Substring.string t))
-    o Substring.splitr (fn ch => ch <> #".") o Substring.full o Token.toString
+    o Substring.splitr (fn ch => ch <> #".") o Substring.full
+  val splitPrefixFromType = splitPrefixFromTypeString o Token.toString
   fun prependTokenOrDefault def str t =
     let
       val (prefix, t) = splitPrefixFromType t

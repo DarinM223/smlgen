@@ -8,6 +8,10 @@ struct
   val zeroWordTok = mkToken "0w0"
   val primeTok = mkToken "0w31"
   val hashStringTok = mkToken "hashString"
+  val wordFromIntTok = mkToken "Word.fromInt"
+  val ordTok = mkToken "Char.ord"
+  val trueHashTok = mkToken "0wx096DB16D"
+  val falseHashTok = mkToken "0wx01B56B6D"
 
   fun hashString env e =
     (Env.setOption env ("string", true); appExp [Const hashStringTok, e])
@@ -36,9 +40,8 @@ struct
                       , tupleExp
                           [ Const accTok
                           , appExp
-                              [ Const (mkToken "Word.fromInt")
-                              , parensExp (appExp
-                                  [Const (mkToken "Char.ord"), Const chTok])
+                              [ Const wordFromIntTok
+                              , parensExp (appExp [Const ordTok, Const chTok])
                               ]
                           ]
                       ]))
@@ -87,18 +90,44 @@ struct
     , "LargeWord.word"
     ]
 
-  fun tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
+  fun getPrefixModule s =
     let
-      val atom = Atom.atom s
-      val con = Const
-        (if tyconIsGeneratedFix env' s then mkToken s else mkHash (mkToken s))
-      val constrExp =
-        case args of
-          [] => con
-        | _ => appExp [con, tupleExp (List.map (tyExp' env) args)]
+      val (prefix, _) = splitPrefixFromTypeString s
     in
-      [appExp [constrExp, Const v]]
+      if String.size prefix > 0 then
+        String.extract (prefix, 0, SOME (String.size prefix - 1))
+      else
+        prefix
     end
+
+  fun tyCon _ v "int" [] =
+        [appExp [Const wordFromIntTok, Const v]]
+    | tyCon _ v "bool" [] =
+        [ifThenElseExp (Const v) (Const trueHashTok) (Const falseHashTok)]
+    | tyCon _ v "char" [] =
+        [appExp
+           [Const wordFromIntTok, parensExp (appExp [Const ordTok, Const v])]]
+    | tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
+        let
+          val atom = Atom.atom s
+          val con = Const
+            (if tyconIsGeneratedFix env' s then mkToken s
+             else mkHash (mkToken s))
+          val constrExp =
+            case args of
+              [] => con
+            | _ => appExp [con, tupleExp (List.map (tyExp' env) args)]
+        in
+          if
+            AtomRedBlackSet.member (customIntegerTypes, atom)
+            orelse AtomRedBlackSet.member (customWordTypes, atom)
+          then
+            ( Env.setOption env (s, true)
+            ; [appExp [Const (mkHash (mkToken (getPrefixModule s))), Const v]]
+            )
+          else
+            [appExp [constrExp, Const v]]
+        end
   and tyExp' env ty =
     let
       val env = Env.freshEnv env
