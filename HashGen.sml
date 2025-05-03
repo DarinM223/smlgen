@@ -69,48 +69,43 @@ struct
       val withPrefix = fn s => mkToken (prefix ^ s)
       val dec = mkHash (mkToken (getPrefixModule intType))
       val (iTok, pTok) = (mkToken "i", mkToken "p")
+      val () = Env.setOption env ("string", true)
     in
-      valDec (Pat.Const dec)
-        (singleFnExp (Pat.Const iTok) (caseExp (Const (withPrefix "precision"))
-           [ ( conPat someTok (Pat.Const pTok)
-             , ifThenElseExp
-                 (infixLExp opGtTok
-                    [ Const pTok
-                    , infixLExp addTok [Const wordSizeTok, Const oneIntTok]
-                    ])
-                 (singleLetExp
-                    (valDec (Pat.Const iTok) (appExp
-                       [Const (withPrefix "toLarge"), Const iTok]))
-                    (appExp
-                       [ Const (mkToken "Word.fromLargeInt")
-                       , parensExp (appExp
-                           [ Const (mkToken "IntInf.xorb")
-                           , tupleExp
-                               [ Const iTok
-                               , appExp
-                                   [ Const (mkToken "IntInf.~>>")
-                                   , tupleExp
-                                       [ Const iTok
-                                       , appExp
-                                           [ Const wordFromIntTok
-                                           , Const wordSizeTok
-                                           ]
-                                       ]
-                                   ]
-                               ]
-                           ])
-                       ]))
-                 (appExp
-                    [ Const wordFromIntTok
-                    , parensExp (appExp
-                        [Const (withPrefix "toInt"), Const iTok])
-                    ])
-             )
-           , ( Pat.Const noneTok
-             , hashString env (parensExp (appExp
-                 [Const (withPrefix "toString"), Const iTok]))
-             )
-           ]))
+      valDec (Pat.Const dec) (caseExp (Const (withPrefix "precision"))
+        [ ( conPat someTok (Pat.Const pTok)
+          , ifThenElseExp
+              (infixLExp opGtTok
+                 [ Const pTok
+                 , infixLExp addTok [Const wordSizeTok, Const oneIntTok]
+                 ])
+              (infixLExp oTok
+                 [ parensExp (singleFnExp (Pat.Const iTok) (appExp
+                     [ Const (mkToken "Word.fromLargeInt")
+                     , parensExp (appExp
+                         [ Const (mkToken "IntInf.xorb")
+                         , tupleExp
+                             [ Const iTok
+                             , appExp
+                                 [ Const (mkToken "IntInf.~>>")
+                                 , tupleExp
+                                     [ Const iTok
+                                     , appExp
+                                         [ Const wordFromIntTok
+                                         , Const wordSizeTok
+                                         ]
+                                     ]
+                                 ]
+                             ]
+                         ])
+                     ]))
+                 , Const (withPrefix "toLarge")
+                 ])
+              (infixLExp oTok [Const wordFromIntTok, Const (withPrefix "toInt")])
+          )
+        , ( Pat.Const noneTok
+          , infixLExp oTok [Const hashStringTok, Const (withPrefix "toString")]
+          )
+        ])
     end
 
   fun combineExpsInLet [] =

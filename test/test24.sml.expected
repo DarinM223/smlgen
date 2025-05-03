@@ -374,84 +374,72 @@ struct
       Substring.foldl
         (fn (ch, acc) => combine (acc, Word.fromInt (Char.ord ch))) 0w0
       o Substring.full
-    val hashPosition = fn i =>
+    val hashPosition =
       case Position.precision of
         SOME p =>
           if p > Word.wordSize + 1 then
-            let
-              val i = Position.toLarge i
-            in
-              Word.fromLargeInt (IntInf.xorb
-                (i, IntInf.~>> (i, Word.fromInt Word.wordSize)))
-            end
+            (fn i =>
+               Word.fromLargeInt (IntInf.xorb
+                 (i, IntInf.~>> (i, Word.fromInt Word.wordSize))))
+            o Position.toLarge
           else
-            Word.fromInt (Position.toInt i)
-      | NONE => hashString (Position.toString i)
-    val hashFixedInt = fn i =>
+            Word.fromInt o Position.toInt
+      | NONE => hashString o Position.toString
+    val hashFixedInt =
       case FixedInt.precision of
         SOME p =>
           if p > Word.wordSize + 1 then
-            let
-              val i = FixedInt.toLarge i
-            in
-              Word.fromLargeInt (IntInf.xorb
-                (i, IntInf.~>> (i, Word.fromInt Word.wordSize)))
-            end
+            (fn i =>
+               Word.fromLargeInt (IntInf.xorb
+                 (i, IntInf.~>> (i, Word.fromInt Word.wordSize))))
+            o FixedInt.toLarge
           else
-            Word.fromInt (FixedInt.toInt i)
-      | NONE => hashString (FixedInt.toString i)
-    val hashIntInf = fn i =>
+            Word.fromInt o FixedInt.toInt
+      | NONE => hashString o FixedInt.toString
+    val hashIntInf =
       case IntInf.precision of
         SOME p =>
           if p > Word.wordSize + 1 then
-            let
-              val i = IntInf.toLarge i
-            in
-              Word.fromLargeInt (IntInf.xorb
-                (i, IntInf.~>> (i, Word.fromInt Word.wordSize)))
-            end
+            (fn i =>
+               Word.fromLargeInt (IntInf.xorb
+                 (i, IntInf.~>> (i, Word.fromInt Word.wordSize))))
+            o IntInf.toLarge
           else
-            Word.fromInt (IntInf.toInt i)
-      | NONE => hashString (IntInf.toString i)
-    val hashInt64 = fn i =>
+            Word.fromInt o IntInf.toInt
+      | NONE => hashString o IntInf.toString
+    val hashInt64 =
       case Int64.precision of
         SOME p =>
           if p > Word.wordSize + 1 then
-            let
-              val i = Int64.toLarge i
-            in
-              Word.fromLargeInt (IntInf.xorb
-                (i, IntInf.~>> (i, Word.fromInt Word.wordSize)))
-            end
+            (fn i =>
+               Word.fromLargeInt (IntInf.xorb
+                 (i, IntInf.~>> (i, Word.fromInt Word.wordSize))))
+            o Int64.toLarge
           else
-            Word.fromInt (Int64.toInt i)
-      | NONE => hashString (Int64.toString i)
-    val hashInt32 = fn i =>
+            Word.fromInt o Int64.toInt
+      | NONE => hashString o Int64.toString
+    val hashInt32 =
       case Int32.precision of
         SOME p =>
           if p > Word.wordSize + 1 then
-            let
-              val i = Int32.toLarge i
-            in
-              Word.fromLargeInt (IntInf.xorb
-                (i, IntInf.~>> (i, Word.fromInt Word.wordSize)))
-            end
+            (fn i =>
+               Word.fromLargeInt (IntInf.xorb
+                 (i, IntInf.~>> (i, Word.fromInt Word.wordSize))))
+            o Int32.toLarge
           else
-            Word.fromInt (Int32.toInt i)
-      | NONE => hashString (Int32.toString i)
-    val hashLargeInt = fn i =>
+            Word.fromInt o Int32.toInt
+      | NONE => hashString o Int32.toString
+    val hashLargeInt =
       case LargeInt.precision of
         SOME p =>
           if p > Word.wordSize + 1 then
-            let
-              val i = LargeInt.toLarge i
-            in
-              Word.fromLargeInt (IntInf.xorb
-                (i, IntInf.~>> (i, Word.fromInt Word.wordSize)))
-            end
+            (fn i =>
+               Word.fromLargeInt (IntInf.xorb
+                 (i, IntInf.~>> (i, Word.fromInt Word.wordSize))))
+            o LargeInt.toLarge
           else
-            Word.fromInt (LargeInt.toInt i)
-      | NONE => hashString (LargeInt.toString i)
+            Word.fromInt o LargeInt.toInt
+      | NONE => hashString o LargeInt.toString
   in
     val hash =
       fn { a = t0
