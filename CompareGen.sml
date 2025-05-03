@@ -8,20 +8,10 @@ struct
   val greaterCmpTok = mkToken "GREATER"
   val lessCmpTok = mkToken "LESS"
   fun caseChain (exp, exps) =
-    parensExp (Case
-      { casee = caseTok
-      , exp = exp
-      , off = ofTok
-      , elems = Seq.fromList
-          [ { pat = Pat.Const equalCmpTok
-            , arrow = fatArrowTok
-            , exp = caseChainExp exps
-            }
-          , {pat = Pat.Const quesTok, arrow = fatArrowTok, exp = Const quesTok}
-          ]
-      , delims = Seq.singleton orTok
-      , optbar = NONE
-      })
+    parensExp (caseExp exp
+      [ (Pat.Const equalCmpTok, caseChainExp exps)
+      , (Pat.Const quesTok, Const quesTok)
+      ])
   and caseChainExp [] = raise Fail "Empty case chain"
     | caseChainExp [exp] = exp
     | caseChainExp (exp :: (exps as Const tok :: exps')) =

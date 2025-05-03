@@ -76,6 +76,7 @@ struct
   val ifTok = mkReservedToken If
   val thenTok = mkReservedToken Then
   val elseTok = mkReservedToken Else
+  val opGtTok = mkToken ">"
 end
 
 structure BuildAst :> BUILD_AST =
@@ -108,6 +109,19 @@ struct
       , exp2 = thn
       , elsee = elseTok
       , exp3 = els
+      }
+
+  fun caseExp cond tups =
+    Case
+      { casee = caseTok
+      , exp = cond
+      , off = ofTok
+      , elems = Seq.fromList
+          (List.map
+             (fn (pat, exp) => {pat = pat, arrow = fatArrowTok, exp = exp}) tups)
+      , delims = Seq.tabulate (fn _ => orTok) (Int.max
+          (0, List.length tups - 1))
+      , optbar = NONE
       }
 
   fun tupleExp [] = unitExp

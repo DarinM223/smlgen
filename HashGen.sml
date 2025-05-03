@@ -6,12 +6,15 @@ struct
   val resultTok = mkToken "result"
   val combineTok = mkToken "combine"
   val zeroWordTok = mkToken "0w0"
+  val oneIntTok = mkToken "1"
+  val wordSizeTok = mkToken "Word.wordSize"
   val primeTok = mkToken "0w31"
   val hashStringTok = mkToken "hashString"
   val wordFromIntTok = mkToken "Word.fromInt"
   val ordTok = mkToken "Char.ord"
   val trueHashTok = mkToken "0wx096DB16D"
   val falseHashTok = mkToken "0wx01B56B6D"
+  val unitHashTok = mkToken "0wx65B2531B"
 
   fun hashString env e =
     (Env.setOption env ("string", true); appExp [Const hashStringTok, e])
@@ -50,6 +53,65 @@ struct
         , Const (mkToken "Substring.full")
         ])
     end
+  fun getPrefixModule s =
+    let
+      val (prefix, _) = splitPrefixFromTypeString s
+    in
+      if String.size prefix > 0 then
+        String.extract (prefix, 0, SOME (String.size prefix - 1))
+      else
+        prefix
+    end
+
+  fun hashCustomIntDec env intType =
+    let
+      val (prefix, _) = splitPrefixFromTypeString intType
+      val withPrefix = fn s => mkToken (prefix ^ s)
+      val dec = mkHash (mkToken (getPrefixModule intType))
+      val (iTok, pTok) = (mkToken "i", mkToken "p")
+    in
+      valDec (Pat.Const dec)
+        (singleFnExp (Pat.Const iTok) (caseExp (Const (withPrefix "precision"))
+           [ ( conPat someTok (Pat.Const pTok)
+             , ifThenElseExp
+                 (infixLExp opGtTok
+                    [ Const pTok
+                    , infixLExp addTok [Const wordSizeTok, Const oneIntTok]
+                    ])
+                 (singleLetExp
+                    (valDec (Pat.Const iTok) (appExp
+                       [Const (withPrefix "toLarge"), Const iTok]))
+                    (appExp
+                       [ Const (mkToken "Word.fromLargeInt")
+                       , parensExp (appExp
+                           [ Const (mkToken "IntInf.xorb")
+                           , tupleExp
+                               [ Const iTok
+                               , appExp
+                                   [ Const (mkToken "IntInf.~>>")
+                                   , tupleExp
+                                       [ Const iTok
+                                       , appExp
+                                           [ Const wordFromIntTok
+                                           , Const wordSizeTok
+                                           ]
+                                       ]
+                                   ]
+                               ]
+                           ])
+                       ]))
+                 (appExp
+                    [ Const wordFromIntTok
+                    , parensExp (appExp
+                        [Const (withPrefix "toInt"), Const iTok])
+                    ])
+             )
+           , ( Pat.Const noneTok
+             , hashString env (parensExp (appExp
+                 [Const (withPrefix "toString"), Const iTok]))
+             )
+           ]))
+    end
 
   fun combineExpsInLet [] =
         raise Fail "combineExpsInLet: expected non empty list of expressions"
@@ -64,14 +126,6 @@ struct
         in
           singleLetExp (multDec (headDec :: restDecs)) (Const resultTok)
         end
-
-  fun additionalDecs env =
-    let
-      fun addStringOption a =
-        if Env.getOption env "string" then hashStringDec :: a else a
-    in
-      (List.rev o addStringOption) [combineDec]
-    end
 
   val customIntegerTypes = (AtomRedBlackSet.fromList o List.map Atom.atom)
     [ "Int32.int"
@@ -90,14 +144,20 @@ struct
     , "LargeWord.word"
     ]
 
-  fun getPrefixModule s =
+  fun additionalDecs env =
     let
-      val (prefix, _) = splitPrefixFromTypeString s
+      fun addStringOption a =
+        if Env.getOption env "string" then hashStringDec :: a else a
+      val customIntDecs = List.map (hashCustomIntDec env)
+        (List.filter
+           (fn typ => AtomRedBlackSet.member (customIntegerTypes, Atom.atom typ))
+           (Env.getOptions env))
+      fun addCustomIntsOption a =
+        case customIntDecs of
+          [] => a
+        | l => l @ a
     in
-      if String.size prefix > 0 then
-        String.extract (prefix, 0, SOME (String.size prefix - 1))
-      else
-        prefix
+      (List.rev o addCustomIntsOption o addStringOption) [combineDec]
     end
 
   fun tyCon _ v "int" [] =
@@ -107,6 +167,7 @@ struct
     | tyCon _ v "char" [] =
         [appExp
            [Const wordFromIntTok, parensExp (appExp [Const ordTok, Const v])]]
+    | tyCon _ v "word" [] = [Const v]
     | tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
         let
           val atom = Atom.atom s
@@ -156,7 +217,7 @@ struct
         in
           case (id, args) of
             ("ref", [ty]) => tyExp env ty
-          | ("unit", []) => [Const (mkToken "0wx65B2531B")]
+          | ("unit", []) => [Const unitHashTok]
           | _ =>
               (case !vars of
                  h :: t => (vars := t; con h)

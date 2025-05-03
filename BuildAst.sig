@@ -56,6 +56,7 @@ sig
   val ifTok: Token.t
   val thenTok: Token.t
   val elseTok: Token.t
+  val opGtTok: Token.t
 end
 
 signature BUILD_AST =
@@ -69,6 +70,7 @@ sig
   val unitExp: Ast.Exp.exp
   val singleLetExp: Ast.Exp.dec -> Ast.Exp.exp -> Ast.Exp.exp
   val ifThenElseExp: Ast.Exp.exp -> Ast.Exp.exp -> Ast.Exp.exp -> Ast.Exp.exp
+  val caseExp: Ast.Exp.exp -> (Ast.Pat.pat * Ast.Exp.exp) list -> Ast.Exp.exp
   val tupleExp: Ast.Exp.exp list -> Ast.Exp.exp
   val recordExp: (Token.token * Ast.Exp.exp) list -> Ast.Exp.exp
   val listExp: Ast.Exp.exp list -> Ast.Exp.exp
