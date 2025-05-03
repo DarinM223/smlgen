@@ -36,7 +36,125 @@ struct
       FunctionalRecordUpdate.makeUpdate6 (from, from, to) r
     end
 
-  fun goExp (_: 'a visitor) (exp: Ast.Exp.exp) = exp
+  fun goExp _ (Ast.Exp.Const tok) = Ast.Exp.Const tok
+    | goExp _ (Ast.Exp.Ident r) = Ast.Exp.Ident r
+    | goExp visitor (Ast.Exp.Record {left, elems, delims, right}) =
+        Ast.Exp.Record
+          { left = left
+          , elems =
+              Seq.map
+                (fn Ast.Exp.RecordPun r => Ast.Exp.RecordPun r
+                  | Ast.Exp.RecordRow {lab, eq, exp} =>
+                   Ast.Exp.RecordRow
+                     {lab = lab, eq = eq, exp = goExp visitor exp}) elems
+          , delims = delims
+          , right = right
+          }
+    | goExp _ (Ast.Exp.Select r) = Ast.Exp.Select r
+    | goExp _ (Ast.Exp.Unit r) = Ast.Exp.Unit r
+    | goExp visitor (Ast.Exp.Tuple {left, elems, delims, right}) =
+        Ast.Exp.Tuple
+          { left = left
+          , elems = Seq.map (goExp visitor) elems
+          , delims = delims
+          , right = right
+          }
+    | goExp visitor (Ast.Exp.List {left, elems, delims, right}) =
+        Ast.Exp.List
+          { left = left
+          , elems = Seq.map (goExp visitor) elems
+          , delims = delims
+          , right = right
+          }
+    | goExp visitor (Ast.Exp.Parens {left, exp, right}) =
+        Ast.Exp.Parens {left = left, exp = goExp visitor exp, right = right}
+    | goExp visitor (Ast.Exp.Sequence {left, elems, delims, right}) =
+        Ast.Exp.Sequence
+          { left = left
+          , elems = Seq.map (goExp visitor) elems
+          , delims = delims
+          , right = right
+          }
+    | goExp visitor (Ast.Exp.App {left, right}) =
+        Ast.Exp.App {left = goExp visitor left, right = goExp visitor right}
+    | goExp visitor (Ast.Exp.Infix {left, id, right}) =
+        Ast.Exp.Infix
+          {left = goExp visitor left, id = id, right = goExp visitor right}
+    | goExp visitor (Ast.Exp.Typed {exp, colon, ty}) =
+        Ast.Exp.Typed {exp = goExp visitor exp, colon = colon, ty = ty}
+    | goExp visitor (Ast.Exp.Andalso {left, andalsoo, right}) =
+        Ast.Exp.Andalso
+          { left = goExp visitor left
+          , andalsoo = andalsoo
+          , right = goExp visitor right
+          }
+    | goExp visitor (Ast.Exp.Orelse {left, orelsee, right}) =
+        Ast.Exp.Orelse
+          { left = goExp visitor left
+          , orelsee = orelsee
+          , right = goExp visitor right
+          }
+    | goExp visitor (Ast.Exp.Handle {exp, handlee, elems, delims, optbar}) =
+        Ast.Exp.Handle
+          { exp = goExp visitor exp
+          , handlee = handlee
+          , elems =
+              Seq.map
+                (fn {pat, arrow, exp} =>
+                   {pat = pat, arrow = arrow, exp = goExp visitor exp}) elems
+          , delims = delims
+          , optbar = optbar
+          }
+    | goExp visitor (Ast.Exp.Raise {raisee, exp}) =
+        Ast.Exp.Raise {raisee = raisee, exp = goExp visitor exp}
+    | goExp visitor (Ast.Exp.IfThenElse {iff, exp1, thenn, exp2, elsee, exp3}) =
+        Ast.Exp.IfThenElse
+          { iff = iff
+          , exp1 = goExp visitor exp1
+          , thenn = thenn
+          , exp2 = goExp visitor exp2
+          , elsee = elsee
+          , exp3 = goExp visitor exp3
+          }
+    | goExp visitor (Ast.Exp.While {whilee, exp1, doo, exp2}) =
+        Ast.Exp.While
+          { whilee = whilee
+          , exp1 = goExp visitor exp1
+          , doo = doo
+          , exp2 = goExp visitor exp2
+          }
+    | goExp visitor (Ast.Exp.Case {casee, exp, off, elems, delims, optbar}) =
+        Ast.Exp.Case
+          { casee = casee
+          , exp = goExp visitor exp
+          , off = off
+          , elems =
+              Seq.map
+                (fn {pat, arrow, exp} =>
+                   {pat = pat, arrow = arrow, exp = goExp visitor exp}) elems
+          , delims = delims
+          , optbar = optbar
+          }
+    | goExp visitor (Ast.Exp.Fn {fnn, elems, delims, optbar}) =
+        Ast.Exp.Fn
+          { fnn = fnn
+          , elems =
+              Seq.map
+                (fn {pat, arrow, exp} =>
+                   {pat = pat, arrow = arrow, exp = goExp visitor exp}) elems
+          , delims = delims
+          , optbar = optbar
+          }
+    | goExp visitor (Ast.Exp.LetInEnd {lett, dec, inn, exps, delims, endd}) =
+        Ast.Exp.LetInEnd
+          { lett = lett
+          , dec = goDec visitor dec
+          , inn = inn
+          , exps = Seq.map (goExp visitor) exps
+          , delims = delims
+          , endd = endd
+          }
+    | goExp _ (Ast.Exp.MLtonSpecific r) = Ast.Exp.MLtonSpecific r
   and goDec (visitor: 'a visitor) (dec: Ast.Exp.dec) =
     case dec of
       Ast.Exp.DecEmpty => dec
