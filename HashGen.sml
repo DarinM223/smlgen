@@ -108,6 +108,38 @@ struct
         ])
     end
 
+  fun hashCustomWordDec wordType =
+    let
+      val (prefix, _) = splitPrefixFromTypeString wordType
+      val withPrefix = fn s => mkToken (prefix ^ s)
+      val dec = mkHash (mkToken (getPrefixModule wordType))
+      val wTok = mkToken "w"
+      val toWord = [Const wordFromIntTok, Const (withPrefix "toInt")]
+    in
+      valDec (Pat.Const dec)
+        (ifThenElseExp
+           (infixLExp opGtTok
+              [ Const (withPrefix "wordSize")
+              , infixLExp addTok [Const wordSizeTok, Const oneIntTok]
+              ])
+           (infixLExp oTok
+              (toWord
+               @
+               [parensExp (singleFnExp (Pat.Const wTok) (appExp
+                  [ Const (withPrefix "xorb")
+                  , tupleExp
+                      [ Const wTok
+                      , appExp
+                          [ Const (withPrefix ">>")
+                          , tupleExp
+                              [ Const wTok
+                              , appExp [Const wordFromIntTok, Const wordSizeTok]
+                              ]
+                          ]
+                      ]
+                  ]))])) (infixLExp oTok toWord))
+    end
+
   fun combineExpsInLet [] =
         raise Fail "combineExpsInLet: expected non empty list of expressions"
     | combineExpsInLet (head :: rest) =
@@ -147,12 +179,15 @@ struct
         (List.filter
            (fn typ => AtomRedBlackSet.member (customIntegerTypes, Atom.atom typ))
            (Env.getOptions env))
-      fun addCustomIntsOption a =
-        case customIntDecs of
-          [] => a
-        | l => l @ a
+      val customWordDecs = List.map hashCustomWordDec
+        (List.filter
+           (fn typ => AtomRedBlackSet.member (customWordTypes, Atom.atom typ))
+           (Env.getOptions env))
+      fun addCustomIntsOption a = customIntDecs @ a
+      fun addCustomWordsOption a = customWordDecs @ a
     in
-      (List.rev o addCustomIntsOption o addStringOption) [combineDec]
+      (List.rev o addCustomWordsOption o addCustomIntsOption o addStringOption)
+        [combineDec]
     end
 
   fun tyCon _ v "int" [] =

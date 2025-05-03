@@ -440,6 +440,32 @@ struct
           else
             Word.fromInt o LargeInt.toInt
       | NONE => hashString o LargeInt.toString
+    val hashWord64 =
+      if Word64.wordSize > Word.wordSize + 1 then
+        Word.fromInt o Word64.toInt
+        o (fn w => Word64.xorb (w, Word64.>> (w, Word.fromInt Word.wordSize)))
+      else
+        Word.fromInt o Word64.toInt
+    val hashWord8 =
+      if Word8.wordSize > Word.wordSize + 1 then
+        Word.fromInt o Word8.toInt
+        o (fn w => Word8.xorb (w, Word8.>> (w, Word.fromInt Word.wordSize)))
+      else
+        Word.fromInt o Word8.toInt
+    val hashWord32 =
+      if Word32.wordSize > Word.wordSize + 1 then
+        Word.fromInt o Word32.toInt
+        o (fn w => Word32.xorb (w, Word32.>> (w, Word.fromInt Word.wordSize)))
+      else
+        Word.fromInt o Word32.toInt
+    val hashLargeWord =
+      if LargeWord.wordSize > Word.wordSize + 1 then
+        Word.fromInt o LargeWord.toInt
+        o
+        (fn w =>
+           LargeWord.xorb (w, LargeWord.>> (w, Word.fromInt Word.wordSize)))
+      else
+        Word.fromInt o LargeWord.toInt
   in
     val hash =
       fn { a = t0
