@@ -431,6 +431,7 @@ struct
   val data =
     "#!/bin/bash\n\
     \cat > build.sml <<EOL\n\
+    \structure Int64 = Int63\n\
     \structure Unsafe =\n\
     \struct\n\
     \  structure Basis =\n\
