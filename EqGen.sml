@@ -122,8 +122,6 @@ struct
       val eqTok = mkToken "eq"
       val (xTok, xsTok) = (mkToken "x", mkToken "xs")
       val (yTok, ysTok) = (mkToken "y", mkToken "ys")
-      val consTok = mkToken "::"
-      val nilTok = mkToken "[]"
     in
       multFunDec
         [[ ( conTok

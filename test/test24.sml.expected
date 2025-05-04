@@ -629,7 +629,14 @@ struct
         eqOption op= (t0, t4) andalso eqList op= (t1, t5) andalso t2 = t6
         andalso Foo.== (t3, t7)
   end
-  local val combine = fn (a, b) => 0w31 * a + b
+  local
+    val combine = fn (a, b) => 0w31 * a + b
+    fun hashOption hash opt =
+      Option.getOpt (Option.map hash opt, 0wx1A35B599)
+    fun hashList _ [] = 0wx6D52A54D
+      | hashList hash l =
+          List.foldl (fn (i, acc) => combine (acc, hash i))
+            (Word.fromInt (List.length l)) l
   in
     val hash = fn {a = t0, b = t1, c = ref t2, d = t3, e = _} =>
       let

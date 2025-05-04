@@ -57,6 +57,8 @@ sig
   val thenTok: Token.t
   val elseTok: Token.t
   val opGtTok: Token.t
+  val nilTok: Token.t
+  val consTok: Token.t
 end
 
 signature BUILD_AST =

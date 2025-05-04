@@ -3,6 +3,7 @@ struct
   open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
   val mkHash = prependToken "hash"
+  val hashTok = mkToken "hash"
   val resultTok = mkToken "result"
   val combineTok = mkToken "combine"
   val zeroWordTok = mkToken "0w0"
@@ -15,6 +16,8 @@ struct
   val trueHashTok = mkToken "0wx096DB16D"
   val falseHashTok = mkToken "0wx01B56B6D"
   val unitHashTok = mkToken "0wx65B2531B"
+  val nilHashTok = mkToken "0wx6D52A54D"
+  val noneHashTok = mkToken "0wx1A35B599"
 
   fun hashString env e =
     (Env.setOption env ("string", true); appExp [Const hashStringTok, e])
@@ -52,6 +55,56 @@ struct
             ]
         , Const (mkToken "Substring.full")
         ])
+    end
+  val hashListDec =
+    let
+      val conTok = mkToken "hashList"
+      val (lTok, iTok, accTok) = (mkToken "l", mkToken "i", mkToken "acc")
+    in
+      multFunDec
+        [[ (conTok, [wildPat, Pat.Const nilTok], Const nilHashTok)
+         , ( conTok
+           , [Pat.Const hashTok, Pat.Const lTok]
+           , appExp
+               [ Const (mkToken "List.foldl")
+               , parensExp
+                   (singleFnExp
+                      (destructTuplePat [Pat.Const iTok, Pat.Const accTok])
+                      (appExp
+                         [ Const combineTok
+                         , tupleExp
+                             [Const accTok, appExp [Const hashTok, Const iTok]]
+                         ]))
+               , parensExp (appExp
+                   [ Const wordFromIntTok
+                   , parensExp (appExp
+                       [Const (mkToken "List.length"), Const lTok])
+                   ])
+               , Const lTok
+               ]
+           )
+         ]]
+    end
+  val hashOptionDec =
+    let
+      val conTok = mkToken "hashOption"
+      val optTok = mkToken "opt"
+    in
+      multFunDec
+        [[( conTok
+          , [Pat.Const hashTok, Pat.Const optTok]
+          , appExp
+              [ Const (mkToken "Option.getOpt")
+              , tupleExp
+                  [ appExp
+                      [ Const (mkToken "Option.map")
+                      , Const hashTok
+                      , Const optTok
+                      ]
+                  , Const noneHashTok
+                  ]
+              ]
+          )]]
     end
   fun getPrefixModule s =
     let
@@ -173,8 +226,12 @@ struct
 
   fun additionalDecs env =
     let
-      fun addStringOption a =
+      fun addHashString a =
         if Env.getOption env "string" then hashStringDec :: a else a
+      fun addHashOption a =
+        if Env.getOption env "option" then hashOptionDec :: a else a
+      fun addHashList a =
+        if Env.getOption env "list" then hashListDec :: a else a
       val customIntDecs = List.map (hashCustomIntDec env)
         (List.filter
            (fn typ => AtomRedBlackSet.member (customIntegerTypes, Atom.atom typ))
@@ -183,11 +240,9 @@ struct
         (List.filter
            (fn typ => AtomRedBlackSet.member (customWordTypes, Atom.atom typ))
            (Env.getOptions env))
-      fun addCustomIntsOption a = customIntDecs @ a
-      fun addCustomWordsOption a = customWordDecs @ a
     in
-      (List.rev o addCustomWordsOption o addCustomIntsOption o addStringOption)
-        [combineDec]
+      (List.rev o (fn a => customWordDecs @ a) o (fn a => customIntDecs @ a)
+       o addHashList o addHashOption o addHashString) [combineDec]
     end
 
   fun tyCon _ v "int" [] =
@@ -198,6 +253,16 @@ struct
         [appExp
            [Const wordFromIntTok, parensExp (appExp [Const ordTok, Const v])]]
     | tyCon _ v "word" [] = [Const v]
+    | tyCon env v "list" [a] =
+        ( Env.setOption env ("list", true)
+        ; [appExp
+             [Const (mkToken "hashList"), parensExp (tyExp' env a), Const v]]
+        )
+    | tyCon env v "option" [a] =
+        ( Env.setOption env ("option", true)
+        ; [appExp
+             [Const (mkToken "hashOption"), parensExp (tyExp' env a), Const v]]
+        )
     | tyCon (env as Env {env = env', ...}) v (s: string) (args: Ty.ty list) =
         let
           val atom = Atom.atom s

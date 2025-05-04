@@ -77,6 +77,8 @@ struct
   val thenTok = mkReservedToken Then
   val elseTok = mkReservedToken Else
   val opGtTok = mkToken ">"
+  val nilTok = mkToken "[]"
+  val consTok = mkToken "::"
 end
 
 structure BuildAst :> BUILD_AST =
