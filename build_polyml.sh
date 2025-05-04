@@ -3,6 +3,7 @@
 # Builds the PolyML's build.sml file from the smlgen.mlb file.
 
 cat > build.sml <<EOL
+structure Int64 = Int63
 structure Unsafe =
 struct
   structure Basis =

@@ -216,6 +216,17 @@ struct
             ( Env.setOption env (s, true)
             ; [appExp [Const (mkHash (mkToken (getPrefixModule s))), Const v]]
             )
+          else if
+            AtomRedBlackMap.inDomain (ShowGen.rewriteMap, atom)
+          then
+            [appExp
+               [ Const hashStringTok
+               , parensExp (appExp
+                   [ Const (mkToken
+                       (AtomRedBlackMap.lookup (ShowGen.rewriteMap, atom)))
+                   , Const v
+                   ])
+               ]]
           else
             [appExp [constrExp, Const v]]
         end

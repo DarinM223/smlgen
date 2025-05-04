@@ -498,7 +498,7 @@ struct
         let
           val result = hashString t0
           val result = combine (result, Word.fromInt t1)
-          val result = combine (result, hashReal t2)
+          val result = combine (result, hashString (Real.toString t2))
           val result = combine (result, Word.fromInt (Char.ord t3))
           val result = combine (result, t4)
           val result = combine (result, hashString t5)
@@ -510,18 +510,18 @@ struct
           val result = combine (result, hashFixedInt t11)
           val result = combine (result, hashPosition t12)
           val result = combine (result, hashIntInf t13)
-          val result = combine (result, hashReal t14)
-          val result = combine (result, LargeReal.hashReal t15)
+          val result = combine (result, hashString (Real.toString t14))
+          val result = combine (result, hashString (LargeReal.toString t15))
           val result = combine (result, Word.fromInt (Char.ord t16))
           val result = combine (result, t17)
           val result = combine (result, hashWord8 t18)
           val result = combine (result, hashWord32 t19)
           val result = combine (result, hashWord64 t20)
           val result = combine (result, hashLargeWord t21)
-          val result = combine (result, Date.hashDate t22)
-          val result = combine (result, Substring.hashSubstring t23)
-          val result = combine (result, Substring.hashSubstring t24)
-          val result = combine (result, Time.hashTime t25)
+          val result = combine (result, hashString (Date.toString t22))
+          val result = combine (result, hashString (Substring.string t23))
+          val result = combine (result, hashString (Substring.string t24))
+          val result = combine (result, hashString (Time.toString t25))
         in
           result
         end

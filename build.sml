@@ -1,3 +1,4 @@
+structure Int64 = Int63
 structure Unsafe =
 struct
   structure Basis =
@@ -70,6 +71,18 @@ fun useProject root' file =
 PolyML.SaveState.loadState "save" handle _ => (
 PolyML.SaveState.saveState "save" );
 *)
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-buffer/mono-buffer.sig";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-buffer/mono-buffer.fun";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-buffer/mono-buffer.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-vector.sig";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-vector.fun";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-vector-slice.sig";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-vector-slice.fun";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-array.sig";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-array.fun";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-array-slice.sig";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-array-slice.fun";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Compat/mono-sequence/mono-vector-slice.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-format-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/dynamic-array.sml";
@@ -84,6 +97,7 @@ use "/usr/local/lib/mlton/sml/smlnj-lib/Util/int-redblack-map.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/uref-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/simple-uref.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/int-binary-map.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Util/Target64Bit/native.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-xprod-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-xprod.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/path-util-sig.sml";
@@ -94,14 +108,18 @@ use "/usr/local/lib/mlton/sml/smlnj-lib/Util/redblack-set-fn.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/mono-dynamic-array-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/bsearch-fn.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/random-sig.sml";
-use "/usr/local/lib/mlton/sml/smlnj-lib/Util/random.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Util/base64-sig.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Util/base64.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Util/Target64Bit/random.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/real-order-stats.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Util/edit-distance.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/atom-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/io-util-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/io-util.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/fifo-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/hash-key-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/mono-hash-table-sig.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Util/max-hash-table-size.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/hash-table-rep.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/int-hash-table.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/list-set-fn.sml";
@@ -119,7 +137,6 @@ use "/usr/local/lib/mlton/sml/smlnj-lib/Util/hash-set-fn.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/graph-scc-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/redblack-map-fn.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/graph-scc-fn.sml";
-use "/usr/local/lib/mlton/sml/smlnj-lib/Util/base64-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/interval-domain-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/interval-set-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/mono-hash2-table-sig.sml";
@@ -148,7 +165,6 @@ use "/usr/local/lib/mlton/sml/smlnj-lib/Util/hash-table.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/int-list-map.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/splaytree.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/splay-set-fn.sml";
-use "/usr/local/lib/mlton/sml/smlnj-lib/Util/base64.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/plist-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/plist.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/keyword-fn.sml";
@@ -156,7 +172,7 @@ use "/usr/local/lib/mlton/sml/smlnj-lib/Util/univariate-stats.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/binary-set-fn.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/atom-binary-set.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/atom-binary-map.sml";
-use "/usr/local/lib/mlton/sml/smlnj-lib/Util/target64-prime-sizes.sml";
+use "/usr/local/lib/mlton/sml/smlnj-lib/Util/Target64Bit/prime-sizes.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/atom-redblack-map.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/rand-sig.sml";
 use "/usr/local/lib/mlton/sml/smlnj-lib/Util/char-map.sml";
