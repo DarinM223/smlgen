@@ -34,6 +34,11 @@ struct
            (infixLExp addTok
               [infixLExp mulTok [Const primeTok, Const aTok], Const bTok]))
     end
+  fun combine env a b =
+    ( Env.setOption env ("combine", true)
+    ; appExp [Const combineTok, tupleExp [a, b]]
+    )
+
   val hashStringDec =
     let
       val (chTok, hTok, pTok) = (mkToken "ch", mkToken "h", mkToken "p")
@@ -76,29 +81,27 @@ struct
       val conTok = mkToken "hashList"
       val (lTok, iTok, accTok) = (mkToken "l", mkToken "i", mkToken "acc")
     in
-      multFunDec
-        [[ (conTok, [wildPat, Pat.Const nilTok], Const nilHashTok)
-         , ( conTok
-           , [Pat.Const hashTok, Pat.Const lTok]
-           , appExp
-               [ Const (mkToken "List.foldl")
-               , parensExp
-                   (singleFnExp
-                      (destructTuplePat [Pat.Const iTok, Pat.Const accTok])
-                      (appExp
-                         [ Const combineTok
-                         , tupleExp
-                             [Const accTok, appExp [Const hashTok, Const iTok]]
-                         ]))
-               , parensExp (appExp
-                   [ Const wordFromIntTok
-                   , parensExp (appExp
-                       [Const (mkToken "List.length"), Const lTok])
-                   ])
-               , Const lTok
-               ]
-           )
-         ]]
+      fn env =>
+        multFunDec
+          [[ (conTok, [wildPat, Pat.Const nilTok], Const nilHashTok)
+           , ( conTok
+             , [Pat.Const hashTok, Pat.Const lTok]
+             , appExp
+                 [ Const (mkToken "List.foldl")
+                 , parensExp
+                     (singleFnExp
+                        (destructTuplePat [Pat.Const iTok, Pat.Const accTok])
+                        (combine env (Const accTok)
+                           (appExp [Const hashTok, Const iTok])))
+                 , parensExp (appExp
+                     [ Const wordFromIntTok
+                     , parensExp (appExp
+                         [Const (mkToken "List.length"), Const lTok])
+                     ])
+                 , Const lTok
+                 ]
+             )
+           ]]
     end
   val hashOptionDec =
     let
@@ -208,16 +211,16 @@ struct
                   ]))])) (infixLExp oTok toWord))
     end
 
-  fun combineExpsInLet [] =
+  fun combineExpsInLet _ [] =
         raise Fail "combineExpsInLet: expected non empty list of expressions"
-    | combineExpsInLet (head :: rest) =
+    | combineExpsInLet env (head :: rest) =
         let
           val headDec = valDec (identPat resultTok) head
           val restDecs =
             List.map
               (fn exp =>
-                 valDec (identPat resultTok) (appExp
-                   [Const combineTok, tupleExp [Const resultTok, exp]])) rest
+                 valDec (identPat resultTok) (combine env (Const resultTok) exp))
+              rest
         in
           singleLetExp (multDec (headDec :: restDecs)) (Const resultTok)
         end
@@ -241,12 +244,20 @@ struct
 
   fun additionalDecs env =
     let
+      fun addCombineHash a =
+        if Env.getOption env "combine" then combineDec :: a else a
       fun addHashString a =
         if Env.getOption env "string" then hashStringDec :: a else a
       fun addHashOption a =
         if Env.getOption env "option" then hashOptionDec :: a else a
-      fun addHashList a =
-        if Env.getOption env "list" then hashListDec :: a else a
+      val addHashList =
+        if Env.getOption env "list" then
+          (* Turn on combine option before adding hashList function *)
+          let val hashListDec = hashListDec env
+          in fn a => hashListDec :: a
+          end
+        else
+          fn a => a
       val customIntDecs = List.map (hashCustomIntDec env)
         (List.filter
            (fn typ => AtomRedBlackSet.member (customIntegerTypes, Atom.atom typ))
@@ -257,7 +268,7 @@ struct
            (Env.getOptions env))
     in
       (List.rev o (fn a => customWordDecs @ a) o (fn a => customIntDecs @ a)
-       o addHashList o addHashOption o addHashString) [combineDec]
+       o addHashList o addHashOption o addHashString o addCombineHash) []
     end
 
   fun tyCon _ v "int" [] =
@@ -299,14 +310,11 @@ struct
           else if
             AtomRedBlackMap.inDomain (ShowGen.rewriteMap, atom)
           then
-            [appExp
-               [ Const hashStringTok
-               , parensExp (appExp
-                   [ Const (mkToken
-                       (AtomRedBlackMap.lookup (ShowGen.rewriteMap, atom)))
-                   , Const v
-                   ])
-               ]]
+            [hashString env (parensExp (appExp
+               [ Const (mkToken
+                   (AtomRedBlackMap.lookup (ShowGen.rewriteMap, atom)))
+               , Const v
+               ]))]
           else
             [appExp [constrExp, Const v]]
         end
@@ -317,7 +325,7 @@ struct
       case (destructTyPat (Env.fresh env) ty, tyExp (envVars env) ty) of
         (Pat.Const _, [App {left, right = Const _, ...}]) => left
       | (pat, [exp]) => singleFnExp pat exp
-      | (pat, exps) => singleFnExp pat (combineExpsInLet exps)
+      | (pat, exps) => singleFnExp pat (combineExpsInLet env exps)
     end
   and tyExp (Env {vars = vars as ref (h :: t), ...}) (Ty.Var v) =
         (vars := t; [appExp [Const (mkTyVar v), Const h]])
@@ -362,11 +370,9 @@ struct
              ( conPat id (destructTyPat (Env.fresh env) ty)
              , case tyExp (envVars env) ty of
                  [exp] =>
-                   hashConstr id
-                     (fn constr =>
-                        appExp [Const combineTok, tupleExp [constr, exp]]) exp
+                   hashConstr id (fn constr => combine env constr exp) exp
                | exps =>
-                   combineExpsInLet
+                   combineExpsInLet env
                      (hashConstr id (fn constr => constr :: exps) exps)
              )
             | {arg = NONE, id, ...} =>
