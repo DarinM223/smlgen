@@ -7,9 +7,12 @@ struct
   val resultTok = mkToken "result"
   val combineTok = mkToken "combine"
   val zeroWordTok = mkToken "0w0"
+  val oneWordTok = mkToken "0w1"
   val oneIntTok = mkToken "1"
+  val wordModTok = mkToken "Word.mod"
   val wordSizeTok = mkToken "Word.wordSize"
   val primeTok = mkToken "0w31"
+  val mTok = mkToken "0w1000000009"
   val hashStringTok = mkToken "hashString"
   val wordFromIntTok = mkToken "Word.fromInt"
   val ordTok = mkToken "Char.ord"
@@ -33,25 +36,37 @@ struct
     end
   val hashStringDec =
     let
-      val (chTok, accTok) = (mkToken "ch", mkToken "acc")
+      val (chTok, hTok, pTok) = (mkToken "ch", mkToken "h", mkToken "p")
+      val modByM = fn e => appExp [Const wordModTok, tupleExp [e, Const mTok]]
+      val number1Tok = mkToken "#1"
     in
       valDec (Pat.Const hashStringTok) (infixLExp oTok
-        [ appExp
+        [ Const number1Tok
+        , appExp
             [ Const (mkToken "Substring.foldl")
             , parensExp
                 (singleFnExp
-                   (destructTuplePat [Pat.Const chTok, Pat.Const accTok])
-                   (appExp
-                      [ Const combineTok
-                      , tupleExp
-                          [ Const accTok
-                          , appExp
-                              [ Const wordFromIntTok
-                              , parensExp (appExp [Const ordTok, Const chTok])
+                   (destructTuplePat
+                      [ Pat.Const chTok
+                      , destructTuplePat [Pat.Const hTok, Pat.Const pTok]
+                      ])
+                   (tupleExp
+                      [ modByM (infixLExp addTok
+                          [ Const hTok
+                          , infixLExp mulTok
+                              [ appExp
+                                  [ Const wordFromIntTok
+                                  , parensExp (infixLExp addTok
+                                      [ appExp [Const ordTok, Const chTok]
+                                      , Const oneIntTok
+                                      ])
+                                  ]
+                              , Const pTok
                               ]
-                          ]
+                          ])
+                      , modByM (infixLExp mulTok [Const pTok, Const primeTok])
                       ]))
-            , Const zeroWordTok
+            , tupleExp [Const zeroWordTok, Const oneWordTok]
             ]
         , Const (mkToken "Substring.full")
         ])

@@ -371,9 +371,13 @@ struct
   local
     val combine = fn (a, b) => 0w31 * a + b
     val hashString =
+      #1
+      o
       Substring.foldl
-        (fn (ch, acc) => combine (acc, Word.fromInt (Char.ord ch))) 0w0
-      o Substring.full
+        (fn (ch, (h, p)) =>
+           ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+           , Word.mod (p * 0w31, 0w1000000009)
+           )) (0w0, 0w1) o Substring.full
     val hashPosition =
       case Position.precision of
         SOME p =>
@@ -532,8 +536,13 @@ datatype test_hash = Foo of int * string | Bar of {a: int, b: string}
 local
   val combine = fn (a, b) => 0w31 * a + b
   val hashString =
-    Substring.foldl (fn (ch, acc) => combine (acc, Word.fromInt (Char.ord ch)))
-      0w0 o Substring.full
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
 in
   val hashTest_hash =
     fn Foo (t0, t1) =>
