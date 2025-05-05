@@ -74,6 +74,7 @@ The characters corresponding to each generator are listed below:
 |   s    | Show                                            |
 |   c    | Compare                                         |
 |   e    | Equality                                        |
+|   h    | Hash                                            |
 
 smlgen will prompt you for every type name that matches to generate code for that type. It will then overwrite the file with the formatted and generated code.
 
@@ -161,3 +162,8 @@ In that case you can increase the maximum type size with the `-maxsize` flag. Fo
 ```
 
 will set the max type size limit to 1000. The default max type size is set at 100.
+
+The hashing functions created by the hash generator are similar to Java's `hashCode` functions
+and are not resilient to collision based attacks. Don't use the default generated functions for hashing untrusted input.
+
+`real` types are supposed to be hashed by bitwise casting them into a `word` of the same size, but there is no standards compliant way to do this. Currently, the hash function for `real` types converts them to strings and hashes the strings, but if you are only using one compiler, you should use the implementation-specific functions for casting reals to words.
