@@ -45,6 +45,30 @@ local
   val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
 in val op== = t ()
 end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  val rec t = fn t_0 =>
+    fn TA (t0, t1, t2) =>
+      let
+        val result = hashString "TA"
+        val result = combine (result, t_0 t0)
+        val result = combine (result, hashString t1)
+        val result = combine (result, t_0 t2)
+      in
+        result
+      end
+     | TB t3 => combine (hashString "TB", Word.fromInt t3)
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val hash = t ()
+end
 datatype result = ResultC of t | ResultD of string list
 val result =
   let
@@ -87,4 +111,23 @@ in
     fn (ResultC t0, ResultC t1) => op== (t0, t1)
      | (ResultD t2, ResultD t3) => eqList op= (t2, t3)
      | _ => false
+end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  fun hashList _ [] = 0wx6D52A54D
+    | hashList hash l =
+        List.foldl (fn (i, acc) => combine (acc, hash i))
+          (Word.fromInt (List.length l)) l
+in
+  val hashResult =
+    fn ResultC t0 => combine (hashString "ResultC", hash t0)
+     | ResultD t1 => combine (hashString "ResultD", hashList hashString t1)
 end

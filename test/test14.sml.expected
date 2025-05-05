@@ -7,6 +7,7 @@ struct
   val showVarname = Int.toString
   val compareVarname = Int.compare
   val eqVarname = op=
+  val hashVarname = Word.fromInt
   datatype exp =
     Var of varname
   | App of exp * exp
@@ -95,6 +96,46 @@ struct
     val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
   in val eqExp = exp ()
   end
+  local
+    val combine = fn (a, b) => 0w31 * a + b
+    val hashString =
+      #1
+      o
+      Substring.foldl
+        (fn (ch, (h, p)) =>
+           ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+           , Word.mod (p * 0w31, 0w1000000009)
+           )) (0w0, 0w1) o Substring.full
+    val rec exp = fn exp_0 =>
+      fn Var t0 => combine (hashString "Var", hashVarname t0)
+       | App (t1, t2) =>
+        let
+          val result = hashString "App"
+          val result = combine (result, exp_0 t1)
+          val result = combine (result, exp_0 t2)
+        in
+          result
+        end
+       | Lam (t3, t4) =>
+        let
+          val result = hashString "Lam"
+          val result = combine (result, hashVarname t3)
+          val result = combine (result, exp_0 t4)
+        in
+          result
+        end
+       | Let (t5, t6, t7) =>
+        let
+          val result = hashString "Let"
+          val result = combine (result, hashVarname t5)
+          val result = combine (result, exp_0 t6)
+          val result = combine (result, exp_0 t7)
+        in
+          result
+        end
+    val exp = fn () => let val rec exp_0 = fn ? => exp exp_0 ? in exp_0 end
+  in val hashExp = exp ()
+  end
 end
 
 structure Typ =
@@ -104,6 +145,17 @@ struct
   val showQname = fn t0 => "\"" ^ t0 ^ "\""
   val compareQname = String.compare
   val eqQname = op=
+  local
+    val hashString =
+      #1
+      o
+      Substring.foldl
+        (fn (ch, (h, p)) =>
+           ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+           , Word.mod (p * 0w31, 0w1000000009)
+           )) (0w0, 0w1) o Substring.full
+  in val hashQname = hashString
+  end
 
   datatype typ =
     TVar of tv ref
@@ -203,5 +255,38 @@ struct
         (tv_0, typ_1)
       end
   in val eqTv = #1 (tv_typ ()) val eqTyp = #2 (tv_typ ())
+  end
+  local
+    val combine = fn (a, b) => 0w31 * a + b
+    val hashString =
+      #1
+      o
+      Substring.foldl
+        (fn (ch, (h, p)) =>
+           ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+           , Word.mod (p * 0w31, 0w1000000009)
+           )) (0w0, 0w1) o Substring.full
+    val rec tv = fn typ_1 =>
+      fn Link t0 => combine (hashString "Link", typ_1 t0)
+       | Unbound t1 => combine (hashString "Unbound", hashString t1)
+    and typ = fn (typ_1, tv_0) =>
+      fn TVar (ref t0) => combine (hashString "TVar", tv_0 t0)
+       | QVar t1 => combine (hashString "QVar", hashQname t1)
+       | TArrow (t2, t3) =>
+        let
+          val result = hashString "TArrow"
+          val result = combine (result, typ_1 t2)
+          val result = combine (result, typ_1 t3)
+        in
+          result
+        end
+    val tv_typ = fn () =>
+      let
+        val rec typ_1 = fn ? => typ (typ_1, tv_0) ?
+        and tv_0 = fn ? => tv typ_1 ?
+      in
+        (tv_0, typ_1)
+      end
+  in val hashTv = #1 (tv_typ ()) val hashTyp = #2 (tv_typ ())
   end
 end

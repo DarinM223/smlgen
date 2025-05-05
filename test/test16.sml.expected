@@ -37,6 +37,31 @@ val op== =
    | (Nil, Nil) => true
    | _ => false
 val eqT' = fn ((t0, t1), (t2, t3)) => op== (t0, t2) andalso t1 = t3
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+in
+  val hash =
+    fn T' (t0, t1) =>
+      let
+        val result = hashString "T'"
+        val result = combine (result, Word.fromInt t0)
+        val result = combine (result, hashString t1)
+      in
+        result
+      end
+     | Nil => hashString "Nil"
+end
+local val combine = fn (a, b) => 0w31 * a + b
+in val hashT' = fn (t0, t1) => combine (hash t0, Word.fromInt t1)
+end
 
 val () = print (showT' (T' (1, "hello"), 2) ^ "\n")
 
@@ -118,6 +143,49 @@ in val op== = t ()
 end
 val eqT' = fn ({t = t0, other = t1}, {t = t2, other = t3}) =>
   op== (t0, t2) andalso t1 = t3
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  val rec t = fn t_0 =>
+    fn T' (t0, t1) =>
+      let
+        val result = hashString "T'"
+        val result = combine (result, hashString t0)
+        val result = combine (result, t_0 t1)
+      in
+        result
+      end
+     | T'' (t2, t3) =>
+      let
+        val result = hashString "T''"
+        val result = combine (result, t_0 t2)
+        val result = combine (result, t_0 t3)
+      in
+        result
+      end
+     | Nil => hashString "Nil"
+  val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+in val hash = t ()
+end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+in val hashT' = fn {t = t0, other = t1} => combine (hash t0, hashString t1)
+end
 
 val () = print
   (showT' {t = T' ("hello", T'' (Nil, Nil)), other = "world"} ^ "\n")
@@ -193,6 +261,37 @@ local
     in (t'_0, t_1)
     end
 in val eqT' = #1 (t'_t ()) val op== = #2 (t'_t ())
+end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  fun hashList _ [] = 0wx6D52A54D
+    | hashList hash l =
+        List.foldl (fn (i, acc) => combine (acc, hash i))
+          (Word.fromInt (List.length l)) l
+  val rec t' = fn t_1 => hashList t_1
+  and t = fn t'_0 =>
+    fn T' (t0, t1) =>
+      let
+        val result = hashString "T'"
+        val result = combine (result, hashString t0)
+        val result = combine (result, t'_0 t1)
+      in
+        result
+      end
+     | Nil => hashString "Nil"
+  val t'_t = fn () =>
+    let val rec t'_0 = fn ? => t' t_1 ? and t_1 = fn ? => t t'_0 ?
+    in (t'_0, t_1)
+    end
+in val hashT' = #1 (t'_t ()) val hash = #2 (t'_t ())
 end
 
 val () = print
@@ -277,6 +376,29 @@ local
     in (t'_0, t_1)
     end
 in val eqT' = fn ? => #1 (t'_t ?) val op== = fn ? => #2 (t'_t ?)
+end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  fun hashList _ [] = 0wx6D52A54D
+    | hashList hash l =
+        List.foldl (fn (i, acc) => combine (acc, hash i))
+          (Word.fromInt (List.length l)) l
+  val rec t' = fn (t_1, b_) => fn (t0, t1) => combine (b_ t0, hashList t_1 t1)
+  and t = fn (t'_0, b_) =>
+    fn T' t0 => combine (hashString "T'", t'_0 t0) | Nil => hashString "Nil"
+  val t'_t = fn b_ =>
+    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    in (t'_0, t_1)
+    end
+in val hashT' = fn ? => #1 (t'_t ?) val hash = fn ? => #2 (t'_t ?)
 end
 
 val () = print (showT' Int.toString (1, [Nil, T' (2, [Nil])]) ^ "\n")
@@ -369,6 +491,39 @@ local
       (t'_0, t_2)
     end
 in val eqT' = fn b_ => #1 (t'_t (b_, b_)) val op== = fn ? => #2 (t'_t ?)
+end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  val rec t' = fn (t_1, a_) => fn (t0, t1) => combine (a_ t0, t_1 t1)
+  and t = fn (t'_3, t'_0, b_, a_) =>
+    fn T' (t0, t1) =>
+      let
+        val result = hashString "T'"
+        val result = combine (result, t'_0 t0)
+        val result = combine (result, t'_3 t1)
+      in
+        result
+      end
+     | Nil => hashString "Nil"
+  val t'_t = fn (a_, b_) =>
+    let
+      val rec t'_3 = fn ? => t' (t_4, b_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
+      and t'_0 = fn ? => t' (t_1, a_) ?
+      and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
+      and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+    in
+      (t'_0, t_2)
+    end
+in val hashT' = fn b_ => #1 (t'_t (b_, b_)) val hash = fn ? => #2 (t'_t ?)
 end
 
 val () = print
@@ -507,6 +662,48 @@ in
   val eqT'' = fn a_ => #1 (t''_t_t' (a_, a_))
   val op== = fn ? => #2 (t''_t_t' ?)
   val eqT' = fn a_ => #3 (t''_t_t' (a_, a_))
+end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  val rec t'' = fn (t_1, a_) => fn (t0, t1) => combine (t_1 t0, a_ t1)
+  and t = fn (t''_8, t'_6, b_, a_) =>
+    fn T' (t0, t1) =>
+      let
+        val result = hashString "T'"
+        val result = combine (result, t'_6 t0)
+        val result = combine (result, t''_8 t1)
+      in
+        result
+      end
+     | Nil => hashString "Nil"
+  and t' = fn (t_7, a_) => fn (t0, t1) => combine (a_ t0, t_7 t1)
+  val t''_t_t' = fn (a_, b_) =>
+    let
+      val rec t_7 = fn ? => t (t''_4, t'_6, Word.fromInt, a_) ?
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t''_8 = fn ? => t'' (t_9, b_) ?
+      and t''_4 = fn ? => t'' (t_3, Word.fromInt) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t_9 = fn ? => t (t''_8, t'_2, b_, hashString) ?
+      and t_3 = fn ? => t (t''_4, t'_2, Word.fromInt, hashString) ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_1 = fn ? => t (t''_0, t'_2, a_, hashString) ?
+      and t'_2 = fn ? => t' (t_3, hashString) ?
+    in
+      (t''_0, t_5, t'_6)
+    end
+in
+  val hashT'' = fn a_ => #1 (t''_t_t' (a_, a_))
+  val hash = fn ? => #2 (t''_t_t' ?)
+  val hashT' = fn a_ => #3 (t''_t_t' (a_, a_))
 end
 
 val () = print

@@ -279,6 +279,8 @@ struct
         [appExp
            [Const wordFromIntTok, parensExp (appExp [Const ordTok, Const v])]]
     | tyCon _ v "word" [] = [Const v]
+    | tyCon env v "string" [] =
+        [hashString env (Const v)]
     | tyCon env v "list" [a] =
         ( Env.setOption env ("list", true)
         ; [appExp
@@ -325,6 +327,7 @@ struct
       case (destructTyPat (Env.fresh env) ty, tyExp (envVars env) ty) of
         (Pat.Const _, [App {left, right = Const _, ...}]) => left
       | (pat, [exp]) => singleFnExp pat exp
+      | (pat, [exp1, exp2]) => singleFnExp pat (combine env exp1 exp2)
       | (pat, exps) => singleFnExp pat (combineExpsInLet env exps)
     end
   and tyExp (Env {vars = vars as ref (h :: t), ...}) (Ty.Var v) =
@@ -371,6 +374,10 @@ struct
              , case tyExp (envVars env) ty of
                  [exp] =>
                    hashConstr id (fn constr => combine env constr exp) exp
+               | [exp1, exp2] =>
+                   hashConstr id
+                     (fn constr => combineExpsInLet env [constr, exp1, exp2])
+                     (combine env exp1 exp2)
                | exps =>
                    combineExpsInLet env
                      (hashConstr id (fn constr => constr :: exps) exps)

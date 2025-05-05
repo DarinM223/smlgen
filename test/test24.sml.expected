@@ -532,37 +532,6 @@ struct
   end
 end
 
-datatype test_hash = Foo of int * string | Bar of {a: int, b: string}
-local
-  val combine = fn (a, b) => 0w31 * a + b
-  val hashString =
-    #1
-    o
-    Substring.foldl
-      (fn (ch, (h, p)) =>
-         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
-         , Word.mod (p * 0w31, 0w1000000009)
-         )) (0w0, 0w1) o Substring.full
-in
-  val hashTest_hash =
-    fn Foo (t0, t1) =>
-      let
-        val result = hashString "Foo"
-        val result = combine (result, Word.fromInt t0)
-        val result = combine (result, hashString t1)
-      in
-        result
-      end
-     | Bar {a = t2, b = t3} =>
-      let
-        val result = hashString "Bar"
-        val result = combine (result, Word.fromInt t2)
-        val result = combine (result, hashString t3)
-      in
-        result
-      end
-end
-
 structure Bar =
 struct
   type t =
@@ -664,8 +633,10 @@ struct
   val showBar = fn _ => "()"
   val compareBar = fn (_, _) => EQUAL
   val eqBar = fn (_, _) => true
+  val hashBar = fn _ => 0wx65B2531B
   datatype bar = Bar of unit
   val showBar = fn Bar _ => "Bar " ^ "(" ^ "()" ^ ")"
   val compareBar = fn (Bar _, Bar _) => EQUAL
   val eqBar = fn (Bar _, Bar _) => true
+  val hashBar = fn Bar _ => 0wx65B2531B
 end

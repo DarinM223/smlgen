@@ -1,4 +1,4 @@
-../smlgen --test test15.sml t:gsce result:gsce
+../smlgen --test test15.sml t:gsceh result:gsceh
 if cmp --silent test15.sml.test test15.sml.expected; then
   echo "test15 succeeded"
 else

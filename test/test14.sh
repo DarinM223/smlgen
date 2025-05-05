@@ -1,4 +1,4 @@
-../smlgen --test test14.sml Lam.varname:gsce Lam.exp:gsce Typ.qname:gsce Typ.tv:gsce
+../smlgen --test test14.sml Lam.varname:gsceh Lam.exp:gsceh Typ.qname:gsceh Typ.tv:gsceh
 if cmp --silent test14.sml.test test14.sml.expected; then
   echo "test14 succeeded"
 else

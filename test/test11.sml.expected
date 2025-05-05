@@ -220,3 +220,102 @@ in
             | ? => ?)
        | ? => ?)
 end
+local
+  fun eqList eq (x :: xs, y :: ys) =
+        eq (x, y) andalso eqList eq (xs, ys)
+    | eqList _ ([], []) = true
+    | eqList _ _ = false
+  fun eqOption eq (SOME x, SOME y) = eq (x, y)
+    | eqOption _ (NONE, NONE) = true
+    | eqOption _ _ = false
+in
+  val op== =
+    fn ( { a = t0
+         , b = t1
+         , c = t2
+         , d = t3
+         , e = t4
+         , f = (t5, t6)
+         , g = t7
+         , h = (t8, t9, t10)
+         , i = t11
+         , j = (_, _, {a = _, b = _})
+         , k = t12
+         }
+       , { a = t13
+         , b = t14
+         , c = t15
+         , d = t16
+         , e = t17
+         , f = (t18, t19)
+         , g = t20
+         , h = (t21, t22, t23)
+         , i = t24
+         , j = (_, _, {a = _, b = _})
+         , k = t25
+         }
+       ) =>
+      t0 = t13 andalso Real.== (t1, t14) andalso t2 = t15 andalso t3 = t16
+      andalso t4 = t17 andalso t5 = t18 andalso Real.== (t6, t19)
+      andalso eqList op= (t7, t20)
+      andalso t8 = t21 andalso t9 = t22 andalso t10 = t23 andalso t11 = t24
+      andalso eqOption (eqOption op=) (t12, t25)
+end
+local
+  val combine = fn (a, b) => 0w31 * a + b
+  val hashString =
+    #1
+    o
+    Substring.foldl
+      (fn (ch, (h, p)) =>
+         ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+         , Word.mod (p * 0w31, 0w1000000009)
+         )) (0w0, 0w1) o Substring.full
+  fun hashOption hash opt =
+    Option.getOpt (Option.map hash opt, 0wx1A35B599)
+  fun hashList _ [] = 0wx6D52A54D
+    | hashList hash l =
+        List.foldl (fn (i, acc) => combine (acc, hash i))
+          (Word.fromInt (List.length l)) l
+in
+  val hash =
+    fn { a = t0
+       , b = t1
+       , c = t2
+       , d = t3
+       , e = t4
+       , f = (t5, t6)
+       , g = t7
+       , h = (ref t8, ref (t9, t10), ref {a = t11, b = t12})
+       , i = ref (ref (ref t13))
+       , j = (_, _, {a = _, b = _})
+       , k = t14
+       } =>
+      let
+        val result = Word.fromInt t0
+        val result = combine (result, hashString (Real.toString t1))
+        val result = combine (result, hashString t2)
+        val result = combine (result, Word.fromInt (Char.ord t3))
+        val result = combine (result, if t4 then 0wx096DB16D else 0wx01B56B6D)
+        val result = combine (result, Word.fromInt t5)
+        val result = combine (result, hashString (Real.toString t6))
+        val result = combine (result, hashList hashString t7)
+        val result = combine (result, Word.fromInt (Char.ord t8))
+        val result = combine (result, if t9 then 0wx096DB16D else 0wx01B56B6D)
+        val result = combine (result, Word.fromInt t10)
+        val result = combine (result, Word.fromInt t11)
+        val result = combine (result, hashString t12)
+        val result = combine (result, Word.fromInt t13)
+        val result = combine (result, 0wx65B2531B)
+        val result = combine (result, 0wx65B2531B)
+        val result = combine (result, 0wx65B2531B)
+        val result = combine (result, 0wx65B2531B)
+        val result = combine
+          ( result
+          , hashOption (hashOption (fn (ref t0) => hashOption Word.fromInt t0))
+              t14
+          )
+      in
+        result
+      end
+end
