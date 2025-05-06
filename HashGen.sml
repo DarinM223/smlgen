@@ -21,6 +21,7 @@ struct
   val unitHashTok = mkToken "0wx65B2531B"
   val nilHashTok = mkToken "0wx6D52A54D"
   val noneHashTok = mkToken "0wx1A35B599"
+  val functionHashTok = mkToken "0wx4996071B"
 
   fun hashString env e =
     (Env.setOption env ("string", true); appExp [Const hashStringTok, e])
@@ -355,7 +356,7 @@ struct
                  h :: t => (vars := t; con h)
                | [] => raise Fail "No vars in con")
         end
-    | tyExp _ (Ty.Arrow _) = raise Fail "Cannot hash function"
+    | tyExp _ (Ty.Arrow _) = [Const functionHashTok]
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
   fun genConstrs (env, constrs: constr list) : Exp.exp =

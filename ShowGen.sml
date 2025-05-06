@@ -167,7 +167,7 @@ struct
                | [] => raise Fail "No vars in con")
         end
     | tyExp _ (ty as Ty.Arrow _) =
-        Const (stringTok (mkToken (showTy ty)))
+        Const (stringTok (mkToken (prettyTy ty)))
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
   fun genConstrs (env, constrs: constr list) : Exp.exp =

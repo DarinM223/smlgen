@@ -534,32 +534,47 @@ end
 
 structure Bar =
 struct
-  type t =
-    { a: Bool.bool Option.option
-    , b: Char.char List.list
-    , c: int ref
-    , d: Foo.t
-    , e: unit
-    }
+  datatype ('a, 'b) t =
+    T of
+      { a: Bool.bool Option.option
+      , b: Char.char List.list
+      , c: int ref
+      , d: Foo.t
+      , e: unit
+      , f: int -> string
+      , g: 'a -> string
+      , h: 'a option option -> ('a, 'b) t -> {a: 'b, b: 'b * 'b} -> string
+      }
   local
     fun showOption f (SOME s) = "SOME " ^ f s
       | showOption _ NONE = "NONE"
-  in
-    val show = fn {a = t0, b = t1, c = ref t2, d = t3, e = _} =>
-      "{"
-      ^
-      String.concatWith ", "
-        [ "a = " ^ showOption Bool.toString t0
-        , "b = "
-          ^
-          "["
-          ^
-          String.concatWith ", "
-            (List.map (fn t0 => "#\"" ^ Char.toString t0 ^ "\"") t1) ^ "]"
-        , "c = " ^ "ref " ^ Int.toString t2
-        , "d = " ^ Foo.show t3
-        , "e = " ^ "()"
-        ] ^ "}"
+    val rec t = fn (t_0, b_, a_) =>
+      fn T {a = t0, b = t1, c = ref t2, d = t3, e = _, f = _, g = _, h = _} =>
+        "T "
+        ^
+        "{"
+        ^
+        String.concatWith ", "
+          [ "a = " ^ showOption Bool.toString t0
+          , "b = "
+            ^
+            "["
+            ^
+            String.concatWith ", "
+              (List.map (fn t0 => "#\"" ^ Char.toString t0 ^ "\"") t1) ^ "]"
+          , "c = " ^ "ref " ^ Int.toString t2
+          , "d = " ^ Foo.show t3
+          , "e = " ^ "()"
+          , "f = " ^ "int -> string"
+          , "g = " ^ "'a -> string"
+          , "h = "
+            ^
+            "'a option option -> ('a, 'b) t -> {a: 'b, b: ('b * 'b)} -> string"
+          ] ^ "}"
+    val t = fn (a_, b_) => let val rec t_0 = fn ? => t (t_0, b_, a_) ?
+                           in t_0
+                           end
+  in val show = t
   end
   local
     fun compareBool (false, true) = LESS
@@ -576,10 +591,9 @@ struct
       | compareOption _ (SOME _, NONE) = GREATER
       | compareOption _ (NONE, SOME _) = LESS
       | compareOption _ (NONE, NONE) = EQUAL
-  in
-    val compare =
-      fn ( {a = t0, b = t1, c = ref t2, d = t3, e = _}
-         , {a = t4, b = t5, c = ref t6, d = t7, e = _}
+    val rec t = fn (t_0, b_, a_) =>
+      fn ( T {a = t0, b = t1, c = ref t2, d = t3, e = _, f = _, g = _, h = _}
+         , T {a = t4, b = t5, c = ref t6, d = t7, e = _, f = _, g = _, h = _}
          ) =>
         (case compareOption compareBool (t0, t4) of
            EQUAL =>
@@ -590,6 +604,10 @@ struct
                    | ? => ?)
               | ? => ?)
          | ? => ?)
+    val t = fn (a_, b_) => let val rec t_0 = fn ? => t (t_0, b_, a_) ?
+                           in t_0
+                           end
+  in val compare = t
   end
   local
     fun eqList eq (x :: xs, y :: ys) =
@@ -599,13 +617,16 @@ struct
     fun eqOption eq (SOME x, SOME y) = eq (x, y)
       | eqOption _ (NONE, NONE) = true
       | eqOption _ _ = false
-  in
-    val op== =
-      fn ( {a = t0, b = t1, c = t2, d = t3, e = _}
-         , {a = t4, b = t5, c = t6, d = t7, e = _}
+    val rec t = fn (t_0, b_, a_) =>
+      fn ( T {a = t0, b = t1, c = t2, d = t3, e = _, f = _, g = _, h = _}
+         , T {a = t4, b = t5, c = t6, d = t7, e = _, f = _, g = _, h = _}
          ) =>
         eqOption op= (t0, t4) andalso eqList op= (t1, t5) andalso t2 = t6
         andalso Foo.== (t3, t7)
+    val t = fn (a_, b_) => let val rec t_0 = fn ? => t (t_0, b_, a_) ?
+                           in t_0
+                           end
+  in val op== = t
   end
   local
     val combine = fn (a, b) => 0w31 * a + b
@@ -615,19 +636,26 @@ struct
       | hashList hash l =
           List.foldl (fn (i, acc) => combine (acc, hash i))
             (Word.fromInt (List.length l)) l
-  in
-    val hash = fn {a = t0, b = t1, c = ref t2, d = t3, e = _} =>
-      let
-        val result =
-          hashOption (fn t0 => if t0 then 0wx096DB16D else 0wx01B56B6D) t0
-        val result = combine
-          (result, hashList (fn t0 => Word.fromInt (Char.ord t0)) t1)
-        val result = combine (result, Word.fromInt t2)
-        val result = combine (result, Foo.hash t3)
-        val result = combine (result, 0wx65B2531B)
-      in
-        result
-      end
+    val rec t = fn (t_0, b_, a_) =>
+      fn T {a = t0, b = t1, c = ref t2, d = t3, e = _, f = _, g = _, h = _} =>
+        let
+          val result =
+            hashOption (fn t0 => if t0 then 0wx096DB16D else 0wx01B56B6D) t0
+          val result = combine
+            (result, hashList (fn t0 => Word.fromInt (Char.ord t0)) t1)
+          val result = combine (result, Word.fromInt t2)
+          val result = combine (result, Foo.hash t3)
+          val result = combine (result, 0wx65B2531B)
+          val result = combine (result, 0wx4996071B)
+          val result = combine (result, 0wx4996071B)
+          val result = combine (result, 0wx4996071B)
+        in
+          result
+        end
+    val t = fn (a_, b_) => let val rec t_0 = fn ? => t (t_0, b_, a_) ?
+                           in t_0
+                           end
+  in val hash = t
   end
   type bar = unit
   val showBar = fn _ => "()"

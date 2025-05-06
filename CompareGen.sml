@@ -227,7 +227,7 @@ struct
                  a :: b :: t => (vars := t; con (tupleExp [Const a, Const b]))
                | _ => raise Fail "No vars in con")
         end
-    | tyExp _ (Ty.Arrow _) = raise Fail "Cannot compare functions"
+    | tyExp _ (Ty.Arrow _) = Const equalCmpTok
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
   fun combinedConstrs l =

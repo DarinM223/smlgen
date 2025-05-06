@@ -249,7 +249,7 @@ struct
                  a :: b :: t => (vars := t; con (Const a) (Const b))
                | _ => raise Fail "No vars in con")
         end
-    | tyExp _ (Ty.Arrow _) = raise Fail "Functions cannot be equal"
+    | tyExp _ (Ty.Arrow _) = Const trueTok
     | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
 
   fun genConstrs (env, constrs: constr list) : Exp.exp =

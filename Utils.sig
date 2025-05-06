@@ -18,6 +18,7 @@ sig
                       -> 'a Ast.SyntaxSeq.t
                       -> Ast.Ty.ty Ast.SyntaxSeq.t
   val showTy: Ast.Ty.ty -> string
+  val prettyTy: Ast.Ty.ty -> string
   val tySize: Ast.Ty.ty -> int
   val stripParens: Ast.Pat.pat -> Ast.Pat.pat
   val destructTyPat: (Token.token -> Token.token) -> Ast.Ty.ty -> Ast.Pat.pat

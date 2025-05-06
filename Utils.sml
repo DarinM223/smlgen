@@ -83,7 +83,7 @@ struct
         if ArraySlice.length elems = 1 then
           showTy (parensTy (ArraySlice.sub (elems, 0)))
         else
-          "(" ^ String.concatWith "," (List.map showTy (Seq.toList elems)) ^ ")"
+          "(" ^ String.concatWith "*" (List.map showTy (Seq.toList elems)) ^ ")"
     | Ty.Con {args, id} =>
         "(" ^ String.concatWith "," (List.map showTy (syntaxSeqToList args))
         ^ ")" ^ Token.toString (stripToken (MaybeLongToken.getToken id))
@@ -92,6 +92,41 @@ struct
     | Ty.Parens {ty as Ty.Tuple _, ...} => showTy ty
     | Ty.Parens {ty as Ty.Record _, ...} => showTy ty
     | Ty.Parens {ty, ...} => "(" ^ showTy ty ^ ")"
+
+  (* Similar to showTy but has prettier output like spacing and less parenthesis. *)
+  fun prettyTy ty =
+    case ty of
+      Ty.Var tok => Token.toString (stripToken tok)
+    | Ty.Record {elems, ...} =>
+        "{"
+        ^
+        String.concatWith ", "
+          (List.map
+             (fn {lab, ty, ...} =>
+                Token.toString (stripToken lab) ^ ": " ^ prettyTy ty)
+             (Seq.toList elems)) ^ "}"
+    | Ty.Tuple {elems, ...} =>
+        if ArraySlice.length elems = 1 then
+          prettyTy (parensTy (ArraySlice.sub (elems, 0)))
+        else
+          "(" ^ String.concatWith " * " (List.map prettyTy (Seq.toList elems))
+          ^ ")"
+    | Ty.Con {args, id} =>
+        let
+          val conStr = Token.toString (stripToken (MaybeLongToken.getToken id))
+        in
+          case syntaxSeqToList args of
+            [] => conStr
+          | [arg] => prettyTy arg ^ " " ^ conStr
+          | args =>
+              "(" ^ String.concatWith ", " (List.map prettyTy args) ^ ") "
+              ^ conStr
+        end
+    | Ty.Arrow {from, to, ...} => prettyTy from ^ " -> " ^ prettyTy to
+    | Ty.Parens {ty as Ty.Parens _, ...} => prettyTy ty
+    | Ty.Parens {ty as Ty.Tuple _, ...} => prettyTy ty
+    | Ty.Parens {ty as Ty.Record _, ...} => prettyTy ty
+    | Ty.Parens {ty, ...} => "(" ^ prettyTy ty ^ ")"
 
   fun tySize ty =
     case ty of

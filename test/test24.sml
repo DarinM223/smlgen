@@ -32,13 +32,17 @@ end
 
 structure Bar =
 struct
-  type t =
-    { a: Bool.bool Option.option
-    , b: Char.char List.list
-    , c: int ref
-    , d: Foo.t
-    , e: unit
-    }
+  datatype ('a, 'b) t =
+    T of
+      { a: Bool.bool Option.option
+      , b: Char.char List.list
+      , c: int ref
+      , d: Foo.t
+      , e: unit
+      , f: int -> string
+      , g: 'a -> string
+      , h: 'a option option -> ('a, 'b) t -> {a: 'b, b: 'b * 'b} -> string
+      }
   type bar = unit
   datatype bar = Bar of unit
 end
