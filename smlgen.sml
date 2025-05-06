@@ -19,6 +19,7 @@ struct
     , recordPun = true
     , orPat = true
     , extendedText = true
+    , sigWithtype = true
     }
 
   fun lookupGen #"g" = GenericGen.gen
