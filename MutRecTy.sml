@@ -119,9 +119,7 @@ struct
     )
 
   fun addTyArg (Env {tyToArgs, ...}) k v =
-    let val s = TyTable.lookup tyToArgs k handle LibBase.NotFound => []
-    in TyTable.insert tyToArgs (k, v :: s)
-    end
+    TyTable.insertWith (fn (v', v) => v @ v') tyToArgs (k, [v])
 
   fun buildSubstMap (Env {tyTokToId, tyData, ...}) tycon tys =
     let
