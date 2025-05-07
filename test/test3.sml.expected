@@ -24,10 +24,10 @@ val expr_stmt = fn (b_, a_) =>
   let
     open Tie
     val Y = Generic.Y
-    val _ & _ & _ & _ & expr_0 & _ & _ & stmt_6 =
+    val _ & _ & _ & _ & expr_0 & _ & stmt_6 & _ =
       fix (Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y)
-        (fn expr_3 & expr_2 & expr_5 & stmt_7 & expr_0 & stmt_4 & stmt_1 &
-             stmt_6 =>
+        (fn expr_2 & expr_3 & stmt_1 & stmt_7 & expr_0 & expr_5 & stmt_6 &
+             stmt_4 =>
            let
              open Generic
              fun expr (*24*) (expr_3, expr_0, stmt_1, a_, b_) =
@@ -51,14 +51,14 @@ val expr_stmt = fn (b_, a_) =>
                  , fn INR ? => If (*t*) ? | INL ? => Assign (*i*) ?
                  )
            in
-             expr (expr_0, expr_3, stmt_4, b_, a_)
-             & expr (expr_2, expr_2, stmt_1, a_, a_)
-             & expr (expr_5, expr_5, stmt_4, b_, b_)
+             expr (expr_2, expr_2, stmt_1, a_, a_)
+             & expr (expr_0, expr_3, stmt_4, b_, a_)
+             & stmt (stmt_1, stmt_1, expr_2, a_, a_)
              & stmt (stmt_7, stmt_6, expr_3, b_, a_)
              & expr (expr_3, expr_0, stmt_1, a_, b_)
-             & stmt (stmt_4, stmt_4, expr_5, b_, b_)
-             & stmt (stmt_1, stmt_1, expr_2, a_, a_)
+             & expr (expr_5, expr_5, stmt_4, b_, b_)
              & stmt (stmt_6, stmt_7, expr_0, a_, b_)
+             & stmt (stmt_4, stmt_4, expr_5, b_, b_)
            end)
   in
     (expr_0, stmt_6)

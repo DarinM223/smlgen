@@ -42,14 +42,14 @@ local
        | ? => ?)
   val expr_stmt = fn (a_, b_) =>
     let
-      val rec expr_0 = fn ? => expr (expr_0, expr_3, stmt_1, b_, a_) ?
-      and expr_2 = fn ? => expr (expr_2, expr_2, stmt_1, a_, a_) ?
-      and expr_5 = fn ? => expr (expr_5, expr_5, stmt_4, b_, b_) ?
+      val rec expr_2 = fn ? => expr (expr_2, expr_2, stmt_1, a_, a_) ?
+      and expr_0 = fn ? => expr (expr_0, expr_3, stmt_1, b_, a_) ?
+      and stmt_1 = fn ? => stmt (stmt_1, stmt_1, expr_2, a_, a_) ?
       and stmt_6 = fn ? => stmt (stmt_6, stmt_7, expr_0, b_, a_) ?
       and expr_3 = fn ? => expr (expr_3, expr_0, stmt_4, a_, b_) ?
-      and stmt_4 = fn ? => stmt (stmt_4, stmt_4, expr_5, b_, b_) ?
-      and stmt_1 = fn ? => stmt (stmt_1, stmt_1, expr_2, a_, a_) ?
+      and expr_5 = fn ? => expr (expr_5, expr_5, stmt_4, b_, b_) ?
       and stmt_7 = fn ? => stmt (stmt_7, stmt_6, expr_3, a_, b_) ?
+      and stmt_4 = fn ? => stmt (stmt_4, stmt_4, expr_5, b_, b_) ?
     in
       (expr_0, stmt_6)
     end

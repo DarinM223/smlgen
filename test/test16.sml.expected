@@ -307,7 +307,7 @@ val t'_t = fn b_ =>
   let
     open Tie
     val Y = Generic.Y
-    val t'_0 & t_1 = fix (Y *` Y) (fn t'_0 & t_1 =>
+    val t_1 & t'_0 = fix (Y *` Y) (fn t_1 & t'_0 =>
       let
         open Generic
         fun t' (t_1, b_) =
@@ -316,7 +316,7 @@ val t'_t = fn b_ =>
           data' (C1' "T'" t'_0 +` C0' "Nil")
             (fn Nil => INR () | T' ? => INL ?, fn INR () => Nil | INL ? => T' ?)
       in
-        t' (t_1, b_) & t (t'_0, b_)
+        t (t'_0, b_) & t' (t_1, b_)
       end)
   in
     (t'_0, t_1)
@@ -333,7 +333,7 @@ local
   and t = fn (t'_0, b_) =>
     fn T' t0 => "T' " ^ "(" ^ t'_0 t0 ^ ")" | Nil => "Nil"
   val t'_t = fn b_ =>
-    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    let val rec t_1 = fn ? => t (t'_0, b_) ? and t'_0 = fn ? => t' (t_1, b_) ?
     in (t'_0, t_1)
     end
 in val showT' = fn ? => #1 (t'_t ?) val show = fn ? => #2 (t'_t ?)
@@ -357,7 +357,7 @@ local
      | (Nil, T' _) => GREATER
      | (Nil, Nil) => EQUAL
   val t'_t = fn b_ =>
-    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    let val rec t_1 = fn ? => t (t'_0, b_) ? and t'_0 = fn ? => t' (t_1, b_) ?
     in (t'_0, t_1)
     end
 in val compareT' = fn ? => #1 (t'_t ?) val compare = fn ? => #2 (t'_t ?)
@@ -372,7 +372,7 @@ local
   and t = fn (t'_0, b_) =>
     fn (T' t0, T' t1) => t'_0 (t0, t1) | (Nil, Nil) => true | _ => false
   val t'_t = fn b_ =>
-    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    let val rec t_1 = fn ? => t (t'_0, b_) ? and t'_0 = fn ? => t' (t_1, b_) ?
     in (t'_0, t_1)
     end
 in val eqT' = fn ? => #1 (t'_t ?) val op== = fn ? => #2 (t'_t ?)
@@ -395,7 +395,7 @@ local
   and t = fn (t'_0, b_) =>
     fn T' t0 => combine (hashString "T'", t'_0 t0) | Nil => hashString "Nil"
   val t'_t = fn b_ =>
-    let val rec t'_0 = fn ? => t' (t_1, b_) ? and t_1 = fn ? => t (t'_0, b_) ?
+    let val rec t_1 = fn ? => t (t'_0, b_) ? and t'_0 = fn ? => t' (t_1, b_) ?
     in (t'_0, t_1)
     end
 in val hashT' = fn ? => #1 (t'_t ?) val hash = fn ? => #2 (t'_t ?)
@@ -409,8 +409,8 @@ val t'_t = fn (a_, b_) =>
   let
     open Tie
     val Y = Generic.Y
-    val _ & _ & t'_0 & _ & t_2 =
-      fix (Y *` Y *` Y *` Y *` Y) (fn t'_3 & t_4 & t'_0 & t_1 & t_2 =>
+    val t'_0 & _ & t_2 & _ & _ =
+      fix (Y *` Y *` Y *` Y *` Y) (fn t'_0 & t_1 & t_2 & t'_3 & t_4 =>
         let
           open Generic
           fun t' (t_1, a_) = tuple2 (a_, t_1)
@@ -420,8 +420,8 @@ val t'_t = fn (a_, b_) =>
               , fn INR () => Nil | INL ? => T' ?
               )
         in
-          t' (t_4, b_) & t (t'_3, t'_3, b_, b_) & t' (t_1, a_)
-          & t (t'_0, t'_0, a_, a_) & t (t'_3, t'_0, b_, a_)
+          t' (t_1, a_) & t (t'_0, t'_0, a_, a_) & t (t'_3, t'_0, b_, a_)
+          & t' (t_4, b_) & t (t'_3, t'_3, b_, b_)
         end)
   in
     (t'_0, t_2)
@@ -437,11 +437,11 @@ local
      | Nil => "Nil"
   val t'_t = fn (a_, b_) =>
     let
-      val rec t'_3 = fn ? => t' (t_4, b_) ?
-      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
-      and t'_0 = fn ? => t' (t_1, a_) ?
+      val rec t'_0 = fn ? => t' (t_1, a_) ?
       and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
       and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+      and t'_3 = fn ? => t' (t_4, b_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
     in
       (t'_0, t_2)
     end
@@ -463,11 +463,11 @@ local
      | (Nil, Nil) => EQUAL
   val t'_t = fn (a_, b_) =>
     let
-      val rec t'_3 = fn ? => t' (t_4, b_) ?
-      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
-      and t'_0 = fn ? => t' (t_1, a_) ?
+      val rec t'_0 = fn ? => t' (t_1, a_) ?
       and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
       and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+      and t'_3 = fn ? => t' (t_4, b_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
     in
       (t'_0, t_2)
     end
@@ -482,11 +482,11 @@ local
      | _ => false
   val t'_t = fn (a_, b_) =>
     let
-      val rec t'_3 = fn ? => t' (t_4, b_) ?
-      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
-      and t'_0 = fn ? => t' (t_1, a_) ?
+      val rec t'_0 = fn ? => t' (t_1, a_) ?
       and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
       and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+      and t'_3 = fn ? => t' (t_4, b_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
     in
       (t'_0, t_2)
     end
@@ -515,11 +515,11 @@ local
      | Nil => hashString "Nil"
   val t'_t = fn (a_, b_) =>
     let
-      val rec t'_3 = fn ? => t' (t_4, b_) ?
-      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
-      and t'_0 = fn ? => t' (t_1, a_) ?
+      val rec t'_0 = fn ? => t' (t_1, a_) ?
       and t_1 = fn ? => t (t'_0, t'_0, a_, a_) ?
       and t_2 = fn ? => t (t'_3, t'_0, b_, a_) ?
+      and t'_3 = fn ? => t' (t_4, b_) ?
+      and t_4 = fn ? => t (t'_3, t'_3, b_, b_) ?
     in
       (t'_0, t_2)
     end
@@ -541,9 +541,9 @@ val t''_t_t' = fn (a_, b_) =>
   let
     open Tie
     val Y = Generic.Y
-    val _ & t'_6 & _ & _ & t_5 & _ & _ & t''_0 & _ & _ =
+    val _ & _ & _ & t'_6 & _ & _ & t''_0 & t_5 & _ & _ =
       fix (Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y)
-        (fn t_7 & t'_6 & t''_8 & t''_4 & t_5 & t_9 & t_3 & t''_0 & t_1 & t'_2 =>
+        (fn t''_8 & t_1 & t_9 & t'_6 & t_7 & t'_2 & t''_0 & t_5 & t''_4 & t_3 =>
            let
              open Generic
              fun t'' (t_1, a_) = tuple2 (t_1, a_)
@@ -554,10 +554,11 @@ val t''_t_t' = fn (a_, b_) =>
                  )
              fun t' (t_7, a_) = tuple2 (a_, t_7)
            in
-             t (t''_4, t'_6, int, a_) & t' (t_7, a_) & t'' (t_9, b_)
-             & t'' (t_3, int) & t (t''_8, t'_6, b_, a_)
-             & t (t''_8, t'_2, b_, string) & t (t''_4, t'_2, int, string)
-             & t'' (t_1, a_) & t (t''_0, t'_2, a_, string) & t' (t_3, string)
+             t'' (t_9, b_) & t (t''_0, t'_2, a_, string)
+             & t (t''_8, t'_2, b_, string) & t' (t_7, a_)
+             & t (t''_4, t'_6, int, a_) & t' (t_3, string) & t'' (t_1, a_)
+             & t (t''_8, t'_6, b_, a_) & t'' (t_3, int)
+             & t (t''_4, t'_2, int, string)
            end)
   in
     (t''_0, t_5, t'_6)
@@ -576,17 +577,17 @@ local
     fn (t0, t1) => "(" ^ String.concatWith ", " [a_ t0, t_7 t1] ^ ")"
   val t''_t_t' = fn (a_, b_) =>
     let
-      val rec t_7 = fn ? => t (t''_4, t'_6, Int.toString, a_) ?
-      and t'_6 = fn ? => t' (t_7, a_) ?
-      and t''_8 = fn ? => t'' (t_9, b_) ?
-      and t''_4 = fn ? => t'' (t_3, Int.toString) ?
-      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      val rec t''_8 = fn ? => t'' (t_9, b_) ?
+      and t_1 = fn ? => t (t''_0, t'_2, a_, fn t0 => "\"" ^ t0 ^ "\"") ?
       and t_9 = fn ? => t (t''_8, t'_2, b_, fn t0 => "\"" ^ t0 ^ "\"") ?
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t_7 = fn ? => t (t''_4, t'_6, Int.toString, a_) ?
+      and t'_2 = fn ? => t' (t_3, fn t0 => "\"" ^ t0 ^ "\"") ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t''_4 = fn ? => t'' (t_3, Int.toString) ?
       and t_3 = fn ? =>
         t (t''_4, t'_2, Int.toString, fn t0 => "\"" ^ t0 ^ "\"") ?
-      and t''_0 = fn ? => t'' (t_1, a_) ?
-      and t_1 = fn ? => t (t''_0, t'_2, a_, fn t0 => "\"" ^ t0 ^ "\"") ?
-      and t'_2 = fn ? => t' (t_3, fn t0 => "\"" ^ t0 ^ "\"") ?
     in
       (t''_0, t_5, t'_6)
     end
@@ -616,16 +617,16 @@ local
        | ? => ?)
   val t''_t_t' = fn (a_, b_) =>
     let
-      val rec t_7 = fn ? => t (t''_4, t'_6, Int.compare, a_) ?
-      and t'_6 = fn ? => t' (t_7, a_) ?
-      and t''_8 = fn ? => t'' (t_9, b_) ?
-      and t''_4 = fn ? => t'' (t_3, Int.compare) ?
-      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
-      and t_9 = fn ? => t (t''_8, t'_2, b_, String.compare) ?
-      and t_3 = fn ? => t (t''_4, t'_2, Int.compare, String.compare) ?
-      and t''_0 = fn ? => t'' (t_1, a_) ?
+      val rec t''_8 = fn ? => t'' (t_9, b_) ?
       and t_1 = fn ? => t (t''_0, t'_2, a_, String.compare) ?
+      and t_9 = fn ? => t (t''_8, t'_2, b_, String.compare) ?
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t_7 = fn ? => t (t''_4, t'_6, Int.compare, a_) ?
       and t'_2 = fn ? => t' (t_3, String.compare) ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t''_4 = fn ? => t'' (t_3, Int.compare) ?
+      and t_3 = fn ? => t (t''_4, t'_2, Int.compare, String.compare) ?
     in
       (t''_0, t_5, t'_6)
     end
@@ -645,16 +646,16 @@ local
     fn ((t0, t1), (t2, t3)) => a_ (t0, t2) andalso t_7 (t1, t3)
   val t''_t_t' = fn (a_, b_) =>
     let
-      val rec t_7 = fn ? => t (t''_4, t'_6, op=, a_) ?
-      and t'_6 = fn ? => t' (t_7, a_) ?
-      and t''_8 = fn ? => t'' (t_9, b_) ?
-      and t''_4 = fn ? => t'' (t_3, op=) ?
-      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
-      and t_9 = fn ? => t (t''_8, t'_2, b_, op=) ?
-      and t_3 = fn ? => t (t''_4, t'_2, op=, op=) ?
-      and t''_0 = fn ? => t'' (t_1, a_) ?
+      val rec t''_8 = fn ? => t'' (t_9, b_) ?
       and t_1 = fn ? => t (t''_0, t'_2, a_, op=) ?
+      and t_9 = fn ? => t (t''_8, t'_2, b_, op=) ?
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t_7 = fn ? => t (t''_4, t'_6, op=, a_) ?
       and t'_2 = fn ? => t' (t_3, op=) ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t''_4 = fn ? => t'' (t_3, op=) ?
+      and t_3 = fn ? => t (t''_4, t'_2, op=, op=) ?
     in
       (t''_0, t_5, t'_6)
     end
@@ -687,16 +688,16 @@ local
   and t' = fn (t_7, a_) => fn (t0, t1) => combine (a_ t0, t_7 t1)
   val t''_t_t' = fn (a_, b_) =>
     let
-      val rec t_7 = fn ? => t (t''_4, t'_6, Word.fromInt, a_) ?
-      and t'_6 = fn ? => t' (t_7, a_) ?
-      and t''_8 = fn ? => t'' (t_9, b_) ?
-      and t''_4 = fn ? => t'' (t_3, Word.fromInt) ?
-      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
-      and t_9 = fn ? => t (t''_8, t'_2, b_, hashString) ?
-      and t_3 = fn ? => t (t''_4, t'_2, Word.fromInt, hashString) ?
-      and t''_0 = fn ? => t'' (t_1, a_) ?
+      val rec t''_8 = fn ? => t'' (t_9, b_) ?
       and t_1 = fn ? => t (t''_0, t'_2, a_, hashString) ?
+      and t_9 = fn ? => t (t''_8, t'_2, b_, hashString) ?
+      and t'_6 = fn ? => t' (t_7, a_) ?
+      and t_7 = fn ? => t (t''_4, t'_6, Word.fromInt, a_) ?
       and t'_2 = fn ? => t' (t_3, hashString) ?
+      and t''_0 = fn ? => t'' (t_1, a_) ?
+      and t_5 = fn ? => t (t''_8, t'_6, b_, a_) ?
+      and t''_4 = fn ? => t'' (t_3, Word.fromInt) ?
+      and t_3 = fn ? => t (t''_4, t'_2, Word.fromInt, hashString) ?
     in
       (t''_0, t_5, t'_6)
     end
