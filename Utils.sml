@@ -68,52 +68,63 @@ struct
         SyntaxSeq.Many
           {left = left, elems = Seq.map f elems, delims = delims, right = right}
 
-  fun showTy ty =
-    case ty of
-      Ty.Var tok => Token.toString (stripToken tok)
-    | Ty.Record {elems, ...} =>
-        "{"
-        ^
-        String.concatWith ","
-          (List.map
-             (fn {lab, ty, ...} =>
-                Token.toString (stripToken lab) ^ ":" ^ showTy ty)
-             (Seq.toList elems)) ^ "}"
-    | Ty.Tuple {elems, ...} =>
+  (* Converts a type into a normal form so it can be hashed. Things like duplicate
+     parenthesis are eliminated and all tokens are stripped.
+   *)
+  fun normalize (Ty.Var tok) =
+        Ty.Var (stripToken tok)
+    | normalize (Ty.Record {left, elems, delims, right}) =
+        Ty.Record
+          { left = stripToken left
+          , elems =
+              Seq.map
+                (fn {lab, colon, ty} =>
+                   { lab = stripToken lab
+                   , colon = stripToken colon
+                   , ty = normalize ty
+                   }) elems
+          , delims = Seq.map stripToken delims
+          , right = stripToken right
+          }
+    | normalize (Ty.Tuple {elems, delims}) =
         if ArraySlice.length elems = 1 then
-          showTy (parensTy (ArraySlice.sub (elems, 0)))
+          normalize (parensTy (ArraySlice.sub (elems, 0)))
         else
-          "(" ^ String.concatWith "*" (List.map showTy (Seq.toList elems)) ^ ")"
-    | Ty.Con {args, id} =>
-        "(" ^ String.concatWith "," (List.map showTy (syntaxSeqToList args))
-        ^ ")" ^ Token.toString (stripToken (MaybeLongToken.getToken id))
-    | Ty.Arrow {from, to, ...} => showTy from ^ "->" ^ showTy to
-    | Ty.Parens {ty as Ty.Parens _, ...} => showTy ty
-    | Ty.Parens {ty as Ty.Tuple _, ...} => showTy ty
-    | Ty.Parens {ty as Ty.Record _, ...} => showTy ty
-    | Ty.Parens {ty, ...} => "(" ^ showTy ty ^ ")"
+          Ty.Tuple
+            { elems = Seq.map normalize elems
+            , delims = Seq.map stripToken delims
+            }
+    | normalize (Ty.Con {args, id}) =
+        Ty.Con
+          { args = syntaxSeqMap normalize args
+          , id = MaybeLongToken.make (stripToken (MaybeLongToken.getToken id))
+          }
+    | normalize (Ty.Arrow {from, to, arrow}) =
+        Ty.Arrow
+          {from = normalize from, to = normalize to, arrow = stripToken arrow}
+    | normalize (Ty.Parens {ty as Ty.Parens _, ...}) = normalize ty
+    | normalize (Ty.Parens {ty as Ty.Tuple _, ...}) = normalize ty
+    | normalize (Ty.Parens {ty as Ty.Record _, ...}) = normalize ty
+    | normalize (Ty.Parens {ty, left, right}) =
+        Ty.Parens
+          {ty = normalize ty, left = stripToken left, right = stripToken right}
 
-  (* Similar to showTy but has prettier output like spacing and less parenthesis. *)
   fun prettyTy ty =
     case ty of
-      Ty.Var tok => Token.toString (stripToken tok)
+      Ty.Var tok => Token.toString tok
     | Ty.Record {elems, ...} =>
         "{"
         ^
         String.concatWith ", "
           (List.map
-             (fn {lab, ty, ...} =>
-                Token.toString (stripToken lab) ^ ": " ^ prettyTy ty)
+             (fn {lab, ty, ...} => Token.toString lab ^ ": " ^ prettyTy ty)
              (Seq.toList elems)) ^ "}"
     | Ty.Tuple {elems, ...} =>
-        if ArraySlice.length elems = 1 then
-          prettyTy (parensTy (ArraySlice.sub (elems, 0)))
-        else
-          "(" ^ String.concatWith " * " (List.map prettyTy (Seq.toList elems))
-          ^ ")"
+        "(" ^ String.concatWith " * " (List.map prettyTy (Seq.toList elems))
+        ^ ")"
     | Ty.Con {args, id} =>
         let
-          val conStr = Token.toString (stripToken (MaybeLongToken.getToken id))
+          val conStr = Token.toString (MaybeLongToken.getToken id)
         in
           case syntaxSeqToList args of
             [] => conStr
@@ -123,9 +134,6 @@ struct
               ^ conStr
         end
     | Ty.Arrow {from, to, ...} => prettyTy from ^ " -> " ^ prettyTy to
-    | Ty.Parens {ty as Ty.Parens _, ...} => prettyTy ty
-    | Ty.Parens {ty as Ty.Tuple _, ...} => prettyTy ty
-    | Ty.Parens {ty as Ty.Record _, ...} => prettyTy ty
     | Ty.Parens {ty, ...} => "(" ^ prettyTy ty ^ ")"
 
   fun tySize ty =

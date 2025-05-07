@@ -375,7 +375,7 @@ struct
              ; print ") "
              ; print (Token.toString tycon)
              ; print " = "
-             ; print (Utils.showTy ty)
+             ; print (Utils.prettyTy ty)
              ; print "\n"
              )) elems
       ; print "]\n"

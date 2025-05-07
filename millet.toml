@@ -4,3 +4,4 @@ root = "smlgen.mlb"
 [diagnostics]
 5043.severity = "ignore"
 4037.severity = "ignore"
+3007.severity = "ignore"

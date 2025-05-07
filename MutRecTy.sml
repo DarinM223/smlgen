@@ -7,10 +7,18 @@ struct
 
   datatype type_data = Databind of constr list | Typebind of Ty.ty
 
+  structure TyTable =
+    HashTableFn
+      (struct
+         type hash_key = Ast.Ty.ty
+         val hashVal = Ast.Ty.hash
+         val sameKey = Ast.Ty.==
+       end)
+
   datatype env =
     Env of
-      { tyToFix: Token.token AtomTable.hash_table
-      , tyToArgs: Ty.ty list AtomTable.hash_table
+      { tyToFix: Token.token TyTable.hash_table
+      , tyToArgs: Ty.ty list TyTable.hash_table
       , fixToTy: Ty.ty AtomTable.hash_table
       , vars: Token.token list
       , tyTokToId: int AtomTable.hash_table
@@ -74,8 +82,8 @@ struct
 
   fun mkEnv tableSize =
     Env
-      { tyToFix = AtomTable.mkTable (tableSize, LibBase.NotFound)
-      , tyToArgs = AtomTable.mkTable (tableSize, LibBase.NotFound)
+      { tyToFix = TyTable.mkTable (tableSize, LibBase.NotFound)
+      , tyToArgs = TyTable.mkTable (tableSize, LibBase.NotFound)
       , fixToTy = AtomTable.mkTable (tableSize, LibBase.NotFound)
       , vars = []
       , tyTokToId = AtomTable.mkTable (tableSize, LibBase.NotFound)
@@ -85,8 +93,8 @@ struct
 
   fun envWithVars vars
     (Env {tyToFix, tyToArgs, fixToTy, tyTokToId, tyData, c, ...}) =
-    ( AtomTable.clear tyToFix
-    ; AtomTable.clear tyToArgs
+    ( TyTable.clear tyToFix
+    ; TyTable.clear tyToArgs
     ; AtomTable.clear fixToTy
     ; Env
         { tyToFix = tyToFix
@@ -100,8 +108,8 @@ struct
     )
 
   fun addTyArg (Env {tyToArgs, ...}) k v =
-    let val s = AtomTable.lookup tyToArgs k handle LibBase.NotFound => []
-    in AtomTable.insert tyToArgs (k, v :: s)
+    let val s = TyTable.lookup tyToArgs k handle LibBase.NotFound => []
+    in TyTable.insert tyToArgs (k, v :: s)
     end
 
   fun buildSubstMap (Env {tyTokToId, tyData, ...}) tycon tys =
@@ -134,21 +142,20 @@ struct
     let
       val i = AtomTable.lookup tyTokToId (Atom.atom tycon)
       val (_, vars, dat) = IntHashTable.lookup tyData i
-      val ty = subst substMap (tyconToTy (env, tycon))
-      val tyStrA = Atom.atom (showTy ty)
+      val ty0 = normalize (subst substMap (tyconToTy (env, tycon)))
     in
-      if AtomTable.inDomain tyToFix tyStrA then
+      if TyTable.inDomain tyToFix ty0 then
         ()
       else
         let
-          val () = List.app (addTyArg env tyStrA)
+          val () = List.app (addTyArg env ty0)
             (List.map
                (fn s => AtomMap.lookup (substMap, Atom.atom (Token.toString s)))
                (syntaxSeqToList vars))
           val i = !c before c := !c + 1
           val freshTycon = tycon ^ "_" ^ Int.toString i
-          val () = AtomTable.insert tyToFix (tyStrA, mkToken freshTycon)
-          val () = AtomTable.insert fixToTy (Atom.atom freshTycon, ty)
+          val () = TyTable.insert tyToFix (ty0, mkToken freshTycon)
+          val () = AtomTable.insert fixToTy (Atom.atom freshTycon, ty0)
 
           fun go (Ty.Var _) = ()
             | go (Ty.Record {elems, ...}) =
@@ -167,16 +174,15 @@ struct
                           raise RecursionLimit
                         else
                           ()
-                      val tyStr = showTy ty
                       val con = fn () =>
                         Ty.Con
                           { args = Ast.SyntaxSeq.Empty
                           , id = MaybeLongToken.make
-                              (AtomTable.lookup tyToFix (Atom.atom tyStr))
+                              (TyTable.lookup tyToFix (normalize ty))
                           }
                     in
                       traverseTy (env, tycon', buildSubstMap env tycon' tys);
-                      addTyArg env tyStrA (con ())
+                      addTyArg env ty0 (con ())
                     end
                   else
                     List.app go tys
@@ -193,15 +199,11 @@ struct
         end
     end
 
-  fun generatedFixNameForTy (Env {tyToFix, ...}) ty =
-    AtomTable.find tyToFix (Atom.atom (showTy ty))
-
-  fun generatedArgsForTy (Env {tyToArgs, ...}) ty =
-    AtomTable.lookup tyToArgs (Atom.atom (showTy ty))
-
+  fun generatedFixNameForTy (Env {tyToFix, ...}) ty = TyTable.find tyToFix ty
+  fun generatedArgsForTy (Env {tyToArgs, ...}) ty = TyTable.lookup tyToArgs ty
   fun generatedFixesAndArgs (Env {tyToFix, tyToArgs, ...}) =
-    List.map (fn (a, links) => (AtomTable.lookup tyToFix a, links))
-      (AtomTable.listItemsi tyToArgs)
+    List.map (fn (a, links) => (TyTable.lookup tyToFix a, links))
+      (TyTable.listItemsi tyToArgs)
 
   fun tyconIsGeneratedFix (Env {fixToTy, ...}) tycon =
     AtomTable.inDomain fixToTy (Atom.atom tycon)

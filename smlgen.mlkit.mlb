@@ -60,6 +60,7 @@ smlfmt/src/prettier-print/PrettierStrUtil.sml
 smlfmt/src/prettier-print/PrettierStr.sml
 smlfmt/src/prettier-print/PrettierFun.sml
 smlfmt/src/prettier-print/PrettierPrintAst.sml
+SmlfmtWrappers.sml
 Fold.sml
 FunctionalRecordUpdate.sml
 Options.sml
