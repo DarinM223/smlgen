@@ -1,14 +1,6 @@
 structure HashUtils =
 struct
   val combine = fn (a, b) => 0w31 * a + b
-  fun hashList _ [] = 0wx6D52A54D
-    | hashList hash l =
-        List.foldl (fn (i, acc) => combine (acc, hash i))
-          (Word.fromInt (List.length l)) l
-  fun eqList eq (x :: xs, y :: ys) =
-        eq (x, y) andalso eqList eq (xs, ys)
-    | eqList _ ([], []) = true
-    | eqList _ _ = false
   val hashString =
     #1
     o
@@ -24,8 +16,15 @@ struct
   open Seq
   local open HashUtils
   in
-    val hash = fn a_ => hashList a_ o Seq.toList
-    val op== = fn a_ => fn (l1, l2) => eqList a_ (Seq.toList l1, Seq.toList l2)
+    fun hash a_ s =
+      case Seq.length s of
+        0 => 0wx6D52A54D
+      | n =>
+          ArraySlice.foldl (fn (i, acc) => combine (acc, a_ i)) (Word.fromInt n)
+            s
+    fun op== a_ (l1, l2) =
+      Seq.length l1 = Seq.length l2
+      andalso ArraySlice.all (fn a => a) (Seq.zipWith a_ (l1, l2))
   end
 end
 
