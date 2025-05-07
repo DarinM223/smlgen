@@ -7,6 +7,17 @@ struct
 
   datatype type_data = Databind of constr list | Typebind of Ty.ty
 
+  fun normalizeTypeData (Databind datbinds) =
+        let
+          fun normalizeArg {off, ty} = {off = off, ty = normalize ty}
+          fun normalizeDatbind {arg, id, opp} =
+            {arg = Option.map normalizeArg arg, id = id, opp = opp}
+        in
+          Databind (List.map normalizeDatbind datbinds)
+        end
+    | normalizeTypeData (Typebind ty) =
+        Typebind (normalize ty)
+
   structure TyTable =
     HashTableFn
       (struct
@@ -142,7 +153,7 @@ struct
     let
       val i = AtomTable.lookup tyTokToId (Atom.atom tycon)
       val (_, vars, dat) = IntHashTable.lookup tyData i
-      val ty0 = normalize (subst substMap (tyconToTy (env, tycon)))
+      val ty0 = subst substMap (tyconToTy (env, tycon))
     in
       if TyTable.inDomain tyToFix ty0 then
         ()
@@ -177,8 +188,7 @@ struct
                       val con = fn () =>
                         Ty.Con
                           { args = Ast.SyntaxSeq.Empty
-                          , id = MaybeLongToken.make
-                              (TyTable.lookup tyToFix (normalize ty))
+                          , id = MaybeLongToken.make (TyTable.lookup tyToFix ty)
                           }
                     in
                       traverseTy (env, tycon', buildSubstMap env tycon' tys);
@@ -199,8 +209,8 @@ struct
         end
     end
 
-  fun generatedFixNameForTy (Env {tyToFix, ...}) ty = TyTable.find tyToFix ty
-  fun generatedArgsForTy (Env {tyToArgs, ...}) ty = TyTable.lookup tyToArgs ty
+  fun generatedFixNameForTy (Env {tyToFix, ...}) = TyTable.find tyToFix
+  fun generatedArgsForTy (Env {tyToArgs, ...}) = TyTable.lookup tyToArgs
   fun generatedFixesAndArgs (Env {tyToFix, tyToArgs, ...}) =
     List.map (fn (a, links) => (TyTable.lookup tyToFix a, links))
       (TyTable.listItemsi tyToArgs)
@@ -329,7 +339,7 @@ struct
                  (Atom.atom (Token.toString ty), i)
                val () = IntHashTable.insert tyLinks (i, IntListSet.empty)
                val () = IntHashTable.insert tyData
-                 (i, (ty, vars, Databind constrs))
+                 (i, (ty, vars, normalizeTypeData (Databind constrs)))
              in
                i
              end) tys
@@ -345,7 +355,7 @@ struct
                      (Atom.atom (Token.toString tycon), i)
                    val () = IntHashTable.insert tyLinks (i, IntListSet.empty)
                    val () = IntHashTable.insert tyData
-                     (i, (tycon, tyvars, Typebind ty))
+                     (i, (tycon, tyvars, normalizeTypeData (Typebind ty)))
                  in
                    i
                  end) (Seq.toList elems)

@@ -68,8 +68,8 @@ struct
         SyntaxSeq.Many
           {left = left, elems = Seq.map f elems, delims = delims, right = right}
 
-  (* Converts a type into a normal form so it can be hashed. Things like duplicate
-     parenthesis are eliminated and all tokens are stripped.
+  (* Converts a type into a normal form so it can be hashed.
+     Parenthesis are eliminated and all tokens are stripped.
    *)
   fun normalize (Ty.Var tok) =
         Ty.Var (stripToken tok)
@@ -102,12 +102,7 @@ struct
     | normalize (Ty.Arrow {from, to, arrow}) =
         Ty.Arrow
           {from = normalize from, to = normalize to, arrow = stripToken arrow}
-    | normalize (Ty.Parens {ty as Ty.Parens _, ...}) = normalize ty
-    | normalize (Ty.Parens {ty as Ty.Tuple _, ...}) = normalize ty
-    | normalize (Ty.Parens {ty as Ty.Record _, ...}) = normalize ty
-    | normalize (Ty.Parens {ty, left, right}) =
-        Ty.Parens
-          {ty = normalize ty, left = stripToken left, right = stripToken right}
+    | normalize (Ty.Parens {ty, ...}) = normalize ty
 
   fun prettyTy ty =
     case ty of
