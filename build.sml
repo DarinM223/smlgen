@@ -258,6 +258,7 @@ use "smlfmt/src/prettier-print/PrettierStrUtil.sml";
 use "smlfmt/src/prettier-print/PrettierStr.sml";
 use "smlfmt/src/prettier-print/PrettierFun.sml";
 use "smlfmt/src/prettier-print/PrettierPrintAst.sml";
+use "SmlfmtWrappers.sml";
 use "Fold.sml";
 use "FunctionalRecordUpdate.sml";
 use "Options.sml";

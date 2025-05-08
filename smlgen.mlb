@@ -8,6 +8,7 @@ local
     ./smlfmt/src/parse/sources.mlb
     ./smlfmt/src/prettier-print/sources.mlb
   end
+  SmlfmtWrappers.sml
   Fold.sml
   FunctionalRecordUpdate.sml
   Options.sml

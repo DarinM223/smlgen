@@ -12,19 +12,19 @@ val expr_stmt = fn (d_, c_, b_) =>
     open Tie
     val Y = Generic.Y
     val
-      _ & _ & _ & _ & _ & _ & expr_0 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ &
-        _ & _ & _ & stmt_19 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ &
-        _ =
+      _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & stmt_19 & _ & _ & _ &
+        expr_0 & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ &
+        _ & _ =
       fix
         (Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y
          *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y
          *` Y *` Y *` Y *` Y *` Y *` Y *` Y)
-        (fn expr_27 & stmt_29 & expr_11 & expr_4 & expr_21 & expr_22 & expr_0 &
-             stmt_16 & expr_33 & expr_30 & stmt_8 & expr_9 & expr_13 & expr_24 &
-             expr_32 & stmt_14 & expr_35 & expr_28 & expr_17 & expr_23 & expr_20 &
-             stmt_19 & expr_5 & stmt_6 & expr_31 & expr_2 & expr_15 & expr_18 &
-             stmt_3 & expr_7 & stmt_1 & expr_12 & expr_10 & expr_25 & stmt_26 &
-             expr_34 =>
+        (fn stmt_26 & stmt_16 & stmt_14 & expr_34 & expr_4 & expr_15 & expr_22 &
+             expr_31 & expr_5 & expr_12 & expr_13 & expr_7 & stmt_6 & stmt_19 &
+             stmt_8 & expr_30 & expr_33 & expr_0 & expr_24 & expr_23 & expr_20 &
+             expr_2 & expr_25 & expr_10 & expr_11 & expr_21 & expr_32 & expr_9 &
+             expr_27 & expr_35 & stmt_3 & stmt_29 & stmt_1 & expr_28 & expr_17 &
+             expr_18 =>
            let
              open Generic
              fun expr (expr_35, expr_13, stmt_1, b_, c_, d_) =
@@ -46,42 +46,42 @@ val expr_stmt = fn (d_, c_, b_) =>
                  , fn INR ? => If ? | INL ? => Assign ?
                  )
            in
-             expr (expr_33, expr_28, stmt_16, c_, b_, c_)
-             & stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_)
-             & expr (expr_10, expr_11, stmt_6, d_, d_, b_)
-             & expr (expr_4, expr_4, stmt_3, b_, b_, b_)
-             & expr (expr_20, expr_20, stmt_14, c_, d_, d_)
-             & expr (expr_21, expr_22, stmt_19, d_, d_, c_)
-             & expr (expr_35, expr_13, stmt_1, b_, c_, d_)
+             stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_)
              & stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_)
-             & expr (expr_28, expr_33, stmt_26, c_, c_, b_)
-             & expr (expr_32, expr_31, stmt_3, b_, c_, b_)
-             & stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_)
-             & expr (expr_9, expr_9, stmt_8, d_, d_, d_)
-             & expr (expr_24, expr_0, stmt_14, c_, b_, d_)
-             & expr (expr_34, expr_25, stmt_6, d_, c_, b_)
-             & expr (expr_31, expr_32, stmt_29, b_, b_, c_)
              & stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_)
-             & expr (expr_25, expr_34, stmt_19, d_, b_, c_)
-             & expr (expr_27, expr_27, stmt_29, b_, c_, c_)
-             & expr (expr_17, expr_17, stmt_16, c_, c_, c_)
+             & expr (expr_13, expr_35, stmt_29, b_, d_, c_)
+             & expr (expr_4, expr_4, stmt_3, b_, b_, b_)
+             & expr (expr_23, expr_18, stmt_16, c_, d_, c_)
+             & expr (expr_21, expr_22, stmt_19, d_, d_, c_)
+             & expr (expr_30, expr_30, stmt_26, c_, b_, b_)
+             & expr (expr_2, expr_2, stmt_6, d_, b_, b_)
+             & expr (expr_5, expr_12, stmt_1, b_, b_, d_)
+             & expr (expr_24, expr_0, stmt_14, c_, b_, d_)
+             & expr (expr_11, expr_10, stmt_8, d_, b_, d_)
+             & stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_)
+             & stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_)
+             & stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_)
+             & expr (expr_32, expr_31, stmt_3, b_, c_, b_)
+             & expr (expr_28, expr_33, stmt_26, c_, c_, b_)
+             & expr (expr_35, expr_13, stmt_1, b_, c_, d_)
+             & expr (expr_34, expr_25, stmt_6, d_, c_, b_)
              & expr (expr_18, expr_23, stmt_14, c_, c_, d_)
              & expr (expr_22, expr_21, stmt_8, d_, c_, d_)
-             & stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_)
-             & expr (expr_2, expr_2, stmt_6, d_, b_, b_)
-             & stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_)
-             & expr (expr_30, expr_30, stmt_26, c_, b_, b_)
              & expr (expr_12, expr_5, stmt_3, b_, d_, b_)
-             & expr (expr_23, expr_18, stmt_16, c_, d_, c_)
-             & expr (expr_15, expr_15, stmt_19, d_, c_, c_)
-             & stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_)
-             & expr (expr_11, expr_10, stmt_8, d_, b_, d_)
-             & stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_)
-             & expr (expr_5, expr_12, stmt_1, b_, b_, d_)
-             & expr (expr_7, expr_7, stmt_1, b_, d_, d_)
              & expr (expr_0, expr_24, stmt_26, c_, d_, b_)
-             & stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_)
-             & expr (expr_13, expr_35, stmt_29, b_, d_, c_)
+             & expr (expr_7, expr_7, stmt_1, b_, d_, d_)
+             & expr (expr_10, expr_11, stmt_6, d_, d_, b_)
+             & expr (expr_20, expr_20, stmt_14, c_, d_, d_)
+             & expr (expr_31, expr_32, stmt_29, b_, b_, c_)
+             & expr (expr_9, expr_9, stmt_8, d_, d_, d_)
+             & expr (expr_33, expr_28, stmt_16, c_, b_, c_)
+             & expr (expr_25, expr_34, stmt_19, d_, b_, c_)
+             & stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_)
+             & stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_)
+             & stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_)
+             & expr (expr_27, expr_27, stmt_29, b_, c_, c_)
+             & expr (expr_17, expr_17, stmt_16, c_, c_, c_)
+             & expr (expr_15, expr_15, stmt_19, d_, c_, c_)
            end)
   in
     (expr_0, stmt_19)
@@ -110,42 +110,43 @@ local
         ] ^ ")"
   val expr_stmt = fn (d_, c_, b_) =>
     let
-      val rec expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
-      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
-      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
-      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
-      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
-      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
-      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      val rec stmt_26 = fn ? =>
+        stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
       and stmt_16 = fn ? => stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_) ?
-      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
-      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
-      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
-      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
-      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
-      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
       and stmt_14 = fn ? => stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_) ?
-      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
-      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
-      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
+      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
+      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
+      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
+      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
+      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
+      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
+      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
+      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
+      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
+      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
+      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
       and expr_23 = fn ? => expr (expr_18, expr_23, stmt_14, c_, c_, d_) ?
       and expr_20 = fn ? => expr (expr_22, expr_21, stmt_8, d_, c_, d_) ?
-      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
-      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
-      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
-      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
       and expr_2 = fn ? => expr (expr_12, expr_5, stmt_3, b_, d_, b_) ?
-      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
-      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
-      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
-      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
-      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
-      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
-      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
       and expr_25 = fn ? => expr (expr_0, expr_24, stmt_26, c_, d_, b_) ?
-      and stmt_26 = fn ? => stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
-      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
+      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
+      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
+      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
+      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
+      and expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
+      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
+      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
+      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
+      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
+      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
+      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
     in
       (expr_0, stmt_19)
     end
@@ -193,42 +194,43 @@ local
        | ? => ?)
   val expr_stmt = fn (d_, c_, b_) =>
     let
-      val rec expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
-      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
-      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
-      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
-      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
-      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
-      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      val rec stmt_26 = fn ? =>
+        stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
       and stmt_16 = fn ? => stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_) ?
-      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
-      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
-      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
-      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
-      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
-      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
       and stmt_14 = fn ? => stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_) ?
-      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
-      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
-      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
+      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
+      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
+      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
+      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
+      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
+      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
+      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
+      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
+      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
+      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
+      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
       and expr_23 = fn ? => expr (expr_18, expr_23, stmt_14, c_, c_, d_) ?
       and expr_20 = fn ? => expr (expr_22, expr_21, stmt_8, d_, c_, d_) ?
-      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
-      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
-      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
-      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
       and expr_2 = fn ? => expr (expr_12, expr_5, stmt_3, b_, d_, b_) ?
-      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
-      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
-      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
-      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
-      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
-      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
-      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
       and expr_25 = fn ? => expr (expr_0, expr_24, stmt_26, c_, d_, b_) ?
-      and stmt_26 = fn ? => stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
-      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
+      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
+      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
+      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
+      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
+      and expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
+      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
+      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
+      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
+      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
+      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
+      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
     in
       (expr_0, stmt_19)
     end
@@ -255,42 +257,43 @@ local
      | _ => false
   val expr_stmt = fn (d_, c_, b_) =>
     let
-      val rec expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
-      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
-      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
-      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
-      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
-      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
-      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      val rec stmt_26 = fn ? =>
+        stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
       and stmt_16 = fn ? => stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_) ?
-      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
-      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
-      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
-      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
-      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
-      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
       and stmt_14 = fn ? => stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_) ?
-      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
-      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
-      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
+      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
+      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
+      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
+      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
+      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
+      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
+      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
+      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
+      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
+      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
+      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
       and expr_23 = fn ? => expr (expr_18, expr_23, stmt_14, c_, c_, d_) ?
       and expr_20 = fn ? => expr (expr_22, expr_21, stmt_8, d_, c_, d_) ?
-      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
-      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
-      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
-      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
       and expr_2 = fn ? => expr (expr_12, expr_5, stmt_3, b_, d_, b_) ?
-      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
-      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
-      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
-      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
-      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
-      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
-      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
       and expr_25 = fn ? => expr (expr_0, expr_24, stmt_26, c_, d_, b_) ?
-      and stmt_26 = fn ? => stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
-      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
+      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
+      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
+      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
+      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
+      and expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
+      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
+      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
+      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
+      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
+      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
+      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
     in
       (expr_0, stmt_19)
     end
@@ -350,42 +353,43 @@ local
       end
   val expr_stmt = fn (d_, c_, b_) =>
     let
-      val rec expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
-      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
-      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
-      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
-      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
-      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
-      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      val rec stmt_26 = fn ? =>
+        stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
       and stmt_16 = fn ? => stmt (stmt_16, stmt_16, expr_17, expr_17, c_, c_) ?
-      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
-      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
-      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
-      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
-      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
-      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
       and stmt_14 = fn ? => stmt (stmt_14, stmt_19, expr_22, expr_15, d_, c_) ?
-      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
-      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
-      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_4 = fn ? => expr (expr_4, expr_4, stmt_3, b_, b_, b_) ?
+      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
+      and expr_22 = fn ? => expr (expr_21, expr_22, stmt_19, d_, d_, c_) ?
+      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
+      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
+      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
+      and expr_13 = fn ? => expr (expr_24, expr_0, stmt_14, c_, b_, d_) ?
+      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
+      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_8, stmt_8, expr_9, expr_9, d_, d_) ?
+      and expr_30 = fn ? => expr (expr_32, expr_31, stmt_3, b_, c_, b_) ?
+      and expr_33 = fn ? => expr (expr_28, expr_33, stmt_26, c_, c_, b_) ?
+      and expr_0 = fn ? => expr (expr_35, expr_13, stmt_1, b_, c_, d_) ?
+      and expr_24 = fn ? => expr (expr_34, expr_25, stmt_6, d_, c_, b_) ?
       and expr_23 = fn ? => expr (expr_18, expr_23, stmt_14, c_, c_, d_) ?
       and expr_20 = fn ? => expr (expr_22, expr_21, stmt_8, d_, c_, d_) ?
-      and stmt_19 = fn ? => stmt (stmt_19, stmt_14, expr_23, expr_20, c_, d_) ?
-      and expr_5 = fn ? => expr (expr_2, expr_2, stmt_6, d_, b_, b_) ?
-      and stmt_6 = fn ? => stmt (stmt_6, stmt_1, expr_12, expr_7, b_, d_) ?
-      and expr_31 = fn ? => expr (expr_30, expr_30, stmt_26, c_, b_, b_) ?
       and expr_2 = fn ? => expr (expr_12, expr_5, stmt_3, b_, d_, b_) ?
-      and expr_15 = fn ? => expr (expr_23, expr_18, stmt_16, c_, d_, c_) ?
-      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
-      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
-      and expr_7 = fn ? => expr (expr_11, expr_10, stmt_8, d_, b_, d_) ?
-      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
-      and expr_12 = fn ? => expr (expr_5, expr_12, stmt_1, b_, b_, d_) ?
-      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
       and expr_25 = fn ? => expr (expr_0, expr_24, stmt_26, c_, d_, b_) ?
-      and stmt_26 = fn ? => stmt (stmt_26, stmt_29, expr_32, expr_27, b_, c_) ?
-      and expr_34 = fn ? => expr (expr_13, expr_35, stmt_29, b_, d_, c_) ?
+      and expr_10 = fn ? => expr (expr_7, expr_7, stmt_1, b_, d_, d_) ?
+      and expr_11 = fn ? => expr (expr_10, expr_11, stmt_6, d_, d_, b_) ?
+      and expr_21 = fn ? => expr (expr_20, expr_20, stmt_14, c_, d_, d_) ?
+      and expr_32 = fn ? => expr (expr_31, expr_32, stmt_29, b_, b_, c_) ?
+      and expr_9 = fn ? => expr (expr_9, expr_9, stmt_8, d_, d_, d_) ?
+      and expr_27 = fn ? => expr (expr_33, expr_28, stmt_16, c_, b_, c_) ?
+      and expr_35 = fn ? => expr (expr_25, expr_34, stmt_19, d_, b_, c_) ?
+      and stmt_3 = fn ? => stmt (stmt_3, stmt_3, expr_4, expr_4, b_, b_) ?
+      and stmt_29 = fn ? => stmt (stmt_29, stmt_26, expr_33, expr_30, c_, b_) ?
+      and stmt_1 = fn ? => stmt (stmt_1, stmt_6, expr_11, expr_2, d_, b_) ?
+      and expr_28 = fn ? => expr (expr_27, expr_27, stmt_29, b_, c_, c_) ?
+      and expr_17 = fn ? => expr (expr_17, expr_17, stmt_16, c_, c_, c_) ?
+      and expr_18 = fn ? => expr (expr_15, expr_15, stmt_19, d_, c_, c_) ?
     in
       (expr_0, stmt_19)
     end
@@ -409,10 +413,10 @@ val expr_stmt = fn (c_, d_, b_) =>
   let
     open Tie
     val Y = Generic.Y
-    val _ & _ & _ & _ & _ & _ & _ & stmt_8 & _ & _ & expr_0 & _ =
+    val expr_0 & _ & stmt_8 & _ & _ & _ & _ & _ & _ & _ & _ & _ =
       fix (Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y *` Y)
-        (fn stmt_3 & expr_11 & stmt_10 & expr_4 & expr_2 & expr_9 & stmt_1 &
-             stmt_8 & stmt_6 & stmt_5 & expr_0 & expr_7 =>
+        (fn expr_0 & expr_4 & stmt_8 & stmt_10 & expr_2 & expr_11 & stmt_3 &
+             stmt_6 & expr_7 & expr_9 & stmt_1 & stmt_5 =>
            let
              open Generic
              fun expr (expr_9, expr_4, stmt_1, b_, d_, c_) =
@@ -434,18 +438,18 @@ val expr_stmt = fn (c_, d_, b_) =>
                  , fn INR ? => If ? | INL ? => Assign ?
                  )
            in
-             stmt (stmt_8, expr_2, expr_4, b_, c_, d_)
-             & expr (expr_4, expr_9, stmt_6, b_, c_, d_)
-             & stmt (stmt_1, expr_9, expr_11, c_, b_, d_)
+             expr (expr_9, expr_4, stmt_1, b_, d_, c_)
              & expr (expr_11, expr_2, stmt_5, c_, b_, d_)
+             & stmt (stmt_3, expr_7, expr_9, b_, d_, c_)
+             & stmt (stmt_1, expr_9, expr_11, c_, b_, d_)
              & expr (expr_7, expr_0, stmt_3, d_, c_, b_)
+             & expr (expr_4, expr_9, stmt_6, b_, c_, d_)
+             & stmt (stmt_8, expr_2, expr_4, b_, c_, d_)
+             & stmt (stmt_5, expr_11, expr_7, d_, c_, b_)
+             & expr (expr_2, expr_11, stmt_8, c_, d_, b_)
              & expr (expr_0, expr_7, stmt_10, d_, b_, c_)
              & stmt (stmt_10, expr_0, expr_2, c_, d_, b_)
-             & stmt (stmt_3, expr_7, expr_9, b_, d_, c_)
-             & stmt (stmt_5, expr_11, expr_7, d_, c_, b_)
              & stmt (stmt_6, expr_4, expr_0, d_, b_, c_)
-             & expr (expr_9, expr_4, stmt_1, b_, d_, c_)
-             & expr (expr_2, expr_11, stmt_8, c_, d_, b_)
            end)
   in
     (expr_0, stmt_8)
@@ -474,18 +478,18 @@ local
         ] ^ ")"
   val expr_stmt = fn (c_, d_, b_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
-      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
-      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
+      val rec expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
       and expr_4 = fn ? => expr (expr_11, expr_2, stmt_5, c_, b_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
+      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
       and expr_2 = fn ? => expr (expr_7, expr_0, stmt_3, d_, c_, b_) ?
+      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
+      and stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
+      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
       and expr_9 = fn ? => expr (expr_0, expr_7, stmt_10, d_, b_, c_) ?
       and stmt_1 = fn ? => stmt (stmt_10, expr_0, expr_2, c_, d_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
-      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
       and stmt_5 = fn ? => stmt (stmt_6, expr_4, expr_0, d_, b_, c_) ?
-      and expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
-      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
     in
       (expr_0, stmt_8)
     end
@@ -533,18 +537,18 @@ local
        | ? => ?)
   val expr_stmt = fn (c_, d_, b_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
-      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
-      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
+      val rec expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
       and expr_4 = fn ? => expr (expr_11, expr_2, stmt_5, c_, b_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
+      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
       and expr_2 = fn ? => expr (expr_7, expr_0, stmt_3, d_, c_, b_) ?
+      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
+      and stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
+      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
       and expr_9 = fn ? => expr (expr_0, expr_7, stmt_10, d_, b_, c_) ?
       and stmt_1 = fn ? => stmt (stmt_10, expr_0, expr_2, c_, d_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
-      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
       and stmt_5 = fn ? => stmt (stmt_6, expr_4, expr_0, d_, b_, c_) ?
-      and expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
-      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
     in
       (expr_0, stmt_8)
     end
@@ -570,18 +574,18 @@ local
      | _ => false
   val expr_stmt = fn (c_, d_, b_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
-      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
-      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
+      val rec expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
       and expr_4 = fn ? => expr (expr_11, expr_2, stmt_5, c_, b_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
+      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
       and expr_2 = fn ? => expr (expr_7, expr_0, stmt_3, d_, c_, b_) ?
+      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
+      and stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
+      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
       and expr_9 = fn ? => expr (expr_0, expr_7, stmt_10, d_, b_, c_) ?
       and stmt_1 = fn ? => stmt (stmt_10, expr_0, expr_2, c_, d_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
-      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
       and stmt_5 = fn ? => stmt (stmt_6, expr_4, expr_0, d_, b_, c_) ?
-      and expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
-      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
     in
       (expr_0, stmt_8)
     end
@@ -639,18 +643,18 @@ local
       end
   val expr_stmt = fn (c_, d_, b_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
-      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
-      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
+      val rec expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
       and expr_4 = fn ? => expr (expr_11, expr_2, stmt_5, c_, b_, d_) ?
+      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
+      and stmt_10 = fn ? => stmt (stmt_1, expr_9, expr_11, c_, b_, d_) ?
       and expr_2 = fn ? => expr (expr_7, expr_0, stmt_3, d_, c_, b_) ?
+      and expr_11 = fn ? => expr (expr_4, expr_9, stmt_6, b_, c_, d_) ?
+      and stmt_3 = fn ? => stmt (stmt_8, expr_2, expr_4, b_, c_, d_) ?
+      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
+      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
       and expr_9 = fn ? => expr (expr_0, expr_7, stmt_10, d_, b_, c_) ?
       and stmt_1 = fn ? => stmt (stmt_10, expr_0, expr_2, c_, d_, b_) ?
-      and stmt_8 = fn ? => stmt (stmt_3, expr_7, expr_9, b_, d_, c_) ?
-      and stmt_6 = fn ? => stmt (stmt_5, expr_11, expr_7, d_, c_, b_) ?
       and stmt_5 = fn ? => stmt (stmt_6, expr_4, expr_0, d_, b_, c_) ?
-      and expr_0 = fn ? => expr (expr_9, expr_4, stmt_1, b_, d_, c_) ?
-      and expr_7 = fn ? => expr (expr_2, expr_11, stmt_8, c_, d_, b_) ?
     in
       (expr_0, stmt_8)
     end
@@ -674,9 +678,9 @@ val expr_stmt = fn (a_, b_, c_) =>
   let
     open Tie
     val Y = Generic.Y
-    val stmt_3 & _ & _ & expr_0 & _ =
+    val _ & _ & _ & expr_0 & stmt_3 =
       fix (Y *` Y *` Y *` Y *` Y)
-        (fn stmt_3 & stmt_1 & stmt_4 & expr_0 & stmt_2 =>
+        (fn stmt_4 & stmt_1 & stmt_2 & expr_0 & stmt_3 =>
            let
              open Generic
              fun expr (expr_0, stmt_1) =
@@ -698,10 +702,10 @@ val expr_stmt = fn (a_, b_, c_) =>
                  , fn INR ? => If ? | INL ? => Assign ?
                  )
            in
-             stmt (stmt_4, expr_0, c_, b_, a_)
+             stmt (stmt_3, expr_0, c_, a_, b_)
              & stmt (stmt_2, expr_0, real, int, string)
-             & stmt (stmt_3, expr_0, c_, a_, b_) & expr (expr_0, stmt_1)
-             & stmt (stmt_1, expr_0, real, string, int)
+             & stmt (stmt_1, expr_0, real, string, int) & expr (expr_0, stmt_1)
+             & stmt (stmt_4, expr_0, c_, b_, a_)
            end)
   in
     (expr_0, stmt_3)
@@ -729,7 +733,7 @@ local
         ] ^ ")"
   val expr_stmt = fn (a_, b_, c_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
+      val rec stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
       and stmt_1 = fn ? =>
         stmt
           ( stmt_2
@@ -738,8 +742,6 @@ local
           , Int.toString
           , fn t0 => "\"" ^ t0 ^ "\""
           ) ?
-      and stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
-      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
       and stmt_2 = fn ? =>
         stmt
           ( stmt_1
@@ -748,6 +750,8 @@ local
           , fn t0 => "\"" ^ t0 ^ "\""
           , Int.toString
           ) ?
+      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
+      and stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
     in
       (expr_0, stmt_3)
     end
@@ -792,13 +796,13 @@ local
        | ? => ?)
   val expr_stmt = fn (a_, b_, c_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
+      val rec stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
       and stmt_1 = fn ? =>
         stmt (stmt_2, expr_0, Real.compare, Int.compare, String.compare) ?
-      and stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
-      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
       and stmt_2 = fn ? =>
         stmt (stmt_1, expr_0, Real.compare, String.compare, Int.compare) ?
+      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
+      and stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
     in
       (expr_0, stmt_3)
     end
@@ -824,11 +828,11 @@ local
      | _ => false
   val expr_stmt = fn (a_, b_, c_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
+      val rec stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
       and stmt_1 = fn ? => stmt (stmt_2, expr_0, Real.==, op=, op=) ?
-      and stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
-      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
       and stmt_2 = fn ? => stmt (stmt_1, expr_0, Real.==, op=, op=) ?
+      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
+      and stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
     in
       (expr_0, stmt_3)
     end
@@ -881,7 +885,7 @@ local
       end
   val expr_stmt = fn (a_, b_, c_) =>
     let
-      val rec stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
+      val rec stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
       and stmt_1 = fn ? =>
         stmt
           ( stmt_2
@@ -890,8 +894,6 @@ local
           , Word.fromInt
           , hashString
           ) ?
-      and stmt_4 = fn ? => stmt (stmt_3, expr_0, c_, a_, b_) ?
-      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
       and stmt_2 = fn ? =>
         stmt
           ( stmt_1
@@ -900,6 +902,8 @@ local
           , hashString
           , Word.fromInt
           ) ?
+      and expr_0 = fn ? => expr (expr_0, stmt_1) ?
+      and stmt_3 = fn ? => stmt (stmt_4, expr_0, c_, b_, a_) ?
     in
       (expr_0, stmt_3)
     end

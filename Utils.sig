@@ -17,7 +17,7 @@ sig
   val syntaxSeqMapTy: ('a -> Ast.Ty.ty)
                       -> 'a Ast.SyntaxSeq.t
                       -> Ast.Ty.ty Ast.SyntaxSeq.t
-  val showTy: Ast.Ty.ty -> string
+  val normalize: Ast.Ty.ty -> Ast.Ty.ty
   val prettyTy: Ast.Ty.ty -> string
   val tySize: Ast.Ty.ty -> int
   val stripParens: Ast.Pat.pat -> Ast.Pat.pat

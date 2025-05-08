@@ -154,6 +154,7 @@ struct
 
   fun doSML (opts: Options.opts) (filepath: string, args: string list) =
     let
+      val () = print ("Generating code for file: " ^ filepath ^ "\n")
       val args: args = List.map parseArg args
       val fp = FilePath.fromUnixPath filepath
       val hfp = FilePath.toHostPath
@@ -188,7 +189,6 @@ struct
           end
       | _ => raise Fail "Just comments"
     end
-
 
   fun main _ =
     let
@@ -244,12 +244,13 @@ struct
         | _ => ()
       val () =
         if String.size projGen > 0 then FilesGen.genProject projGen else ()
+      val args = CommandLineArgs.positional ()
+      val files = collectSMLFiles [] args
     in
-      case CommandLineArgs.positional () of
+      case files of
         [] => ()
-      | args =>
-          List.app (fn file :: args => doSML opts (file, args) | _ => ())
-            (collectSMLFiles [] args);
+      | _ =>
+          List.app (fn file :: args => doSML opts (file, args) | _ => ()) files;
       OS.Process.success
     end
 end

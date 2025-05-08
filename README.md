@@ -24,8 +24,10 @@ to build the project in MLton.
 To build the project in Poly/ML, run:
 
 ```
+./build_polyml.sh
 polyc build.sml -o smlgen
 ```
+(MLton libraries are required to be in `/usr/local/lib/mlton` or `/usr/lib/mlton` for this to work)
 
 To build the project in MLKit, run:
 
@@ -44,7 +46,7 @@ to build a SML/NJ heap image file that looks something like `smlgen.amd64-linux`
 depending on the target architecture and OS. Then to run this heap image, run:
 
 ```
-sml @SMLload smlgen.amd64-linux <args>
+sml @SMLload=smlgen.amd64-linux <args>
 ```
 
 where `<args>` is the command line arguments to smlgen.
