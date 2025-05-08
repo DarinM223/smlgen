@@ -246,7 +246,6 @@ struct
         if String.size projGen > 0 then FilesGen.genProject projGen else ()
       val args = CommandLineArgs.positional ()
       val files = collectSMLFiles [] args
-      val files = if name = "not-smlnj" then files else List.tl files
     in
       case files of
         [] => ()
@@ -256,4 +255,4 @@ struct
     end
 end
 
-val main = fn () => ignore (Main.main ("not-smlnj", []))
+val main = fn () => ignore (Main.main ("", []))
