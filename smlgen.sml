@@ -190,7 +190,7 @@ struct
       | _ => raise Fail "Just comments"
     end
 
-  fun main (name, _) =
+  fun main _ =
     let
       val opts as {maxSize, defaultTableSize, fileGen, projGen, ...} =
         { test = CommandLineArgs.parseFlag "test"
