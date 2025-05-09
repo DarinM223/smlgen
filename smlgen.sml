@@ -1,5 +1,39 @@
 structure Main =
 struct
+  val noFilesDesc =
+    "No files specified. Try running with --help or -h for more information.\n"
+  val helpDesc =
+    "Generate for types usage: [filename] [type]:[generator...]... [options]\n\
+    \  type: Fully qualified type name (Example: Ast.Ty.ty)\n\
+    \  generator:\n\
+    \     u                 Functional record update\n\
+    \     g                 Generic (type indexed values)\n\
+    \     s                 Show\n\
+    \     c                 Compare\n\
+    \     e                 Equality\n\
+    \     h                 Hash\n\
+    \  options:\n\
+    \    --print, -p        Print generated code to stdout instead of overwriting\n\
+    \    --recurmod, -r     Break the recursive modules in the file\n\
+    \    --test, -t         Create file with .test extension instead of overwriting\n\
+    \    -maxsize <size>    The max type size limit for polymorphic recursion\n\
+    \                       Default is 100.\n\
+    \    -tablesize <size>  The default size of hashtables used in smlgen\n\
+    \                       Default is 100.\n\
+    \\n\
+    \Generate specific files usage: -gen <filetype>\n\
+    \  filetype:\n\
+    \     fru               Functional record update\n\
+    \     fold              Fold\n\
+    \     fold01n           Fold01N\n\
+    \     product           Product type\n\
+    \     printf            Printf\n\
+    \     num               Numeric literals\n\
+    \     literal           Array & Vector literals\n\
+    \     optarg            Optional arguments\n\
+    \\n\
+    \Generate new project usage: -proj [dirname]\n\n"
+
   fun filterToken tokenString ((token' :: path, actions) :: xs) =
         if token' = tokenString then
           (path, actions) :: filterToken tokenString xs
@@ -190,18 +224,26 @@ struct
       | _ => raise Fail "Just comments"
     end
 
+  val search = fn key =>
+    Option.isSome (List.find (fn a => a = key) (CommandLine.arguments ()))
+  val parseFlag' = fn key => search ("-" ^ key)
+
   fun main _ =
     let
       val opts as {maxSize, defaultTableSize, fileGen, projGen, ...} =
-        { test = CommandLineArgs.parseFlag "test"
-        , printOnly = CommandLineArgs.parseFlag "print"
-        , recursiveModules = CommandLineArgs.parseFlag "recurmod"
+        { test = CommandLineArgs.parseFlag "test" orelse parseFlag' "t"
+        , printOnly = CommandLineArgs.parseFlag "print" orelse parseFlag' "p"
+        , recursiveModules =
+            CommandLineArgs.parseFlag "recurmod" orelse parseFlag' "r"
         , fileGen = CommandLineArgs.parseString "gen" ""
         , projGen = CommandLineArgs.parseString "proj" ""
         , maxSize = CommandLineArgs.parseInt "maxsize" (! Options.maxTySize)
         , defaultTableSize =
             CommandLineArgs.parseInt "tablesize" (! Options.defaultTableSize)
         }
+      val helpOpt = CommandLineArgs.parseFlag "help" orelse parseFlag' "h"
+
+      val () = if helpOpt then print helpDesc else ()
 
       val () =
         if maxSize <> ! Options.maxTySize then
@@ -248,7 +290,7 @@ struct
       val files = collectSMLFiles [] args
     in
       case files of
-        [] => ()
+        [] => if not helpOpt then print noFilesDesc else ()
       | _ =>
           List.app (fn file :: args => doSML opts (file, args) | _ => ()) files;
       OS.Process.success
