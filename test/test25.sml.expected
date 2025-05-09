@@ -1,0 +1,108 @@
+val () =
+  let
+    type t = word
+    val show = Word.toString
+    val compare = Word.compare
+    val op== = op=
+    val hash = fn t0 => t0
+    datatype t = Foo of int | Bar of string * t
+    local
+      val rec t = fn t_0 =>
+        fn Foo t0 => "Foo " ^ "(" ^ Int.toString t0 ^ ")"
+         | Bar (t1, t2) =>
+          "Bar " ^ "(" ^ String.concatWith ", " ["\"" ^ t1 ^ "\"", t_0 t2] ^ ")"
+      val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+    in val show = t ()
+    end
+    local
+      val rec t = fn t_0 =>
+        fn (Foo t0, Foo t1) => Int.compare (t0, t1)
+         | (Foo _, Bar _) => LESS
+         | (Bar _, Foo _) => GREATER
+         | (Bar (t2, t3), Bar (t4, t5)) =>
+          (case String.compare (t2, t4) of
+             EQUAL => t_0 (t3, t5)
+           | ? => ?)
+      val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+    in val compare = t ()
+    end
+    local
+      val rec t = fn t_0 =>
+        fn (Foo t0, Foo t1) => t0 = t1
+         | (Bar (t2, t3), Bar (t4, t5)) => t2 = t4 andalso t_0 (t3, t5)
+         | _ => false
+      val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+    in val op== = t ()
+    end
+    local
+      val combine = fn (a, b) => 0w31 * a + b
+      val hashString =
+        #1
+        o
+        Substring.foldl
+          (fn (ch, (h, p)) =>
+             ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+             , Word.mod (p * 0w31, 0w1000000009)
+             )) (0w0, 0w1) o Substring.full
+      val rec t = fn t_0 =>
+        fn Foo t0 => combine (hashString "Foo", Word.fromInt t0)
+         | Bar (t1, t2) =>
+          let
+            val result = hashString "Bar"
+            val result = combine (result, hashString t1)
+            val result = combine (result, t_0 t2)
+          in
+            result
+          end
+      val t = fn () => let val rec t_0 = fn ? => t t_0 ? in t_0 end
+    in val hash = t ()
+    end
+  in
+    print "expression\n"
+  end
+
+
+structure Module =
+struct
+  val hello =
+    let
+      type hello = string
+      val showHello = fn t0 => "\"" ^ t0 ^ "\""
+      val compareHello = String.compare
+      val eqHello = op=
+      local
+        val hashString =
+          #1
+          o
+          Substring.foldl
+            (fn (ch, (h, p)) =>
+               ( Word.mod (h + Word.fromInt (Char.ord ch + 1) * p, 0w1000000009)
+               , Word.mod (p * 0w31, 0w1000000009)
+               )) (0w0, 0w1) o Substring.full
+      in val hashHello = hashString
+      end
+      val hello: hello = "hello"
+    in
+      hello
+    end
+end
+
+val _ =
+  1
+  +
+  List.hd
+    (List.map
+       (fn a =>
+          2
+          +
+          ((fn b =>
+              a
+              +
+              (b
+               +
+               (let
+                  type t = int
+                  val result: t = 4
+                in
+                  result
+                end))) 3)) [1, 2, 3])

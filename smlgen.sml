@@ -6,31 +6,33 @@ struct
     "Generate for types usage: [filename] [type]:[generator...]... [options]\n\
     \  type: Fully qualified type name (Example: Ast.Ty.ty)\n\
     \  generator:\n\
-    \     u                 Functional record update\n\
-    \     g                 Generic (type indexed values)\n\
-    \     s                 Show\n\
-    \     c                 Compare\n\
-    \     e                 Equality\n\
-    \     h                 Hash\n\
+    \     u                  Functional record update\n\
+    \     g                  Generic (type indexed values)\n\
+    \     s                  Show\n\
+    \     c                  Compare\n\
+    \     e                  Equality\n\
+    \     h                  Hash\n\
     \  options:\n\
-    \    --print, -p        Print generated code to stdout instead of overwriting\n\
-    \    --recurmod, -r     Break the recursive modules in the file\n\
-    \    --test, -t         Create file with .test extension instead of overwriting\n\
-    \    -maxsize <size>    The max type size limit for polymorphic recursion\n\
-    \                       Default is 100.\n\
-    \    -tablesize <size>  The default size of hashtables used in smlgen\n\
-    \                       Default is 100.\n\
+    \    --print, -p         Print generated code to stdout instead of overwriting\n\
+    \    --recurmod, -r      Break the recursive modules in the file\n\
+    \    --test, -t          Create file with .test extension instead of overwriting\n\
+    \    -maxsize <size>     The max type size limit for polymorphic recursion\n\
+    \                        Default is 100\n\
+    \    -tablesize <size>   The default size of hashtables used in smlgen\n\
+    \                        Default is 100\n\
+    \    -maxexpdepth <size> The max depth to look into expressions for types\n\
+    \                        Default is 100, and negative means no limit\n\
     \\n\
     \Generate specific files usage: -gen <filetype>\n\
     \  filetype:\n\
-    \     fru               Functional record update\n\
-    \     fold              Fold\n\
-    \     fold01n           Fold01N\n\
-    \     product           Product type\n\
-    \     printf            Printf\n\
-    \     num               Numeric literals\n\
-    \     literal           Array & Vector literals\n\
-    \     optarg            Optional arguments\n\
+    \     fru                Functional record update\n\
+    \     fold               Fold\n\
+    \     fold01n            Fold01N\n\
+    \     product            Product type\n\
+    \     printf             Printf\n\
+    \     num                Numeric literals\n\
+    \     literal            Array & Vector literals\n\
+    \     optarg             Optional arguments\n\
     \\n\
     \Generate new project usage: -proj [dirname]\n\n"
 
@@ -224,26 +226,11 @@ struct
       | _ => raise Fail "Just comments"
     end
 
-  val search = fn key =>
-    Option.isSome (List.find (fn a => a = key) (CommandLine.arguments ()))
-  val parseFlag' = fn key => search ("-" ^ key)
-
   fun main _ =
     let
-      val opts as {maxSize, defaultTableSize, fileGen, projGen, ...} =
-        { test = CommandLineArgs.parseFlag "test" orelse parseFlag' "t"
-        , printOnly = CommandLineArgs.parseFlag "print" orelse parseFlag' "p"
-        , recursiveModules =
-            CommandLineArgs.parseFlag "recurmod" orelse parseFlag' "r"
-        , fileGen = CommandLineArgs.parseString "gen" ""
-        , projGen = CommandLineArgs.parseString "proj" ""
-        , maxSize = CommandLineArgs.parseInt "maxsize" (! Options.maxTySize)
-        , defaultTableSize =
-            CommandLineArgs.parseInt "tablesize" (! Options.defaultTableSize)
-        }
-      val helpOpt = CommandLineArgs.parseFlag "help" orelse parseFlag' "h"
+      val opts as {maxSize, projGen, ...} = Options.parseOpts ()
 
-      val () = if helpOpt then print helpDesc else ()
+      val () = if #help opts then print helpDesc else ()
 
       val () =
         if maxSize <> ! Options.maxTySize then
@@ -254,17 +241,27 @@ struct
           ()
 
       val () =
-        if defaultTableSize <> ! Options.defaultTableSize then
+        if #defaultTableSize opts <> ! Options.defaultTableSize then
           ( print
-              ("Setting default table size to: " ^ Int.toString defaultTableSize
-               ^ "\n")
-          ; Options.defaultTableSize := defaultTableSize
+              ("Setting default table size to: "
+               ^ Int.toString (#defaultTableSize opts) ^ "\n")
+          ; Options.defaultTableSize := #defaultTableSize opts
           )
         else
           ()
 
       val () =
-        case fileGen of
+        if #maxExpDepth opts <> ! Options.maxExpDepth then
+          ( print
+              ("Setting max expression depth to: "
+               ^ Int.toString (#maxExpDepth opts) ^ "\n")
+          ; Options.maxExpDepth := #maxExpDepth opts
+          )
+        else
+          ()
+
+      val () =
+        case #fileGen opts of
           "fru" => (print "Generating FRU\n"; FilesGen.genFiles FruFile.t)
         | "fold" => (print "Generating Fold\n"; FilesGen.genFiles FoldFile.t)
         | "fold01n" =>
@@ -286,11 +283,11 @@ struct
         | _ => ()
       val () =
         if String.size projGen > 0 then FilesGen.genProject projGen else ()
-      val args = CommandLineArgs.positional ()
+      val args = Options.positional ()
       val files = collectSMLFiles [] args
     in
       case files of
-        [] => if not helpOpt then print noFilesDesc else ()
+        [] => if not (#help opts) then print noFilesDesc else ()
       | _ =>
           List.app (fn file :: args => doSML opts (file, args) | _ => ()) files;
       OS.Process.success
