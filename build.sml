@@ -274,6 +274,7 @@ use "RecMod.sml";
 use "FruGen.sml";
 use "GenericGen.sml";
 use "Env.sml";
+use "BasicGeneratorFn.fun";
 use "ShowGen.sml";
 use "CompareGen.sml";
 use "EqGen.sml";

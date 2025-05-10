@@ -76,6 +76,7 @@ RecMod.sml
 FruGen.sml
 GenericGen.sml
 Env.sml
+BasicGeneratorFn.fun
 ShowGen.sml
 CompareGen.sml
 EqGen.sml

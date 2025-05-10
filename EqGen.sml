@@ -1,4 +1,4 @@
-structure EqGen =
+structure EqGenBuild =
 struct
   open Ast Ast.Exp TokenUtils Tokens BuildAst Utils MutRecTy Env
 
@@ -92,6 +92,8 @@ struct
     in
       mkToken (prefix ^ prepended)
     end
+  val prefixGen = mkEq
+  val defaultGenFnName = "op="
 
   val eqOptionDec =
     let
@@ -162,7 +164,7 @@ struct
         ( Env.setOption env ("list", true)
         ; appExp
             [ Const (mkToken "eqList")
-            , parensExp (tyExp' env a)
+            , parensExp (tyExp env a)
             , tupleExp [e1, e2]
             ]
         )
@@ -170,7 +172,7 @@ struct
         ( Env.setOption env ("option", true)
         ; appExp
             [ Const (mkToken "eqOption")
-            , parensExp (tyExp' env a)
+            , parensExp (tyExp env a)
             , tupleExp [e1, e2]
             ]
         )
@@ -188,7 +190,7 @@ struct
           val constrExp =
             case args of
               [] => con
-            | _ => appExp [con, tupleExp (List.map (tyExp' env) args)]
+            | _ => appExp [con, tupleExp (List.map (tyExp env) args)]
         in
           if AtomRedBlackSet.member (eqTypesSet, atom) then
             infixLExp equalTok [e1, e2]
@@ -199,12 +201,12 @@ struct
                       (AtomRedBlackMap.lookup (compareTypesMap, atom)))
                   , tupleExp [e1, e2]
                   ]
-              , Const CompareGen.equalCmpTok
+              , Const CompareGenBuild.equalCmpTok
               ]
           else
             appExp [constrExp, tupleExp [e1, e2]]
         end
-  and tyExp' env ty =
+  and tyExp env ty =
     let
       val env = Env.freshEnv env
       fun etaReduce a b elems exp newExp =
@@ -214,7 +216,7 @@ struct
             else singleFnExp (destructTuplePat [Pat.Const a, Pat.Const b]) exp
         | _ => singleFnExp (destructTuplePat [Pat.Const a, Pat.Const b]) exp
     in
-      case (Env.destructTyPatTwiceNoRefs env ty, tyExp env ty) of
+      case (Env.destructTyPatTwiceNoRefs env ty, tyExp_ env ty) of
         ( (Pat.Const a, Pat.Const b)
         , exp as App {left, right = Tuple {elems, ...}, ...}
         ) => etaReduce a b elems exp left
@@ -225,14 +227,14 @@ struct
             singleFnExp (destructTuplePat [Pat.Const a, Pat.Const b]) exp
       | ((pat1, pat2), exp) => singleFnExp (destructTuplePat [pat1, pat2]) exp
     end
-  and tyExp (Env {vars = vars as ref (a :: b :: t), ...}) (Ty.Var v) =
+  and tyExp_ (Env {vars = vars as ref (a :: b :: t), ...}) (Ty.Var v) =
         (vars := t; appExp [Const (mkTyVar v), tupleExp [Const a, Const b]])
-    | tyExp _ (Ty.Var _) = raise Fail "No vars for var"
-    | tyExp env (Ty.Record {elems, ...}) =
-        andalsoChainExp (List.map (tyExp env o #ty) (Seq.toList elems))
-    | tyExp env (Ty.Tuple {elems, ...}) =
-        andalsoChainExp (List.map (tyExp env) (Seq.toList elems))
-    | tyExp (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
+    | tyExp_ _ (Ty.Var _) = raise Fail "No vars for var"
+    | tyExp_ env (Ty.Record {elems, ...}) =
+        andalsoChainExp (List.map (tyExp_ env o #ty) (Seq.toList elems))
+    | tyExp_ env (Ty.Tuple {elems, ...}) =
+        andalsoChainExp (List.map (tyExp_ env) (Seq.toList elems))
+    | tyExp_ (env as Env {vars, env = env', ...}) (ty as Ty.Con {id, args, ...}) =
         let
           val id = Token.toString (MaybeLongToken.getToken id)
           val id = Option.getOpt (rewriteAlias (Atom.atom id), id)
@@ -249,8 +251,8 @@ struct
                  a :: b :: t => (vars := t; con (Const a) (Const b))
                | _ => raise Fail "No vars in con")
         end
-    | tyExp _ (Ty.Arrow _) = Const trueTok
-    | tyExp env (Ty.Parens {ty, ...}) = tyExp env ty
+    | tyExp_ _ (Ty.Arrow _) = Const trueTok
+    | tyExp_ env (Ty.Parens {ty, ...}) = tyExp_ env ty
 
   fun genConstrs (env, constrs: constr list) : Exp.exp =
     let
@@ -261,7 +263,9 @@ struct
              let
                val (pat1, pat2) = destructTyPatTwiceNoRefs env ty
              in
-               (destructTuplePat [conPat id pat1, conPat id pat2], tyExp env ty)
+               ( destructTuplePat [conPat id pat1, conPat id pat2]
+               , tyExp_ env ty
+               )
              end
             | {arg = NONE, id, ...} =>
              (destructTuplePat [Pat.Const id, Pat.Const id], Const trueTok))
@@ -272,98 +276,6 @@ struct
     in
       multFnExp tups
     end
-
-  fun genTypebind ({elems, ...}: typbind) =
-    let
-      val env = Env.empty (mkEnv (! Options.defaultTableSize))
-      val decs =
-        List.map
-          (fn {ty, tycon, tyvars, ...} =>
-             let
-               val vars = syntaxSeqToList tyvars
-               val env = Env.setSubEnv (Env.freshEnv env) (envWithVars vars)
-             in
-               valDec (Pat.Const (mkEq tycon)) (header vars (tyExp' env ty))
-             end) (Seq.toList elems)
-    in
-      localDecs (additionalDecs env) (multDec decs)
-    end
-
-  fun genSimpleDatabind (env, tyTok, vars, Databind constrs) =
-        let
-          val env = Env.empty env
-          val dec = valDec (Pat.Const (mkEq tyTok)) (header vars
-            (genConstrs (env, constrs)))
-        in
-          localDecs (additionalDecs env) dec
-        end
-    | genSimpleDatabind (_, tyTok, vars, Typebind ty) =
-        genSingleTypebind genTypebind (tyTok, vars, ty)
-
-  fun genRecursiveDatabind (env, tycons, tys, vars) =
-    let
-      val env as Env {env = env', ...} = Env.empty env
-      val varExps = List.map Ty.Var vars
-      val dups: IntRedBlackSet.set AtomTable.hash_table =
-        AtomTable.mkTable (List.length tycons, LibBase.NotFound)
-      val generatorDecs =
-        List.map
-          (fn (tycon, ty) =>
-             let
-               val tyconA = Atom.atom (Token.toString tycon)
-               val args =
-                 List.map
-                   (fn Ty.Con {id, ...} => MaybeLongToken.getToken id
-                     | Ty.Var v => mkTyVar v
-                     | _ => raise Fail "Invalid arg")
-                   (generatedArgsForTy env' ty)
-               val argDups = findDuplicates args
-               val () = AtomTable.insert dups (tyconA, argDups)
-               val substMap = buildSubstMap env' (Token.toString tycon) varExps
-             in
-               ( Pat.Const tycon
-               , singleFnExp
-                   (destructTuplePat
-                      (applyDuplicates (argDups, Pat.Const, args)))
-                   (case tyconData env' tyconA of
-                      Databind constrs =>
-                        genConstrs
-                          (env, List.map (substConstr substMap) constrs)
-                    | Typebind ty => tyExp' env (subst substMap ty))
-               )
-             end) (ListPair.zip (tycons, tys))
-      val concatTys = mkToken (String.concatWith "_"
-        (List.map Token.toString tycons))
-      val mutRecDec = valDecs true
-        (List.map
-           (fn (tycon, args) =>
-              let
-                val tycon' = baseTyName (Token.toString tycon)
-                val argDups = AtomTable.lookup dups (Atom.atom tycon')
-                val env = Env.freshEnv env
-                val args = applyDuplicates (argDups, tyExp' env, args)
-              in
-                ( Pat.Const tycon
-                , singleFnExp (Pat.Const quesTok) (appExp
-                    [Const (mkToken tycon'), tupleExp args, Const quesTok])
-                )
-              end) (generatedFixesAndArgs env'))
-      val tyToks = List.map (Option.valOf o generatedFixNameForTy env') tys
-      val dec = multDec
-        (additionalDecs env
-         @
-         [ valDecs true generatorDecs
-         , valDec (Pat.Const concatTys)
-             (singleFnExp
-                (destructTuplePat (List.map (Pat.Const o mkTyVar) vars))
-                (singleLetExp mutRecDec (tupleExp (List.map Const tyToks))))
-         ])
-      val unpacked = unpackingDecs (env', vars, concatTys, tycons, mkEq, "op=")
-    in
-      localDec dec (multDec unpacked)
-    end
-
-  val genDatabind = genDatabindHelper (genSimpleDatabind, genRecursiveDatabind)
-
-  val gen = {genTypebind = genTypebind, genDatabind = genDatabind}
 end
+
+structure EqGen = BasicGeneratorFn(EqGenBuild)
