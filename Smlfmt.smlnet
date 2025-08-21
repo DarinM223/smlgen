@@ -83,5 +83,3 @@ functor Dict=smlfmt/src/base/Dict.sml,
     Set=smlfmt/src/base/Set.sml,
     PrettySimpleDoc=smlfmt/src/base/PrettySimpleDoc.sml,
     PrettyTabbedDoc=smlfmt/src/base/PrettyTabbedDoc.sml
-export SmlfmtMain
-make

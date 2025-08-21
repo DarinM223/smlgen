@@ -29,4 +29,5 @@ Group is
   HashGen.sml
   FilesData.sml
   FilesGen.sml
+  Main.sml
   smlgen.sml

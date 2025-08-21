@@ -31,6 +31,7 @@ local
   HashGen.sml
   FilesData.sml
   FilesGen.sml
+  Main.sml
   smlgen.sml
 in
   main.sml
