@@ -221,7 +221,13 @@ struct
               else
                 ()
             else
-              TextIO.output (TextIO.openOut hfp, prettyAst false)
+              let
+                val out = TextIO.openOut hfp
+              in
+                TextIO.output (out, prettyAst false);
+                TextIO.flushOut out;
+                TextIO.closeOut out
+              end
           end
       | _ => raise Fail "Just comments"
     end
