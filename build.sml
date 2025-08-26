@@ -281,4 +281,5 @@ use "EqGen.sml";
 use "HashGen.sml";
 use "FilesData.sml";
 use "FilesGen.sml";
+use "Main.sml";
 use "smlgen.sml";

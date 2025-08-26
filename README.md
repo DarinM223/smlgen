@@ -51,6 +51,15 @@ sml @SMLload=smlgen.amd64-linux <args>
 
 where `<args>` is the command line arguments to smlgen.
 
+To build the project in [SML.NET](https://github.com/DarinM223/smldotnet), run:
+
+```
+./build_smlnet.sh
+$SMLNETPATH/bin/smlnet.sh @Smlgen
+```
+
+the resulting program is `SmldotnetMain.exe` which can be ran like `mono SmldotnetMain.exe ...`.
+
 Running
 -------
 

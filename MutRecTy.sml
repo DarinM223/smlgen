@@ -22,8 +22,8 @@ struct
     HashTableFn
       (struct
          type hash_key = Ast.Ty.ty
-         val hashVal = Ast.Ty.hash
-         val sameKey = Ast.Ty.==
+         val hashVal = SmlfmtWrappers.Ast.Ty.hash
+         val sameKey = SmlfmtWrappers.Ast.Ty.==
        end)
 
   datatype env =
