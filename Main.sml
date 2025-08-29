@@ -13,6 +13,7 @@ struct
     \     e                  Equality\n\
     \     h                  Hash\n\
     \  options:\n\
+    \    --interactive, -i   Input datatypes through standard input\n\
     \    --print, -p         Print generated code to stdout instead of overwriting\n\
     \    --recurmod, -r      Break the recursive modules in the file\n\
     \    --test, -t          Create file with .test extension instead of overwriting\n\
@@ -232,6 +233,31 @@ struct
       | _ => raise Fail "Just comments"
     end
 
+  fun doInteractive (opts: Options.opts) =
+    let
+      val source = Source.loadFromStdin ()
+      val allTokens = Lexer.tokens allows source
+      val result = Parser.parse allows allTokens
+      val opts = let open Fold FunctionalRecordUpdate
+                 in Options.updateOpts opts set #printOnly true $
+                 end
+    in
+      case result of
+        Parser.Ast ast =>
+          let
+            val args = ["foo:s"]
+            val args: args = List.map parseArg args
+            val ast = gen opts args ast
+            val prettyAst = fn colors =>
+              TerminalColorString.toString {colors = colors} (Utils.pretty ast)
+          in
+            print (prettyAst true);
+            print "\n";
+            doInteractive opts
+          end
+      | _ => (print "Just comments... Skipping\n"; doInteractive opts)
+    end
+
 end
 
 structure Main =
@@ -302,6 +328,7 @@ struct
           List.app
             (fn file :: args => MainHelpers.doSML opts (file, args) | _ => ())
             files;
+      if #interactive opts then MainHelpers.doInteractive opts else ();
       OS.Process.success
     end
 end

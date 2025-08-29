@@ -14,11 +14,12 @@ struct
     , defaultTableSize: int
     , maxExpDepth: int
     , help: bool
+    , interactive: bool
     }
   fun updateOpts r =
     let
       fun from test printOnly recursiveModules fileGen projGen maxSize
-        defaultTableSize maxExpDepth help =
+        defaultTableSize maxExpDepth help interactive =
         { test = test
         , printOnly = printOnly
         , recursiveModules = recursiveModules
@@ -28,6 +29,7 @@ struct
         , defaultTableSize = defaultTableSize
         , maxExpDepth = maxExpDepth
         , help = help
+        , interactive = interactive
         }
       fun to ?
         { test
@@ -39,11 +41,12 @@ struct
         , defaultTableSize
         , maxExpDepth
         , help
+        , interactive
         } =
         ?test printOnly recursiveModules fileGen projGen maxSize
-          defaultTableSize maxExpDepth help
+          defaultTableSize maxExpDepth help interactive
     in
-      FunctionalRecordUpdate.makeUpdate9 (from, from, to) r
+      FunctionalRecordUpdate.makeUpdate10 (from, from, to) r
     end
   val defaultOpts: opts =
     { test = false
@@ -55,6 +58,7 @@ struct
     , defaultTableSize = !defaultTableSize
     , maxExpDepth = !maxExpDepth
     , help = false
+    , interactive = false
     }
 
   val opts = let open Fold FunctionalRecordUpdate
@@ -77,6 +81,8 @@ struct
         CommandLineArgs.parseInt "tablesize" (!defaultTableSize)
     , maxExpDepth = CommandLineArgs.parseInt "maxexpdepth" (!maxExpDepth)
     , help = CommandLineArgs.parseFlag "help" orelse parseFlag' "h"
+    , interactive =
+        CommandLineArgs.parseFlag "interactive" orelse parseFlag' "i"
     }
 
   (* Similar to CommandLineArgs.positional () but handles shortened args like -p *)
