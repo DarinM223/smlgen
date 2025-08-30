@@ -37,7 +37,9 @@ struct
     \\n\
     \Generate new project usage: -proj [dirname]\n\n"
 
-  fun filterToken tokenString ((token' :: path, actions) :: xs) =
+  fun filterToken tokenString ((action as (["*"], _)) :: xs) =
+        action :: filterToken tokenString xs
+    | filterToken tokenString ((token' :: path, actions) :: xs) =
         if token' = tokenString then
           (path, actions) :: filterToken tokenString xs
         else
@@ -45,7 +47,8 @@ struct
     | filterToken tokenString (_ :: xs) = filterToken tokenString xs
     | filterToken _ [] = []
 
-  fun getActions tokenString (([token'], actions) :: xs) =
+  fun getActions _ ((["*"], actions) :: _) = SOME actions
+    | getActions tokenString (([token'], actions) :: xs) =
         if token' = tokenString then SOME actions else getActions tokenString xs
     | getActions tokenString (_ :: xs) = getActions tokenString xs
     | getActions _ [] = NONE
@@ -68,18 +71,21 @@ struct
     | lookupGen ch =
         raise Fail ("unknown lookup character: " ^ Char.toString ch)
 
-  fun printToken t =
-    ( print (Token.toString t ^ ":")
-    ; print
+  fun printToken path t =
+    let
+      val t' = String.concatWith "." (List.rev (Token.toString t :: path))
+    in
+      print (t' ^ ":");
+      print
         (Int.toString (#line (Source.absoluteEnd (Token.getSource t))) ^ " ")
-    )
-  fun printDecTypes (Ast.Exp.DecType {typbind = {elems, ...}, ...}) =
-        ArraySlice.app (fn e => printToken (#tycon e)) elems
-    | printDecTypes (Ast.Exp.DecDatatype {datbind = {elems, ...}, ...}) =
-        ArraySlice.app (fn e => printToken (#tycon e)) elems
-    | printDecTypes (Ast.Exp.DecReplicateDatatype {left_id, ...}) =
-        printToken left_id
-    | printDecTypes _ = raise Fail "Unknown declaration type"
+    end
+  fun printDecTypes path (Ast.Exp.DecType {typbind = {elems, ...}, ...}) =
+        ArraySlice.app (fn e => printToken path (#tycon e)) elems
+    | printDecTypes path (Ast.Exp.DecDatatype {datbind = {elems, ...}, ...}) =
+        ArraySlice.app (fn e => printToken path (#tycon e)) elems
+    | printDecTypes path (Ast.Exp.DecReplicateDatatype {left_id, ...}) =
+        printToken path left_id
+    | printDecTypes _ _ = raise Fail "Unknown declaration type"
 
   fun datbindActions args : Ast.Exp.datbind -> Utils.gen option =
     Option.join
@@ -139,26 +145,27 @@ struct
             end
       )
 
-  fun goDecType (opts: Options.opts) (args, dec, typbind) =
+  fun goDecType (opts: Options.opts) ((args, path), dec, typbind) =
     case typbindActions args typbind of
       SOME action =>
         ( print "Types: "
-        ; printDecTypes dec
+        ; printDecTypes path dec
         ; confirm opts dec (fn () => #genTypebind action typbind)
         )
     | NONE => dec
 
   type args = (string list * Utils.gen) list
 
-  fun visitor (opts: Options.opts) (args: args) : args AstVisitor.visitor =
-    { state = args
+  fun visitor (opts: Options.opts) (args: args) :
+    (args * string list) AstVisitor.visitor =
+    { state = (args, [])
     , goDecType = goDecType opts
-    , goDecReplicateDatatype = fn (args, dec, left, right) =>
+    , goDecReplicateDatatype = fn (state, dec, left, right) =>
         let val typbind = BuildAst.replicateDatatypeToTypbind left right
-        in goDecType opts (args, dec, typbind)
+        in goDecType opts (state, dec, typbind)
         end
     , goDecDatatype =
-        fn (args, dec, datbind, withtypee: AstVisitor.withtypee) =>
+        fn ((args, path), dec, datbind, withtypee: AstVisitor.withtypee) =>
           let
             val actions1 = datbindActions args datbind
             val actions2 = Option.join
@@ -171,14 +178,20 @@ struct
             case actions of
               SOME action =>
                 ( print "Types: "
-                ; printDecTypes dec
+                ; printDecTypes path dec
                 ; confirm opts dec (fn () =>
                     #genDatabind action datbind (Option.map #typbind withtypee))
                 )
             | NONE => dec
           end
-    , onStructure = fn strid => filterToken (Token.toString strid)
-    , onFunctor = fn funid => filterToken (Token.toString funid)
+    , onStructure = fn strid =>
+        fn (args, path) => let val strid = Token.toString strid
+                           in (filterToken strid args, strid :: path)
+                           end
+    , onFunctor = fn funid =>
+        fn (args, path) => let val funid = Token.toString funid
+                           in (filterToken funid args, funid :: path)
+                           end
     }
 
   fun gen (opts: Options.opts) (args: args) (Ast.Ast topdecs : Ast.t) =
@@ -245,14 +258,10 @@ struct
       case result of
         Parser.Ast ast =>
           let
-            val args = ["foo:s"]
+            val args = ["*:s"]
             val args: args = List.map parseArg args
-            val ast = gen opts args ast
-            val prettyAst = fn colors =>
-              TerminalColorString.toString {colors = colors} (Utils.pretty ast)
+            val _ = gen opts args ast
           in
-            print (prettyAst true);
-            print "\n";
             doInteractive opts
           end
       | _ => (print "Just comments... Skipping\n"; doInteractive opts)
