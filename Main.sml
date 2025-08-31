@@ -202,6 +202,10 @@ struct
             , semicolon = semicolon
             }) topdecs)
 
+  fun printParseErrors e =
+    TerminalColorString.print
+      (Error.show {highlighter = SOME SyntaxHighlighter.fuzzyHighlight} e)
+
   fun doSML (opts: Options.opts) (filepath: string, args: string list) =
     let
       val () = print ("Generating code for file: " ^ filepath ^ "\n")
@@ -243,28 +247,43 @@ struct
                 TextIO.closeOut out
               end
           end
-      | _ => raise Fail "Just comments"
+      | _ => print "Just comments... Skipping\n"
     end
+    handle Error.Error e => printParseErrors e
 
   fun doInteractive (opts: Options.opts) =
     let
-      val source = Source.loadFromStdin ()
-      val allTokens = Lexer.tokens allows source
-      val result = Parser.parse allows allTokens
       val opts = let open Fold FunctionalRecordUpdate
                  in Options.updateOpts opts set #printOnly true $
                  end
+      fun parse source k =
+        let
+          val parsed = let val allTokens = Lexer.tokens allows source
+                       in SOME (Parser.parse allows allTokens)
+                       end
+                       handle Error.Error e => (printParseErrors e; NONE)
+        in
+          case parsed of
+            SOME parsed => k parsed
+          | NONE => go ()
+        end
+      and go () =
+        let
+          val source = Source.loadFromStdin ()
+        in
+          parse source
+            (fn Parser.Ast ast =>
+               let
+                 val args = ["*:s"]
+                 val args: args = List.map parseArg args
+                 val _ = gen opts args ast
+               in
+                 go ()
+               end
+              | _ => (print "Just comments... Skipping\n"; go ()))
+        end
     in
-      case result of
-        Parser.Ast ast =>
-          let
-            val args = ["*:s"]
-            val args: args = List.map parseArg args
-            val _ = gen opts args ast
-          in
-            doInteractive opts
-          end
-      | _ => (print "Just comments... Skipping\n"; doInteractive opts)
+      go ()
     end
 
 end
