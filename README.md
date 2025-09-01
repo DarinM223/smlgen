@@ -58,7 +58,21 @@ To build the project in [SML.NET](https://github.com/DarinM223/smldotnet), run:
 $SMLNETPATH/bin/smlnet.sh @Smlgen
 ```
 
-the resulting program is `SmldotnetMain.exe` which can be ran like `mono SmldotnetMain.exe ...`.
+the resulting program is `SmldotnetMain.exe` which can be ran with Mono
+like `mono SmldotnetMain.exe ...`.
+
+To run the SML.NET compiled executable with .NET Core, run:
+
+```
+cd smldotnet/
+dotnet build
+./build_net_core.sh
+```
+
+Then `dotnet smlgen.exe` will run smlgen with the .NET Core runtime. With .NET Core, there
+are currently some differences when it comes to reading input. One Ctrl-D will count as an
+Enter key when submitting input and three Ctrl-Ds will count as one Ctrl-D input.
+
 
 Running
 -------
