@@ -2,17 +2,19 @@ structure MainHelpers =
 struct
   val noFilesDesc =
     "No files specified. Try running with --help or -h for more information.\n"
-  val helpDesc =
-    "Generate for types usage: [filename] [type]:[generator...]... [options]\n\
-    \  type: Fully qualified type name (Example: Ast.Ty.ty)\n\
-    \  generator:\n\
-    \     u                  Functional record update\n\
+  val genDesc =
+    "     u                  Functional record update\n\
     \     g                  Generic (type indexed values)\n\
     \     s                  Show\n\
     \     c                  Compare\n\
     \     e                  Equality\n\
-    \     h                  Hash\n\
-    \  options:\n\
+    \     h                  Hash\n"
+  val helpDesc =
+    "Generate for types usage: [filename] [type]:[generator...]... [options]\n\
+    \  type: Fully qualified type name (Example: Ast.Ty.ty)\n\
+    \  generator:\n" ^ genDesc
+    ^
+    "  options:\n\
     \    --interactive, -i   Input datatypes through standard input\n\
     \    --print, -p         Print generated code to stdout instead of overwriting\n\
     \    --recurmod, -r      Break the recursive modules in the file\n\
@@ -206,6 +208,11 @@ struct
     TerminalColorString.print
       (Error.show {highlighter = SOME SyntaxHighlighter.fuzzyHighlight} e)
 
+  fun clearScreen () =
+    let val strm = TextIO.openOut (Posix.ProcEnv.ctermid ())
+    in TextIO.output (strm, "\^[[H\^[[2J"); TextIO.closeOut strm
+    end
+
   fun doSML (opts: Options.opts) (filepath: string, args: string list) =
     let
       val () = print ("Generating code for file: " ^ filepath ^ "\n")
@@ -267,20 +274,53 @@ struct
             SOME parsed => k parsed
           | NONE => go ()
         end
+      and inputGenerators k =
+        ( print "Generators ('help' for help): "
+        ; case TextIO.inputLine TextIO.stdIn of
+            SOME line =>
+              if FilesGen.trim line = "help" then
+                ( print
+                    "Enter a string with each character corresponding to a generator:\n"
+                ; print genDesc
+                ; inputGenerators k
+                )
+              else
+                let
+                  val filtered = (String.implode
+                    (List.filter
+                       (fn ch => (lookupGen ch; true) handle _ => false)
+                       (String.explode line)))
+                in
+                  if filtered = "" then
+                    ( print "Invalid generators, retrying...\n"
+                    ; inputGenerators k
+                    )
+                  else
+                    k filtered
+                end
+          | NONE => go ()
+        )
       and go () =
         let
+          val () = print "Enter Standard ML code (Ctrl-D for end of input):\n"
           val source = Source.loadFromStdin ()
         in
           parse source
-            (fn Parser.Ast ast =>
-               let
-                 val args = ["*:s"]
-                 val args: args = List.map parseArg args
-                 val _ = gen opts args ast
-               in
-                 go ()
-               end
-              | _ => (print "Just comments... Skipping\n"; go ()))
+            (fn Parser.Ast (ast as Ast.Ast topdecs) =>
+               if ArraySlice.isEmpty topdecs then
+                 (clearScreen (); go ())
+               else
+                 inputGenerators (fn line =>
+                   let
+                     val args = ["*:" ^ line]
+                     val args: args = List.map parseArg args
+                     val _ = gen opts args ast
+                   in
+                     print "\n";
+                     go ()
+                   end)
+              | _ =>
+               (clearScreen (); print "Just comments... Skipping\n"; go ()))
         end
     in
       go ()
