@@ -7,6 +7,7 @@ local
     ./smlfmt/src/lex/sources.mlb
     ./smlfmt/src/parse/sources.mlb
     ./smlfmt/src/prettier-print/sources.mlb
+    ./smlfmt/src/syntax-highlighting/sources.mlb
   end
   SmlfmtWrappers.sml
   Fold.sml

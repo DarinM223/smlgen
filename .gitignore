@@ -19,3 +19,5 @@ Deps.smlnet
 .smlnetobj
 *.il
 *.exe
+smldotnet/bin
+smldotnet/obj
